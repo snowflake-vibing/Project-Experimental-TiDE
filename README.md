@@ -35,6 +35,14 @@ Toàn bộ nội dung bài báo khoa học đã được dịch nghĩa, tổng h
 
 ---
 
+## 💡 Từ Điển Thuật Ngữ (Feynman Glossary)
+
+Giải thích các khái niệm cốt lõi bằng **phương pháp Feynman** (ngắn gọn, trực quan, dùng ẩn dụ đời thực, không dùng thuật ngữ rườm rà):
+
+- [`glossary/dynamic_covariates.md`](./glossary/dynamic_covariates.md): **Dynamic Covariates là gì?** – Câu chuyện quầy bán kem của bác Ba, bóc tách thuật ngữ, bảng dữ liệu mẫu và bí quyết giúp TiDE vượt trội.
+
+---
+
 ## 🏛️ Sơ Đồ Kiến Trúc TiDE
 
 ```mermaid

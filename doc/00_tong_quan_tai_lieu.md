@@ -40,44 +40,48 @@ Bộ tài liệu này được cấu trúc theo từng chương của bài báo 
 
 ---
 
-## 3. Kiến Trúc Tổng Thể Ở Một Cái Nhìn
+## 3. Từ Điển Thuật Ngữ (Feynman Technique Glossary)
+
+- [`../glossary/dynamic_covariates.md`](../glossary/dynamic_covariates.md): **Dynamic Covariates là gì?** – Giải thích trực quan bằng câu chuyện quầy kem bác Ba, bản chất "động", bảng dữ liệu mẫu và cơ chế "đường cao tốc" (Highway) của TiDE.
+
+---
+
+## 4. Kiến Trúc Tổng Thể Ở Một Cái Nhìn
 
 ```mermaid
 flowchart TD
-    subgraph Inputs["Dữ Liệu Đầu Vào"]
-        Y["Chuỗi Lịch Sử y (1:L)"]
-        X["Dynamic Covariates x (1:L+H)"]
-        A["Static Attributes a"]
-    end
+    Y["Chuỗi Lịch Sử: y(1:L)"]
+    X["Dynamic Covariates: x(1:L+H)"]
+    A["Static Attributes: a"]
 
-    subgraph FeatureProj["Khối Chiếu Đặc Trưng (Feature Projection)"]
-        X --> FP["Residual Block (r -> r_tilde)"]
-        FP --> X_proj["Projected Covariates x_tilde (1:L+H)"]
-    end
+    FP["Feature Projection: r -> r_tilde"]
+    X --> FP
+    FP --> X_proj["Projected Covariates"]
 
-    subgraph Encoder["Khối Mã Hóa (Dense Encoder)"]
-        Y & X_proj & A --> Concat1["Ghép nối (Flatten & Concat)"]
-        Concat1 --> EncBlocks["ne x Residual Blocks (hiddenSize)"]
-        EncBlocks --> Latent["Vector Mã Hóa e"]
-    end
+    Enc["Dense Encoder: ne khoi Residual Blocks"]
+    Y --> Enc
+    X_proj --> Enc
+    A --> Enc
+    Enc --> Latent["Vector Ma Hoa: e"]
 
-    subgraph Decoder["Khối Giải Mã (Dense Decoder)"]
-        Latent --> DecBlocks["nd x Residual Blocks"]
-        DecBlocks --> Reshape["Reshape thành Ma trận D (p x H)"]
-    end
+    Dec["Dense Decoder: nd khoi Residual Blocks"]
+    Latent --> Dec
+    Dec --> Reshape["Reshape thanh D in R^(p x H)"]
 
-    subgraph TemporalDec["Khối Giải Mã Theo Thời Gian (Temporal Decoder)"]
-        Reshape --> D_t["Decoded Vector d_t tại mỗi bước t"]
-        X_proj --> X_fut["Future Covariate x_tilde(L+t)"]
-        D_t & X_fut --> TempDecBlock["Residual Block (Highway)"]
-        TempDecBlock --> Out_Nonlinear["Dự Báo Phi Tuyến y_hat_nl"]
-    end
+    Reshape --> D_t["Decoded Vector d_t"]
+    X_proj --> X_fut["Future Covariate x_tilde(L+t)"]
 
-    subgraph GlobalSkip["Nhánh Tắt Toàn Cục (Global Linear Residual)"]
-        Y --> LinearSkip["Fully Linear Layer (L -> H)"]
-        LinearSkip --> Out_Linear["Dự Báo Tuyến Tính y_hat_lin"]
-    end
+    TempDec["Temporal Decoder (Covariate Highway)"]
+    D_t --> TempDec
+    X_fut --> TempDec
+    TempDec --> Out_NL["Du Bao Phi Tuyen: y_hat_nl"]
 
-    Out_Nonlinear & Out_Linear --> Sum["Cộng Tổng (Residual Addition)"]
-    Sum --> FinalOutput["Dự Báo Cuối Cùng y_hat (L+1 : L+H)"]
+    LinSkip["Global Linear Skip Connection (L -> H)"]
+    Y --> LinSkip
+    LinSkip --> Out_Lin["Du Bao Tuyen Tinh: y_hat_lin"]
+
+    Sum["Phep Cong Residual (+)"]
+    Out_NL --> Sum
+    Out_Lin --> Sum
+    Sum --> Final["Du Bao Cuoi Cung: y_hat(L+1:L+H)"]
 ```
