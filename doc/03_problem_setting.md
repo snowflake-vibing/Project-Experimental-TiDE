@@ -44,7 +44,7 @@ $$
 - *Ví dụ*: Các biến thời gian tuần hoàn (giờ trong ngày, ngày trong tuần, tháng trong năm), sự kiện ngày lễ (Tết, Giáng Sinh), thông tin thời tiết dự báo, kế hoạch giảm giá khuyến mãi trong tương lai.
 
 ### 3. Biến Ngoại Sinh Tĩnh (Static Attributes)
-- Ký hiệu là $a^{(i)} \in \mathbb{R}^{r_{stat}}$, biểu diễn đặc trưng cố định không thay đổi theo thời gian của chuỗi thứ $i$.
+- Ký hiệu là $a^{(i)} \in \mathbb{R}^{r_{\text{stat}}}$, biểu diễn đặc trưng cố định không thay đổi theo thời gian của chuỗi thứ $i$.
 - *Ví dụ*: ID nhận dạng cảm biến, vị trí địa lý của trạm quan trắc, mã danh mục sản phẩm (đồ gia dụng, thực phẩm), quy mô siêu thị.
 
 ---
@@ -122,12 +122,17 @@ Trong đó:
 - Phép chia cho $B \cdot H$ đảm bảo giá trị hàm tổn thất được chuẩn hóa trung bình theo từng điểm thời gian, không phụ thuộc vào quy mô batch hay độ dài horizon.
 
 #### Tại sao bài báo sử dụng MSE làm hàm mục tiêu?
+
 1. **Ước lượng kỳ vọng có điều kiện**: Về mặt lý thuyết xác suất thống kê, việc tối thiểu hóa hàm mất mát MSE buộc mô hình nơ-ron xấp xỉ giá trị **kỳ vọng có điều kiện (Conditional Expectation)** của tương lai:
-   $$
-   \hat{y} \approx \mathbb{E}\left[ y_{L+1:L+H} \mid y_{1:L}, x_{1:L+H}, a \right]
-   $$
-   Đây là điểm ước lượng tối ưu không thiên lệch trong các bài toán hồi quy khi nhiễu tuân theo phân phối chuẩn Gaussian.
+
+$$
+\hat{y} \approx \mathbb{E}\left[ y_{L+1:L+H} \mid y_{1:L}, x_{1:L+H}, a \right]
+$$
+
+Đây là điểm ước lượng tối ưu không thiên lệch trong các bài toán hồi quy khi nhiễu tuân theo phân phối chuẩn Gaussian.
+
 2. **Đạo hàm trơn tru**: Hàm MSE có đạo hàm bậc một liên tục và trơn tru khắp mọi nơi, giúp thuật toán lan truyền ngược (backpropagation) tính gradient mượt mà và hội tụ ổn định hơn so với MAE (vốn không có đạo hàm tại điểm sai số bằng 0).
+
 3. **Phạt nặng sai số lớn**: Do sai số được bình phương lên $(y - \hat{y})^2$, các dự báo lệch quá xa thực tế sẽ bị phạt rất nặng, ép mô hình phải bám sát những thời điểm có biến động mạnh.
 
 ---
@@ -140,18 +145,20 @@ TiDE áp dụng kỹ thuật **Cửa sổ trượt (Sliding Window)**:
 
 ```mermaid
 flowchart TD
-    subgraph Stream ["Chuỗi Thời Gian Gốc Liên Tục (Thời gian t = 1, 2, ..., T)"]
-        Timeline["--- t1 --- t2 --- t3 --- t4 --- t5 --- t6 --- t7 --- t8 --- t9 --- t10 --->"]
+    subgraph Stream ["Chuỗi Thời Gian Gốc Liên Tục Theo Thời Gian"]
+        T1["Mốc t1"] --> T2["Mốc t2"] --> T3["Mốc t3"] --> T4["Mốc t4"] --> T5["Mốc t5"] --> T6["Mốc t6"]
     end
 
     subgraph M1 ["Mẫu Thứ Nhất (Sample 1: Cắt tại mốc t)"]
-        Hist1["Quá Khứ L bước: y(t-L : t-1)"]
-        Fut1["Tương Lai H bước: y(t : t+H-1)"]
+        Hist1["Quá Khứ L bước: từ t-L đến t-1"]
+        Fut1["Tương Lai H bước: từ t đến t+H-1"]
+        Hist1 --> Fut1
     end
 
-    subgraph M2 ["Mẫu Thứ Hai (Sample 2: Dịch sang t+1)"]
-        Hist2["Quá Khứ L bước: y(t-L+1 : t)"]
-        Fut2["Tương Lai H bước: y(t+1 : t+H)"]
+    subgraph M2 ["Mẫu Thứ Hai (Sample 2: Dịch sang mốc t+1)"]
+        Hist2["Quá Khứ L bước: từ t-L+1 đến t"]
+        Fut2["Tương Lai H bước: từ t+1 đến t+H"]
+        Hist2 --> Fut2
     end
 
     Stream --> M1
@@ -162,13 +169,16 @@ flowchart TD
 1. Tổng chiều dài một cửa sổ hoàn chỉnh là $W = L + H$ (gồm $L$ điểm nhìn lại và $H$ điểm tương lai).
 2. Với một chuỗi thời gian có độ dài $T_{\text{train}}$, cửa sổ trượt dịch chuyển từng bước thời gian (stride = 1) từ đầu đến cuối tập huấn luyện.
 3. Số lượng mẫu huấn luyện tối đa có thể tạo ra từ một chuỗi đơn lẻ là:
-   $$
-   M = T_{\text{train}} - (L + H) + 1
-   $$
-   Với $N$ chuỗi thời gian trong tập dữ liệu, tổng số cặp mẫu có sẵn trong một epoch lên tới $N \times M$ mẫu.
+
+$$
+M = T_{\text{train}} - (L + H) + 1
+$$
+
+Với $N$ chuỗi thời gian trong tập dữ liệu, tổng số cặp mẫu có sẵn trong một epoch lên tới $N \times M$ mẫu.
+
 4. **Hiện tượng Chồng lấn thời gian (Overlapping Time-points)**:
-   - Hai mẫu liên tiếp $S_t$ và $S_{t+1}$ sẽ chia sẻ chung phần lớn các điểm dữ liệu lịch sử và tương lai (chỉ lệch nhau 1 bước thời gian).
-   - Tác giả nhấn mạnh: Việc các mini-batch chứa các cặp điểm thời gian chồng lấn là **tiêu chuẩn khoa học bắt buộc** trong cộng đồng LTTF (áp dụng tương tự trong Autoformer, PatchTST, DLinear). Điều này giúp tối đa hóa số lượng mẫu huấn luyện, dạy cho mô hình tính bất biến tịnh tiến theo thời gian (time-translation invariance) và học được mọi trạng thái chuyển đổi chu kỳ.
+- Hai mẫu liên tiếp $S_t$ và $S_{t+1}$ sẽ chia sẻ chung phần lớn các điểm dữ liệu lịch sử và tương lai (chỉ lệch nhau 1 bước thời gian).
+- Tác giả nhấn mạnh: Việc các mini-batch chứa các cặp điểm thời gian chồng lấn là **tiêu chuẩn khoa học bắt buộc** trong cộng đồng LTTF (áp dụng tương tự trong Autoformer, PatchTST, DLinear). Điều này giúp tối đa hóa số lượng mẫu huấn luyện, dạy cho mô hình tính bất biến tịnh tiến theo thời gian (time-translation invariance) và học được mọi trạng thái chuyển đổi chu kỳ.
 
 ---
 
@@ -180,11 +190,12 @@ TiDE áp dụng quy trình kiểm định khoa học nghiêm ngặt nhất: **Đ
 
 ```mermaid
 flowchart TD
-    subgraph TestSet ["Tập Kiểm Tra Độc Lập (Test Set: t = T_test_start ... T_end)"]
-        Step1["Bước 1: Đứng tại t1 -> Lấy L bước quá khứ -> Dự báo H bước tương lai -> So sánh sai số"]
-        Step2["Bước 2: Bước sang t2 = t1 + 1 -> Lấy L bước quá khứ mới -> Dự báo H bước -> So sánh sai số"]
-        StepN["Bước K: Lặp lại cuốn chiếu cho đến hết chuỗi -> Lấy trung bình toàn bộ sai số"]
-        Step1 --> Step2 --> StepN
+    subgraph TestSet ["Tập Kiểm Tra Độc Lập Theo Trục Thời Gian"]
+        Step1["Bước 1: Đứng tại mốc t1, lấy L bước quá khứ, dự báo H bước tương lai và tính sai số"]
+        Step2["Bước 2: Bước sang mốc t2, lấy L bước quá khứ mới, dự báo H bước tiếp theo và tính sai số"]
+        StepN["Bước K: Lặp lại quá trình cuốn chiếu cho đến hết tập kiểm tra và tính trung bình sai số"]
+        Step1 --> Step2
+        Step2 --> StepN
     end
 ```
 
@@ -202,20 +213,25 @@ flowchart TD
 Khi đánh giá trên toàn bộ tập Test gồm $N_{\text{test}}$ chuỗi và tất cả các cửa sổ cuốn chiếu, TiDE sử dụng hai thang đo tiêu chuẩn chính:
 
 #### 1. Sai Số Bình Phương Trung Bình (Mean Squared Error - MSE)
+
 $$
 \text{MSE} = \frac{1}{N_{\text{test}} \cdot K \cdot H} \sum_{i=1}^{N_{\text{test}}} \sum_{k=1}^{K} \sum_{t=1}^{H} \left( y_{L+t}^{(i, k)} - \hat{y}_{L+t}^{(i, k)} \right)^2
 $$
+
 - Đo lường phương sai sai số của mô hình.
 - Phản ánh mức độ nhạy cảm của mô hình đối với các dự báo lệch lớn (outliers).
 
 #### 2. Sai Số Tuyệt Đối Trung Bình (Mean Absolute Error - MAE)
+
 $$
 \text{MAE} = \frac{1}{N_{\text{test}} \cdot K \cdot H} \sum_{i=1}^{N_{\text{test}}} \sum_{k=1}^{K} \sum_{t=1}^{H} \left| y_{L+t}^{(i, k)} - \hat{y}_{L+t}^{(i, k)} \right|
 $$
+
 - Đo lường độ lệch tuyệt đối trung bình giữa giá trị dự báo và thực tế.
 - MAE có cùng đơn vị đo lường với biến mục tiêu (ví dụ: kWh điện, lưu lượng xe/giờ, độ C nhiệt độ), giúp người vận hành hệ thống dễ dàng hình dung và giải thích trực quan.
 
 #### So sánh sự khác biệt bản chất giữa MSE và MAE:
+
 | Tiêu chí | MSE | MAE |
 |:---|:---|:---|
 | **Độ nhạy với sai số lớn** | Rất cao (phạt bình phương sai số) | Tuyến tính (phạt đều mọi mức sai số) |
@@ -227,7 +243,7 @@ $$
 
 ### 3.4.5. Chỉ Số Đánh Giá Chuyên Biệt Cho Bán Lẻ: WRMSSE (M5 Competition)
 
-Đối với bài toán dự báo nhu cầu bán lẻ quy mô lớn M5 ( Walmart), bài báo sử dụng chỉ số chính thức của cuộc thi là **WRMSSE (Weighted Root Mean Squared Scaled Error)**:
+Đối với bài toán dự báo nhu cầu bán lẻ quy mô lớn M5 (Walmart), bài báo sử dụng chỉ số chính thức của cuộc thi là **WRMSSE (Weighted Root Mean Squared Scaled Error)**:
 
 $$
 \text{WRMSSE} = \sum_{i=1}^{N} W_i \sqrt{ \frac{\frac{1}{H} \sum_{t=1}^{H} \left( y_{L+t}^{(i)} - \hat{y}_{L+t}^{(i)} \right)^2}{\frac{1}{T-1} \sum_{t=2}^{T} \left( y_t^{(i)} - y_{t-1}^{(i)} \right)^2} }
