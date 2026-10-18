@@ -43,6 +43,8 @@ $$
 v = \text{LayerNorm} \left( \text{Dropout} \left( W_2 \cdot \text{ReLU}(W_1 u + b_1) + b_2 \right) + W_{\text{skip}} u \right)
 $$
 
+> 📖 **Xem giải thích chi tiết**: Đọc bài phân tích chuyên sâu về toán học ma trận, cơ chế chuyển đổi số chiều $d_{\text{in}} \to d_{\text{hidden}}$, vai trò bẻ gãy tính tuyến tính của ReLU, cơ chế Skip Connection và mã nguồn PyTorch minh họa tại: [`../explanation/section_4_1_residual_block.md`](../explanation/section_4_1_residual_block.md).
+
 ---
 
 ## 4.2. Khối Mã Hóa (Encoding Section)
