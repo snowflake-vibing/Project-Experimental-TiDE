@@ -49,6 +49,7 @@ Bộ tài liệu này được cấu trúc theo từng chương của bài báo 
 - [`../glossary/residual_block.md`](../glossary/residual_block.md): **Residual Block là gì?** – Người thợ sửa tranh trên tấm kính trong suốt, cơ chế học phần dư và triệt tiêu vanishing gradient.
 - [`../glossary/temporal_decoder.md`](../glossary/temporal_decoder.md): **Temporal Decoder là gì?** – Người đưa thư hỏa tốc trong tiệm pizza, làn đường cao tốc (Covariate Highway) phản ứng tức thì với sự kiện tương lai.
 - [`../glossary/hadamard_product.md`](../glossary/hadamard_product.md): **Ký hiệu phép nhân Hadamard $\odot$ là gì?** – Chiếc máy tính tiền siêu thị, phép nhân từng phần tử tương ứng và vai trò nút vặn âm lượng trong Layer Normalization.
+- [`../glossary/revin.md`](../glossary/revin.md): **RevIN là gì?** – Chuyện đổi tiền khi đi du lịch nước ngoài, cơ chế chuẩn hóa đảo nghịch 2 chiều và trị căn bệnh trôi dạt phân phối (Non-stationarity).
 
 ---
 
