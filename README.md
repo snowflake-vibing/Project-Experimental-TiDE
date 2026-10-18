@@ -39,8 +39,12 @@ Toàn bộ nội dung bài báo khoa học đã được dịch nghĩa, tổng h
 
 Giải thích các khái niệm cốt lõi bằng **phương pháp Feynman** (ngắn gọn, trực quan, dùng ẩn dụ đời thực, không dùng thuật ngữ rườm rà):
 
-- [`glossary/dynamic_covariates.md`](./glossary/dynamic_covariates.md): **Dynamic Covariates là gì?** – Câu chuyện quầy bán kem của bác Ba, bóc tách thuật ngữ, bảng dữ liệu mẫu và bí quyết giúp TiDE vượt trội.
 - [`glossary/RULE.md`](./glossary/RULE.md): **Quy chuẩn xây dựng Glossary** – Nguyên tắc bắt buộc đọc khi viết giải thích thuật ngữ theo phương pháp Feynman.
+- [`glossary/dynamic_covariates.md`](./glossary/dynamic_covariates.md): **Dynamic Covariates là gì?** – Câu chuyện quầy bán kem của bác Ba, bóc tách thuật ngữ, bảng dữ liệu mẫu và bí quyết giúp TiDE vượt trội.
+- [`glossary/feature_projection.md`](./glossary/feature_projection.md): **Feature Projection là gì?** – Chiếc balo đi cắm trại và túi hút chân không, phép chiếu giảm chiều không gian và giải bài toán bùng nổ số chiều.
+- [`glossary/overfitting.md`](./glossary/overfitting.md): **Overfitting là gì?** – Người học sinh học vẹt đề thi, nhận biết qua biểu đồ phân kỳ Loss và 5 tầng phòng thủ của TiDE.
+- [`glossary/residual_block.md`](./glossary/residual_block.md): **Residual Block là gì?** – Người thợ sửa tranh trên tấm kính trong suốt, cơ chế học phần dư và giải quyết triệt tiêu gradient.
+- [`glossary/temporal_decoder.md`](./glossary/temporal_decoder.md): **Temporal Decoder là gì?** – Người đưa thư hỏa tốc trong tiệm pizza, làn đường cao tốc (Covariate Highway) giúp phản ứng tức thì với sự kiện tương lai.
 
 ---
 
