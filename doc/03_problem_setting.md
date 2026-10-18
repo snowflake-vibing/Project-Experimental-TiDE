@@ -32,6 +32,8 @@ $$
 \hat{y}_{L+1:L+H}^{(i)} = \begin{bmatrix} \hat{y}_{L+1}^{(i)}, \hat{y}_{L+2}^{(i)}, \dots, \hat{y}_{L+H}^{(i)} \end{bmatrix}^\top \in \mathbb{R}^H
 $$
 
+> 💡 **Xem giải thích chi tiết:** [Giải phẫu từng ký hiệu toán học trong vector nhãn tương lai $y_{L+1:L+H}^{(i)}$ và Case study thực tế](../explanation/target_horizon_vector.md).
+
 ### 2. Biến Ngoại Sinh Động Theo Thời Gian (Dynamic Covariates)
 - Ký hiệu là $x_t^{(i)} \in \mathbb{R}^r$, biểu diễn một vector $r$ chiều tại bước thời gian $t$.
 - Các biến này có đặc điểm là **đã biết trước trên toàn bộ khoảng thời gian** bao gồm cả quá khứ và tương lai: $t \in \{1, 2, \dots, L+H\}$.
