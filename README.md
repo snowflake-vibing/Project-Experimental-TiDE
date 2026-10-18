@@ -47,30 +47,35 @@ Giải thích các khái niệm cốt lõi bằng **phương pháp Feynman** (ng
 
 ```mermaid
 flowchart TD
-    Y["Chuỗi Lịch Sử y (1:L)"]
-    X["Dynamic Covariates x (1:L+H)"]
-    A["Static Attributes a"]
+    Y["Chuỗi Lịch Sử: y(1:L)"]
+    X["Biến Ngoại Sinh Động: x(1:L+H)"]
+    A["Thuộc Tính Tĩnh: a"]
 
-    X --> FP["Feature Projection (r -> r_tilde)"]
-    FP --> X_proj["Projected Covariates"]
+    FP["Khối Chiếu Đặc Trưng: r -> r_tilde"]
+    X --> FP
+    FP --> X_proj["Biến Ngoại Sinh Đã Nén"]
     
-    Y & X_proj & A --> Enc["Dense Encoder (ne x Residual Blocks)"]
-    Enc --> Latent["Latent Vector e"]
+    Y --> Enc["Khối Mã Hóa Dày Đặc (Dense Encoder)"]
+    X_proj --> Enc
+    A --> Enc
+    Enc --> Latent["Vector Biểu Diễn Tiềm Ẩn e"]
     
-    Latent --> Dec["Dense Decoder (nd x Residual Blocks)"]
-    Dec --> Reshape["Reshape thành D in R^(p x H)"]
+    Latent --> Dec["Khối Giải Mã Dày Đặc (Dense Decoder)"]
+    Dec --> Reshape["Reshape thành Ma Trận D kích thước p nhân H"]
     
-    Reshape --> D_t["Decoded Vector d_t"]
-    X_proj --> X_fut["Future Covariate x_tilde(L+t)"]
+    Reshape --> D_t["Cột đặc trưng giải mã d_t"]
+    X_proj --> X_fut["Biến ngoại sinh tương lai x_tilde(L+t)"]
     
-    D_t & X_fut --> TempDec["Temporal Decoder (Covariate Highway)"]
-    TempDec --> Out_NL["Non-linear Predictions"]
+    D_t --> TempDec["Khối Temporal Decoder (Đường Cao Tốc)"]
+    X_fut --> TempDec
+    TempDec --> Out_NL["Dự Báo Phi Tuyến: y_hat_nl"]
 
-    Y --> LinSkip["Global Linear Skip Connection"]
-    LinSkip --> Out_Lin["Linear Predictions"]
+    Y --> LinSkip["Nhánh Tắt Tuyến Tính Toàn Cục (L -> H)"]
+    LinSkip --> Out_Lin["Dự Báo Tuyến Tính: y_hat_lin"]
 
-    Out_NL & Out_Lin --> Add["Residual Addition (+)"]
-    Add --> Final["Dự Báo Cuối Cùng y_hat (L+1 : L+H)"]
+    Out_NL --> Add["Phép Cộng Residual (+)"]
+    Out_Lin --> Add
+    Add --> Final["Dự Báo Hoàn Chỉnh: y_hat(L+1:L+H)"]
 ```
 
 ---

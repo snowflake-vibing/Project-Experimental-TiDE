@@ -59,15 +59,15 @@ $$
 
 ```mermaid
 flowchart LR
-    subgraph Inputs [Thong Tin Dau Vao Da Biet]
+    subgraph Inputs ["Thông Tin Đầu Vào Đã Biết"]
         direction TB
-        Y_hist["Lich su quan sat: y(1:L)"]
+        Y_hist["Lịch sử quan sát: y(1:L)"]
         X_all["Dynamic Covariates: x(1:L+H)"]
-        A_stat["Thuoc tinh tinh: a"]
+        A_stat["Thuộc tính tĩnh: a"]
     end
 
-    Model["Ham Du Bao Toan Cuc f_theta"]
-    Y_pred["Du Bao Tuong Lai: y_hat(L+1:L+H)"]
+    Model["Hàm Dự Báo Toàn Cục f_Theta"]
+    Y_pred["Dự Báo Tương Lai: y_hat(L+1:L+H)"]
 
     Y_hist --> Model
     X_all --> Model

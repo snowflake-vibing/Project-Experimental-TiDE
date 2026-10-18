@@ -16,15 +16,15 @@ Khối **Residual Block** là đơn vị xử lý cốt lõi xuất hiện xuyê
 
 ```mermaid
 flowchart TD
-    In["Dau vao u (so chieu d_in)"]
-    L1["Linear Layer 1: d_in -> d_hidden"]
-    Act["Ham Kich Hoat ReLU"]
-    L2["Linear Layer 2: d_hidden -> d_out"]
-    Drop["Dropout Layer"]
-    Skip["Linear Skip Projection"]
-    Add["Phep Cong Residual"]
-    LN["Layer Normalization"]
-    Out["Dau ra v (so chieu d_out)"]
+    In["Đầu vào u (số chiều d_in)"]
+    L1["Tầng Tuyến Tính 1: d_in -> d_hidden"]
+    Act["Hàm Kích Hoạt ReLU"]
+    L2["Tầng Tuyến Tính 2: d_hidden -> d_out"]
+    Drop["Tầng Dropout"]
+    Skip["Nhánh Tắt Tuyến Tính (Linear Skip)"]
+    Add["Phép Cộng Residual (+)"]
+    LN["Tầng Chuẩn Hóa Lớp (Layer Norm)"]
+    Out["Đầu ra v (số chiều d_out)"]
 
     In --> L1
     L1 --> Act
@@ -51,28 +51,28 @@ Nhiệm vụ của khối mã hóa là tiếp nhận chuỗi lịch sử $y_{1:L
 
 ```mermaid
 flowchart TD
-    subgraph S1 [1. Feature Projection]
-        X["Dynamic Covariates x_t tai moi buoc t"]
-        RB_FP["Residual Block chieu giam chieu"]
-        X_tilde["x_tilde_t voi r_tilde rat nho"]
+    subgraph S1 ["1. Khối Chiếu Đặc Trưng (Feature Projection)"]
+        X["Biến Ngoại Sinh Động x_t tại mỗi bước thời gian t"]
+        RB_FP["Khối Residual Block chiếu giảm chiều không gian"]
+        X_tilde["Đặc trưng nén x_tilde_t với số chiều r_tilde rất nhỏ"]
         X --> RB_FP
         RB_FP --> X_tilde
     end
 
-    subgraph S2 [2. Flatten va Concatenate]
-        FlatX["Trai phang: (L+H) * r_tilde"]
-        FlatY["Lich su quan sat: L chieu"]
-        FlatA["Thuoc tinh tinh: r_stat chieu"]
-        ConcatAll["Ghep thanh 1 Vector Lon duy nhat"]
+    subgraph S2 ["2. Trải Phẳng Và Ghép Nối Dữ Liệu"]
+        FlatX["Trải phẳng toàn bộ: (L + H) nhân r_tilde chiều"]
+        FlatY["Lịch sử quan sát: L chiều"]
+        FlatA["Thuộc tính tĩnh: r_stat chiều"]
+        ConcatAll["Ghép nối thành 1 Vector Lớn duy nhất"]
         X_tilde --> FlatX
         FlatX --> ConcatAll
         FlatY --> ConcatAll
         FlatA --> ConcatAll
     end
 
-    subgraph S3 [3. Dense Encoder]
-        EncBlocks["ne khoi Residual Blocks (hiddenSize)"]
-        Latent["Vector Ma Hoa Tiềm An e(i)"]
+    subgraph S3 ["3. Khối Mã Hóa Dày Đặc (Dense Encoder)"]
+        EncBlocks["Gồm ne khối Residual Blocks xếp chồng (hiddenSize)"]
+        Latent["Vector Biểu Diễn Tiềm Ẩn e(i)"]
         ConcatAll --> EncBlocks
         EncBlocks --> Latent
     end
@@ -110,21 +110,21 @@ Khối giải mã chuyển đổi vector tiềm ẩn $e^{(i)}$ thành chuỗi d�
 
 ```mermaid
 flowchart TD
-    Latent["Vector Ma Hoa e(i)"]
-    DecBlocks["Dense Decoder: nd khoi Residual Blocks"]
-    FlatG["Vector g(i) co kich thuoc H * p"]
-    ReshapeOp["Reshape thanh Ma Tran D(i) kich thuoc p x H"]
+    Latent["Vector Mã Hóa e(i)"]
+    DecBlocks["Khối Dense Decoder gồm nd khối Residual Blocks"]
+    FlatG["Vector giải mã g(i) kích thước H nhân p"]
+    ReshapeOp["Reshape thành Ma Trận D(i) kích thước p nhân H"]
     
     Latent --> DecBlocks
     DecBlocks --> FlatG
     FlatG --> ReshapeOp
 
-    subgraph TemporalHighway [Temporal Decoder tai moi buoc tuong lai t]
-        Col_t["Cot d_t(i) dac trung tai buoc t"]
-        FutCov["Covariate tuong lai x_tilde(L+t)"]
-        Concat_t["Ghep [ d_t(i) ; x_tilde(L+t) ]"]
-        TempRB["Residual Block co output dim = 1"]
-        Y_hat_NL["Du bao Phi Tuyen y_hat_NL(L+t)"]
+    subgraph TemporalHighway ["Khối Temporal Decoder Tại Mỗi Bước Tương Lai t"]
+        Col_t["Cột đặc trưng d_t(i) tại bước tương lai t"]
+        FutCov["Biến ngoại sinh tương lai x_tilde(L+t)"]
+        Concat_t["Ghép nối vector d_t(i) và vector x_tilde(L+t)"]
+        TempRB["Khối Residual Block sinh đầu ra vô hướng kích thước 1"]
+        Y_hat_NL["Dự Báo Phi Tuyến: y_hat_NL(L+t)"]
 
         Col_t --> Concat_t
         FutCov --> Concat_t
@@ -134,16 +134,16 @@ flowchart TD
 
     ReshapeOp --> Col_t
 
-    subgraph GlobalBypass [Nhanh Tat Tuyen Tinh Toan Cuc]
-        Y_hist["Lich su y(1:L)"]
-        LinearDirect["Linear Layer truc tiep L -> H"]
-        Y_hat_Lin["Du bao Tuyen Tinh y_hat_Lin"]
+    subgraph GlobalBypass ["Nhánh Tắt Tuyến Tính Toàn Cục (Global Linear Bypass)"]
+        Y_hist["Chuỗi quá khứ: y(1:L)"]
+        LinearDirect["Tầng Linear trực tiếp ánh xạ từ L sang H"]
+        Y_hat_Lin["Dự Báo Tuyến Tính: y_hat_Lin"]
         Y_hist --> LinearDirect
         LinearDirect --> Y_hat_Lin
     end
 
-    FinalSum["Cong Hai Nhanh (+)"]
-    FinalPred["Du Bao Cuoi Cung y_hat(L+1:L+H)"]
+    FinalSum["Phép Cộng Hai Nhánh (+)"]
+    FinalPred["Dự Báo Hoàn Chỉnh Cuối Cùng: y_hat(L+1:L+H)"]
 
     Y_hat_NL --> FinalSum
     Y_hat_Lin --> FinalSum
