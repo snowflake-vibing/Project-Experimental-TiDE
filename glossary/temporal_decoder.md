@@ -2,7 +2,7 @@
 
 > **Phương pháp tiếp cận Feynman (Feynman Technique)**:  
 > *"Nếu bạn không thể giải thích một điều gì đó cho một đứa trẻ 10 tuổi hiểu, thì chính bạn cũng chưa thực sự hiểu nó."*  
-> Bài viết này bóc tách khái niệm **Temporal Decoder** từ câu chuyện người đưa thư hỏa tốc trong nhà hàng pizza, giải thích vì sao cơ chế "đường cao tốc" này là bí quyết giúp mô hình TiDE phản ứng chuẩn xác với các sự kiện tương lai đột xuất.
+> Bài viết này bóc tách khái niệm **Temporal Decoder** từ câu chuyện người đưa thư hỏa tốc trong tiệm bánh pizza, giải thích vì sao cơ chế "đường cao tốc" này là bí quyết giúp mô hình TiDE phản ứng chuẩn xác với các sự kiện tương lai đột xuất.
 
 ---
 
@@ -10,25 +10,28 @@
 
 Hãy tưởng tượng bạn là bếp trưởng của một tiệm bánh pizza nổi tiếng. Bạn đang phải lên kế hoạch: **"Thứ Sáu tuần sau cần chuẩn bị bao nhiêu chiếc bánh pizza?"**
 
-Bạn biết hai luồng thông tin:
+Bạn có hai luồng thông tin:
 1. **Quy luật chung (Bộ giải mã toàn cục)**: Thông thường vào ngày thứ Sáu, quán bán được khoảng 100 chiếc bánh.
 2. **Sự kiện đặc biệt tương lai**: Lật cuốn lịch ra, bạn thấy thứ Sáu tuần sau đúng vào ngày **Lễ Tình Nhân 14/2**!
 
-Bây giờ có hai cách tổ chức nhà hàng:
+Bây giờ có hai cách tổ chức hoạt động của tiệm:
 
 ```mermaid
 flowchart TD
     subgraph Cach1 ["Cách 1: Không Có Đường Hỏa Tốc (Không Dùng Temporal Decoder)"]
-        Info1["Tin 'Hôm đó là ngày 14/2' bị ném vào phòng họp chung của 50 nhân viên"]
-        Confuse1["Thông tin bị bàn tán qua lại, pha loãng và có thể bị quên mất! Bếp trưởng chỉ nướng 100 cái bánh thông thường -> Cháy hàng!"]
+        Info1["Tin tức Ngày 14/2 bị ném vào phòng họp chung của 50 nhân viên"]
+        Confuse1["Thông tin bị bàn tán qua lại, pha loãng và có thể bị quên mất"]
+        Fail1["Bếp trưởng chỉ nướng 100 cái bánh thông thường dẫn đến cháy hàng"]
         Info1 --> Confuse1
+        Confuse1 --> Fail1
     end
 
     subgraph Cach2 ["Cách 2: Có Làn Đường Cao Tốc Riêng (Cách Của Temporal Decoder)"]
-        Info2["Một người đưa thư hỏa tốc cầm tấm biển 'Ngày 14/2 Lễ Tình Nhân'"]
-        Direct2["Chạy trên làn đường cao tốc riêng, đưa thẳng vào tay đầu bếp tại đúng ngày thứ Sáu!"]
-        Action2["Đầu bếp lập tức nướng ngay 300 chiếc bánh hình trái tim -> Bội thu!"]
-        Info2 --> Direct2 --> Action2
+        Info2["Người đưa thư hỏa tốc cầm tấm biển Ngày 14/2 Lễ Tình Nhân"]
+        Direct2["Chạy trên làn đường cao tốc riêng đưa thẳng vào tay đầu bếp đúng ngày thứ Sáu"]
+        Action2["Đầu bếp lập tức nướng ngay 300 chiếc bánh hình trái tim và tiệm bội thu"]
+        Info2 --> Direct2
+        Direct2 --> Action2
     end
 ```
 
@@ -68,18 +71,18 @@ Hãy nhìn vào cách thức vận hành của Temporal Decoder tại mỗi bư�
 ```mermaid
 flowchart TD
     subgraph InputStreams ["Hai Luồng Dữ Liệu Hội Tụ Tại Bước Tương Lai t"]
-        D_t["1. Vector đặc trưng giải mã d_t (từ Dense Decoder)\n(Đại diện cho bối cảnh chung của chuỗi tại bước t)"]
-        X_fut["2. Biến ngoại sinh tương lai x_tilde(L+t)\n(Ví dụ: Ngày lễ 14/2, nhiệt độ 39 độ C tại đúng bước t)"]
+        D_t["1. Vector giải mã d_t từ Dense Decoder: đại diện bối cảnh chuỗi"]
+        X_fut["2. Biến ngoại sinh tương lai x_tilde(L+t): ví dụ ngày lễ 14/2, nhiệt độ cao"]
     end
 
     Concat["Ghép nối hai nguồn thông tin thành một vector duy nhất"]
     D_t --> Concat
     X_fut --> Concat
 
-    RB["Khối Residual Block của Temporal Decoder\n(Kích thước ẩn: temporalDecoderHidden)"]
+    RB["Khối Residual Block của Temporal Decoder với kích thước ẩn temporalDecoderHidden"]
     Concat --> RB
 
-    Out_NL["Con số dự báo phi tuyến tại bước t: y_hat_NL(L+t)\n(Kích thước đầu ra = 1)"]
+    Out_NL["Con số dự báo phi tuyến tại bước t: y_hat_NL(L+t)"]
     RB --> Out_NL
 ```
 
@@ -91,8 +94,9 @@ $$
 
 > 🎯 **Khoảnh khắc "Aha!"**:  
 > Bạn có nhận ra sự tinh tế ở đây không?  
-> Vector $d_t^{(i)}$ mang thông tin **xu hướng toàn cục** được chắt lọc từ quá khứ.  
-> Vector $\tilde{x}_{L+t}^{(i)}$ mang thông tin **đột biến cục bộ** của chính thời điểm đó trong tương lai.  
+> - Vector $d_t^{(i)}$ mang thông tin **xu hướng toàn cục** được chắt lọc từ quá khứ.  
+> - Vector $\tilde{x}_{L+t}^{(i)}$ mang thông tin **đột biến cục bộ** của chính thời điểm đó trong tương lai.  
+> 
 > Temporal Decoder kết hợp cả hai yếu tố này lại ngay tại đích đến, giúp dự báo vừa giữ được xu hướng vĩ mô vừa phản ánh chính xác từng cú sốc vi mô!
 
 ---
@@ -116,9 +120,10 @@ Trong bài báo gốc (Hình 3, Trang 10-11), nhóm tác giả Google Research �
    Cùng một khối Temporal Decoder này được áp dụng lặp lại cho cả $H$ bước tương lai ($t = 1, 2, \dots, H$).
 3. **Kết hợp với Global Linear Skip Connection**:  
    Dự báo cuối cùng là phép cộng giữa đầu ra phi tuyến của Temporal Decoder và nhánh tắt tuyến tính toàn cục:
-   $$
-   \hat{y}_{L+t} = \hat{y}_{L+t,\text{NL}} + \hat{y}_{L+t,\text{Linear}}
-   $$
+
+$$
+\hat{y}_{L+t} = \hat{y}_{L+t,\text{NL}} + \hat{y}_{L+t,\text{Linear}}
+$$
 
 ---
 
