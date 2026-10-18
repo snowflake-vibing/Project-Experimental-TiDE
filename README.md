@@ -52,8 +52,7 @@ Giải thích các khái niệm cốt lõi bằng **phương pháp Feynman** (ng
 
 ## 🔍 Chuyên Đề Phân Tích Kỹ Thuật (Technical Deep-Dive Explanations)
 
-Các bài viết giải thích chi tiết từng phần kỹ thuật, toán học và mã nguồn triển khai:
-
+- [`explanation/RULE.md`](./explanation/RULE.md): **Quy chuẩn chuyên đề phân tích kỹ thuật** – Tiêu chuẩn bắt buộc đọc trước khi tạo bài giải thích: tư duy logic đa tầng, bóc tách nguyên tử, case study thực tế và minh họa code PyTorch.
 - [`explanation/section_4_1_residual_block.md`](./explanation/section_4_1_residual_block.md): **Giải thích chi tiết Phần 4.1: Khối Residual Block** – Cơ chế biến đổi số chiều $d_{\text{in}} \to d_{\text{hidden}}$, hàm kích hoạt phi tuyến tính ReLU, vai trò của Dropout, Skip Connection, Layer Normalization và mã nguồn PyTorch minh họa.
 - [`explanation/target_horizon_vector.md`](./explanation/target_horizon_vector.md): **Giải phẫu công thức vector nhãn tương lai $y_{L+1:L+H}^{(i)}$** – Bóc tách chi tiết từng ký tự toán học ($y, (i), L, H, L+1, L+H, :, [\dots], \top, \mathbb{R}^H$), 3 case study thực tế (Điện lực, Chuỗi bán lẻ Walmart M5, Giao thông) và code trích xuất PyTorch Tensor.
 
