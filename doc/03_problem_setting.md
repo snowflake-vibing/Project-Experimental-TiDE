@@ -96,24 +96,151 @@ $$
 
 ---
 
-## 3.4. Hàm Mất Mát (Loss Function) & Quy Trình Đánh Giá
+## 3.4. Hàm Mất Mát (Loss Function) & Cơ Chế Huấn Luyện - Đánh Giá Chi Tiết
 
-### Hàm Mất Mát Huấn Luyện (Training Loss)
-Mô hình TiDE được huấn luyện bằng thuật toán Mini-batch Stochastic Gradient Descent (Adam optimizer), sử dụng hàm tổn thất **Sai số bình phương trung bình (Mean Squared Error - MSE)**:
+Phần này phân tích sâu về hàm mục tiêu toán học, cơ chế tạo mẫu huấn luyện qua cửa sổ trượt, và phương pháp đánh giá cuốn chiếu (**Rolling Evaluation**) chuẩn xác.
+
+---
+
+### 3.4.1. Bản Chất Toán Học Của Hàm Mất Mát Huấn Luyện (Training Loss)
+
+Mô hình TiDE được huấn luyện bằng thuật toán tối ưu hóa Gradient Descent theo mini-batch (cụ thể là Adam Optimizer). Hàm mất mát được sử dụng trong suốt quá trình tối ưu hóa là **Sai số bình phương trung bình (Mean Squared Error - MSE)**:
 
 $$
-\mathcal{L}_{\text{MSE}}(\Theta) = \frac{1}{B \cdot H} \sum_{i=1}^{B} \sum_{t=1}^{H} \left( y_{L+t}^{(i)} - \hat{y}_{L+t}^{(i)} \right)^2 = \frac{1}{B \cdot H} \sum_{i=1}^{B} \left\| y_{L+1:L+H}^{(i)} - \hat{y}_{L+1:L+H}^{(i)} \right\|_2^2
+\mathcal{L}_{\text{MSE}}(\Theta) = \frac{1}{B \cdot H} \sum_{i=1}^{B} \sum_{t=1}^{H} \left( y_{L+t}^{(i)} - \hat{y}_{L+t}^{(i)} \right)^2
+$$
+
+Biểu diễn dưới dạng chuẩn Euclidean ($L_2$-norm) bình phương:
+
+$$
+\mathcal{L}_{\text{MSE}}(\Theta) = \frac{1}{B \cdot H} \sum_{i=1}^{B} \left\| y_{L+1:L+H}^{(i)} - \hat{y}_{L+1:L+H}^{(i)} \right\|_2^2
 $$
 
 Trong đó:
-- $B$ là kích thước mini-batch (`batchSize`).
-- Mỗi epoch bao gồm tất cả các cặp $(y_{1:L}, y_{L+1:L+H})$ có thể trích xuất được từ tập huấn luyện thông qua kỹ thuật cửa sổ trượt (sliding window).
+- $B$ là kích thước mini-batch (`batchSize`): Số lượng lát cắt chuỗi thời gian được đưa vào mạng trong một lần tính gradient.
+- $H$ là chiều dài khoảng dự báo tương lai (`horizon`): Mô hình dự báo đồng thời toàn bộ $H$ bước thay vì từng bước một (Non-autoregressive direct multi-step forecasting).
+- Phép chia cho $B \cdot H$ đảm bảo giá trị hàm tổn thất được chuẩn hóa trung bình theo từng điểm thời gian, không phụ thuộc vào quy mô batch hay độ dài horizon.
 
-### Quy Trình Đánh Giá (Rolling Evaluation)
-Khi kiểm thử trên tập Test, mô hình áp dụng cơ chế **Rolling Evaluation**:
-- Cửa sổ trượt qua từng bước thời gian trên tập kiểm tra, mỗi bước trích xuất cửa sổ $L$ và dự báo cho $H$ bước tiếp theo.
-- Tính trung bình **MSE** và **Sai số tuyệt đối trung bình (MAE)**:
+#### Tại sao bài báo sử dụng MSE làm hàm mục tiêu?
+1. **Ước lượng kỳ vọng có điều kiện**: Về mặt lý thuyết xác suất thống kê, việc tối thiểu hóa hàm mất mát MSE buộc mô hình nơ-ron xấp xỉ giá trị **kỳ vọng có điều kiện (Conditional Expectation)** của tương lai:
+   $$
+   \hat{y} \approx \mathbb{E}\left[ y_{L+1:L+H} \mid y_{1:L}, x_{1:L+H}, a \right]
+   $$
+   Đây là điểm ước lượng tối ưu không thiên lệch trong các bài toán hồi quy khi nhiễu tuân theo phân phối chuẩn Gaussian.
+2. **Đạo hàm trơn tru**: Hàm MSE có đạo hàm bậc một liên tục và trơn tru khắp mọi nơi, giúp thuật toán lan truyền ngược (backpropagation) tính gradient mượt mà và hội tụ ổn định hơn so với MAE (vốn không có đạo hàm tại điểm sai số bằng 0).
+3. **Phạt nặng sai số lớn**: Do sai số được bình phương lên $(y - \hat{y})^2$, các dự báo lệch quá xa thực tế sẽ bị phạt rất nặng, ép mô hình phải bám sát những thời điểm có biến động mạnh.
+
+---
+
+### 3.4.2. Cơ Chế Trích Xuất Dữ Liệu Qua Cửa Sổ Trượt (Sliding Window & Overlapping Pairs)
+
+Một thách thức lớn trong dữ liệu chuỗi thời gian là: làm thế nào để biến một chuỗi liên tục dài hàng nghìn điểm thành các cặp mẫu (Sample) độc lập cho mạng nơ-ron học?
+
+TiDE áp dụng kỹ thuật **Cửa sổ trượt (Sliding Window)**:
+
+```mermaid
+flowchart TD
+    subgraph Stream ["Chuỗi Thời Gian Gốc Liên Tục (Thời gian t = 1, 2, ..., T)"]
+        Timeline["--- t1 --- t2 --- t3 --- t4 --- t5 --- t6 --- t7 --- t8 --- t9 --- t10 --->"]
+    end
+
+    subgraph M1 ["Mẫu Thứ Nhất (Sample 1: Cắt tại mốc t)"]
+        Hist1["Quá Khứ L bước: y(t-L : t-1)"]
+        Fut1["Tương Lai H bước: y(t : t+H-1)"]
+    end
+
+    subgraph M2 ["Mẫu Thứ Hai (Sample 2: Dịch sang t+1)"]
+        Hist2["Quá Khứ L bước: y(t-L+1 : t)"]
+        Fut2["Tương Lai H bước: y(t+1 : t+H)"]
+    end
+
+    Stream --> M1
+    Stream --> M2
+```
+
+#### Quy trình chi tiết:
+1. Tổng chiều dài một cửa sổ hoàn chỉnh là $W = L + H$ (gồm $L$ điểm nhìn lại và $H$ điểm tương lai).
+2. Với một chuỗi thời gian có độ dài $T_{\text{train}}$, cửa sổ trượt dịch chuyển từng bước thời gian (stride = 1) từ đầu đến cuối tập huấn luyện.
+3. Số lượng mẫu huấn luyện tối đa có thể tạo ra từ một chuỗi đơn lẻ là:
+   $$
+   M = T_{\text{train}} - (L + H) + 1
+   $$
+   Với $N$ chuỗi thời gian trong tập dữ liệu, tổng số cặp mẫu có sẵn trong một epoch lên tới $N \times M$ mẫu.
+4. **Hiện tượng Chồng lấn thời gian (Overlapping Time-points)**:
+   - Hai mẫu liên tiếp $S_t$ và $S_{t+1}$ sẽ chia sẻ chung phần lớn các điểm dữ liệu lịch sử và tương lai (chỉ lệch nhau 1 bước thời gian).
+   - Tác giả nhấn mạnh: Việc các mini-batch chứa các cặp điểm thời gian chồng lấn là **tiêu chuẩn khoa học bắt buộc** trong cộng đồng LTTF (áp dụng tương tự trong Autoformer, PatchTST, DLinear). Điều này giúp tối đa hóa số lượng mẫu huấn luyện, dạy cho mô hình tính bất biến tịnh tiến theo thời gian (time-translation invariance) và học được mọi trạng thái chuyển đổi chu kỳ.
+
+---
+
+### 3.4.3. Quy Trình Đánh Giá Cuốn Chiếu (Rolling Evaluation / Walk-Forward Validation)
+
+Trong học máy thông thường (Tabular Data), ta thường chia ngẫu nhiên (K-fold Cross Validation). Nhưng trong chuỗi thời gian, việc xáo trộn ngẫu nhiên là **điều tối kỵ** vì sẽ làm rò rỉ thông tin tương lai về quá khứ (**Look-ahead bias / Data leakage**).
+
+TiDE áp dụng quy trình kiểm định khoa học nghiêm ngặt nhất: **Đánh Giá Cuốn Chiếu (Rolling Evaluation hay Walk-Forward Validation)** trên tập Test độc lập:
+
+```mermaid
+flowchart TD
+    subgraph TestSet ["Tập Kiểm Tra Độc Lập (Test Set: t = T_test_start ... T_end)"]
+        Step1["Bước 1: Đứng tại t1 -> Lấy L bước quá khứ -> Dự báo H bước tương lai -> So sánh sai số"]
+        Step2["Bước 2: Bước sang t2 = t1 + 1 -> Lấy L bước quá khứ mới -> Dự báo H bước -> So sánh sai số"]
+        StepN["Bước K: Lặp lại cuốn chiếu cho đến hết chuỗi -> Lấy trung bình toàn bộ sai số"]
+        Step1 --> Step2 --> StepN
+    end
+```
+
+#### Các bước thực hiện Rolling Evaluation:
+1. Tập Test được giữ nguyên theo thứ tự thời gian tự nhiên, nằm hoàn toàn sau tập Train và Validation.
+2. Mô hình bắt đầu tại mốc thời gian kiểm thử đầu tiên, đọc $L$ bước quá khứ và sinh ra dự báo $\hat{y}_{L+1:L+H}$.
+3. Dự báo này được so sánh trực tiếp với giá trị thực tế $y_{L+1:L+H}$ để tính sai số.
+4. Cửa sổ dịch chuyển sang bước thời gian tiếp theo (cuốn chiếu bước 1) và thực hiện lại toàn bộ quá trình dự báo cho đến khi trượt hết tập Test.
+5. **Ưu điểm**: Đánh giá cuốn chiếu phản ánh trung thực 100% cách mô hình vận hành trong đời thực: mỗi ngày trôi qua, ta có thêm dữ liệu thực tế mới, trượt cửa sổ nhìn lại và tiếp tục dự báo cho $H$ ngày tới.
+
+---
+
+### 3.4.4. Các Chỉ Số Đo Lường Hiệu Năng (Evaluation Metrics)
+
+Khi đánh giá trên toàn bộ tập Test gồm $N_{\text{test}}$ chuỗi và tất cả các cửa sổ cuốn chiếu, TiDE sử dụng hai thang đo tiêu chuẩn chính:
+
+#### 1. Sai Số Bình Phương Trung Bình (Mean Squared Error - MSE)
+$$
+\text{MSE} = \frac{1}{N_{\text{test}} \cdot K \cdot H} \sum_{i=1}^{N_{\text{test}}} \sum_{k=1}^{K} \sum_{t=1}^{H} \left( y_{L+t}^{(i, k)} - \hat{y}_{L+t}^{(i, k)} \right)^2
+$$
+- Đo lường phương sai sai số của mô hình.
+- Phản ánh mức độ nhạy cảm của mô hình đối với các dự báo lệch lớn (outliers).
+
+#### 2. Sai Số Tuyệt Đối Trung Bình (Mean Absolute Error - MAE)
+$$
+\text{MAE} = \frac{1}{N_{\text{test}} \cdot K \cdot H} \sum_{i=1}^{N_{\text{test}}} \sum_{k=1}^{K} \sum_{t=1}^{H} \left| y_{L+t}^{(i, k)} - \hat{y}_{L+t}^{(i, k)} \right|
+$$
+- Đo lường độ lệch tuyệt đối trung bình giữa giá trị dự báo và thực tế.
+- MAE có cùng đơn vị đo lường với biến mục tiêu (ví dụ: kWh điện, lưu lượng xe/giờ, độ C nhiệt độ), giúp người vận hành hệ thống dễ dàng hình dung và giải thích trực quan.
+
+#### So sánh sự khác biệt bản chất giữa MSE và MAE:
+| Tiêu chí | MSE | MAE |
+|:---|:---|:---|
+| **Độ nhạy với sai số lớn** | Rất cao (phạt bình phương sai số) | Tuyến tính (phạt đều mọi mức sai số) |
+| **Giá trị trung tâm tối ưu** | Tiệm cận **Giá trị trung bình (Mean)** | Tiệm cận **Giá trị trung vị (Median)** |
+| **Đơn vị đo** | Bình phương đơn vị gốc (ví dụ: $\text{kWh}^2$) | Đúng bằng đơn vị gốc (ví dụ: $\text{kWh}$) |
+| **Mục đích chính** | Tối ưu hóa trong quá trình Backprop | Đánh giá trực quan mức độ lệch thực tế |
+
+---
+
+### 3.4.5. Chỉ Số Đánh Giá Chuyên Biệt Cho Bán Lẻ: WRMSSE (M5 Competition)
+
+Đối với bài toán dự báo nhu cầu bán lẻ quy mô lớn M5 ( Walmart), bài báo sử dụng chỉ số chính thức của cuộc thi là **WRMSSE (Weighted Root Mean Squared Scaled Error)**:
 
 $$
-\text{MAE} = \frac{1}{N_{\text{test}} \cdot H} \sum_{i=1}^{N_{\text{test}}} \sum_{t=1}^{H} \left| y_{L+t}^{(i)} - \hat{y}_{L+t}^{(i)} \right|
+\text{WRMSSE} = \sum_{i=1}^{N} W_i \sqrt{ \frac{\frac{1}{H} \sum_{t=1}^{H} \left( y_{L+t}^{(i)} - \hat{y}_{L+t}^{(i)} \right)^2}{\frac{1}{T-1} \sum_{t=2}^{T} \left( y_t^{(i)} - y_{t-1}^{(i)} \right)^2} }
 $$
+
+Ý nghĩa của các thành phần trong WRMSSE:
+1. **Chuẩn hóa tỷ lệ (Scaled Error)**: Mẫu số bên trong căn là sai số của phương pháp Naive Benchmark (lấy hôm trước đoán hôm sau). Chuẩn hóa này giúp so sánh công bằng giữa mặt hàng bán chạy (doanh số hàng nghìn cái) và mặt hàng bán chậm (doanh số vài cái mỗi tuần).
+2. **Trọng số đóng góp $W_i$ (Weighted)**: Được tính dựa trên tổng giá trị doanh thu bằng tiền ($) của sản phẩm $i$ trong 28 ngày gần nhất. Các sản phẩm mang lại doanh thu cao cho siêu thị sẽ có trọng số $W_i$ lớn hơn, buộc mô hình phải ưu tiên dự báo thật chuẩn cho nhóm mặt hàng chủ lực.
+
+---
+
+### 3.4.6. Phân Chia Tập Dữ Liệu & Dừng Sớm (Validation & Early Stopping)
+
+Để đảm bảo mô hình không bị quá khớp (overfitting) và chọn ra bộ siêu tham số tối ưu:
+- **Tập Validation (Kiểm định)**: Nằm ngay giữa tập Train và tập Test. Mô hình được đánh giá trên tập Validation sau mỗi epoch huấn luyện.
+- **Chiến lược Early Stopping**: Nếu sai số MSE trên tập Validation không giảm trong một số epoch liên tiếp (patience = 5 đến 10 epochs), quá trình huấn luyện sẽ dừng lại và lưu checkpoint có loss nhỏ nhất để đem đi đánh giá trên tập Test.
