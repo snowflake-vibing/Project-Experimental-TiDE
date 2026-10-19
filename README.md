@@ -37,24 +37,28 @@ Toàn bộ nội dung bài báo khoa học đã được dịch nghĩa, tổng h
 
 ## 💡 Từ Điển Thuật Ngữ (Feynman Glossary)
 
-Giải thích các khái niệm cốt lõi bằng **phương pháp Feynman** (ngắn gọn, trực quan, dùng ẩn dụ đời thực, không dùng thuật ngữ rườm rà):
+Giải thích các khái niệm cốt lõi bằng **phương pháp Feynman** (ngắn gọn, trực quan, dùng ẩn dụ đời thực, không dùng thuật ngữ rườm rà) trong thư mục [`doc/glossary/`](./doc/glossary):
 
-- [`glossary/RULE.md`](./glossary/RULE.md): **Quy chuẩn xây dựng Glossary** – Nguyên tắc bắt buộc đọc khi viết giải thích thuật ngữ theo phương pháp Feynman.
-- [`glossary/dynamic_covariates.md`](./glossary/dynamic_covariates.md): **Dynamic Covariates là gì?** – Câu chuyện quầy bán kem của bác Ba, bóc tách thuật ngữ, bảng dữ liệu mẫu và bí quyết giúp TiDE vượt trội.
-- [`glossary/feature_projection.md`](./glossary/feature_projection.md): **Feature Projection là gì?** – Chiếc balo đi cắm trại và túi hút chân không, phép chiếu giảm chiều không gian và giải bài toán bùng nổ số chiều.
-- [`glossary/overfitting.md`](./glossary/overfitting.md): **Overfitting là gì?** – Người học sinh học vẹt đề thi, nhận biết qua biểu đồ phân kỳ Loss và 5 tầng phòng thủ của TiDE.
-- [`glossary/residual_block.md`](./glossary/residual_block.md): **Residual Block là gì?** – Người thợ sửa tranh trên tấm kính trong suốt, cơ chế học phần dư và giải quyết triệt tiêu gradient.
-- [`glossary/temporal_decoder.md`](./glossary/temporal_decoder.md): **Temporal Decoder là gì?** – Người đưa thư hỏa tốc trong tiệm pizza, làn đường cao tốc (Covariate Highway) giúp phản ứng tức thì với sự kiện tương lai.
-- [`glossary/hadamard_product.md`](./glossary/hadamard_product.md): **Ký hiệu phép nhân Hadamard $\odot$ là gì?** – Chiếc máy tính tiền siêu thị, phép nhân từng phần tử tương ứng và vai trò nút vặn âm lượng trong Layer Normalization.
-- [`glossary/revin.md`](./glossary/revin.md): **RevIN là gì?** – Chuyện đổi tiền khi đi du lịch nước ngoài, cơ chế chuẩn hóa đảo nghịch 2 chiều và trị căn bệnh trôi dạt phân phối (Non-stationarity).
+- 📖 **[Xem danh mục Glossary tổng hợp (`doc/glossary/README.md`)](./doc/glossary/README.md)**
+- [`doc/glossary/RULE.md`](./doc/glossary/RULE.md): **Quy chuẩn xây dựng Glossary** – Nguyên tắc bắt buộc đọc khi viết giải thích thuật ngữ theo phương pháp Feynman.
+- [`doc/glossary/dynamic_covariates.md`](./doc/glossary/dynamic_covariates.md): **Dynamic Covariates là gì?** – Câu chuyện quầy bán kem của bác Ba, bóc tách thuật ngữ, bảng dữ liệu mẫu và bí quyết giúp TiDE vượt trội.
+- [`doc/glossary/feature_projection.md`](./doc/glossary/feature_projection.md): **Feature Projection là gì?** – Chiếc balo đi cắm trại và túi hút chân không, phép chiếu giảm chiều không gian và giải bài toán bùng nổ số chiều.
+- [`doc/glossary/overfitting.md`](./doc/glossary/overfitting.md): **Overfitting là gì?** – Người học sinh học vẹt đề thi, nhận biết qua biểu đồ phân kỳ Loss và 5 tầng phòng thủ của TiDE.
+- [`doc/glossary/residual_block.md`](./doc/glossary/residual_block.md): **Residual Block là gì?** – Người thợ sửa tranh trên tấm kính trong suốt, cơ chế học phần dư và giải quyết triệt tiêu gradient.
+- [`doc/glossary/temporal_decoder.md`](./doc/glossary/temporal_decoder.md): **Temporal Decoder là gì?** – Người đưa thư hỏa tốc trong tiệm pizza, làn đường cao tốc (Covariate Highway) giúp phản ứng tức thì với sự kiện tương lai.
+- [`doc/glossary/hadamard_product.md`](./doc/glossary/hadamard_product.md): **Ký hiệu phép nhân Hadamard $\odot$ là gì?** – Chiếc máy tính tiền siêu thị, phép nhân từng phần tử tương ứng và vai trò nút vặn âm lượng trong Layer Normalization.
+- [`doc/glossary/revin.md`](./doc/glossary/revin.md): **RevIN là gì?** – Chuyện đổi tiền khi đi du lịch nước ngoài, cơ chế chuẩn hóa đảo nghịch 2 chiều và trị căn bệnh trôi dạt phân phối (Non-stationarity).
 
 ---
 
 ## 🔍 Chuyên Đề Phân Tích Kỹ Thuật (Technical Deep-Dive Explanations)
 
-- [`explanation/RULE.md`](./explanation/RULE.md): **Quy chuẩn chuyên đề phân tích kỹ thuật** – Tiêu chuẩn bắt buộc đọc trước khi tạo bài giải thích: tư duy logic đa tầng, bóc tách nguyên tử, case study thực tế và minh họa code PyTorch.
-- [`explanation/section_4_1_residual_block.md`](./explanation/section_4_1_residual_block.md): **Giải thích chi tiết Phần 4.1: Khối Residual Block** – Cơ chế biến đổi số chiều $d_{\text{in}} \to d_{\text{hidden}}$, hàm kích hoạt phi tuyến tính ReLU, vai trò của Dropout, Skip Connection, Layer Normalization và mã nguồn PyTorch minh họa.
-- [`explanation/target_horizon_vector.md`](./explanation/target_horizon_vector.md): **Giải phẫu công thức vector nhãn tương lai $y_{L+1:L+H}^{(i)}$** – Bóc tách chi tiết từng ký tự toán học ($y, (i), L, H, L+1, L+H, :, [\dots], \top, \mathbb{R}^H$), 3 case study thực tế (Điện lực, Chuỗi bán lẻ Walmart M5, Giao thông) và code trích xuất PyTorch Tensor.
+Các bài phân tích mổ xẻ chuyên sâu về mặt toán học, cơ chế nơ-ron và code thực nghiệm trong thư mục [`doc/explanation/`](./doc/explanation):
+
+- 📖 **[Xem danh mục Chuyên đề tổng hợp (`doc/explanation/README.md`)](./doc/explanation/README.md)**
+- [`doc/explanation/RULE.md`](./doc/explanation/RULE.md): **Quy chuẩn chuyên đề phân tích kỹ thuật** – Tiêu chuẩn bắt buộc đọc trước khi tạo bài giải thích: tư duy logic đa tầng, bóc tách nguyên tử, case study thực tế và minh họa code PyTorch.
+- [`doc/explanation/section_4_1_residual_block.md`](./doc/explanation/section_4_1_residual_block.md): **Giải thích chi tiết Phần 4.1: Khối Residual Block** – Cơ chế biến đổi số chiều $d_{\text{in}} \to d_{\text{hidden}}$, hàm kích hoạt phi tuyến tính ReLU, vai trò của Dropout, Skip Connection, Layer Normalization và mã nguồn PyTorch minh họa.
+- [`doc/explanation/target_horizon_vector.md`](./doc/explanation/target_horizon_vector.md): **Giải phẫu công thức vector nhãn tương lai $y_{L+1:L+H}^{(i)}$** – Bóc tách chi tiết từng ký tự toán học ($y, (i), L, H, L+1, L+H, :, [\dots], \top, \mathbb{R}^H$), 3 case study thực tế (Điện lực, Chuỗi bán lẻ Walmart M5, Giao thông) và code trích xuất PyTorch Tensor.
 
 ---
 

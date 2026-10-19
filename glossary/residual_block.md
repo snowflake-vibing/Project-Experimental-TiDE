@@ -22,7 +22,8 @@ flowchart TD
         Glass["Đặt tấm kính trong suốt lên bức tranh chú mèo gốc"]
         DrawDelta["Chỉ cần vẽ thêm chiếc nơ đỏ và ánh mắt lên tấm kính!"]
         Combine["Chồng tấm kính lên tranh gốc: Có ngay tác phẩm hoàn hảo!\n(Bức tranh gốc không bao giờ bị mất)"]
-        Glass --> DrawDelta --> Combine
+        Glass --> DrawDelta
+        DrawDelta --> Combine
     end
 ```
 
@@ -43,7 +44,7 @@ Tại sao lại gọi là **Residual Block**?
 ```mermaid
 flowchart LR
     Term["Residual Block"]
-    Term --> P1["Residual (Phần dư / Chênh lệch)"]
+    Term --> P1["Residual (Phần dư hoặc Chênh lệch)"]
     Term --> P2["Block (Khối nơ-ron)"]
 
     P1 --> D1["Khoảng sai khác giữa kết quả mong muốn và giá trị đầu vào: Delta = y - u"]
@@ -66,11 +67,13 @@ flowchart TD
     In["Đầu vào u (Kích thước d_in)"]
     
     subgraph MainStream ["Nhánh Chính: Học Phần Dư F(u)"]
-        L1["Tầng Tuyến Tính 1: d_in -> d_hidden"]
+        L1["Tầng Tuyến Tính 1: biến đổi d_in sang d_hidden"]
         Act["Hàm Kích Hoạt Phi Tuyến ReLU"]
-        L2["Tầng Tuyến Tính 2: d_hidden -> d_out"]
-        Drop["Tầng Dropout điều hòa"]
-        L1 --> Act --> L2 --> Drop
+        L2["Tầng Tuyến Tính 2: biến đổi d_hidden sang d_out"]
+        Drop["Tầng Dropout điều hòa ngẫu nhiên"]
+        L1 --> Act
+        Act --> L2
+        L2 --> Drop
     end
 
     subgraph SkipStream ["Nhánh Tắt: Giữ Nguyên Dữ Liệu Gốc"]
@@ -99,14 +102,17 @@ Trước khi phát minh ra Residual Connection (He et al., 2015 trong ResNet), c
 
 1. **Triệt tiêu gradient (Vanishing Gradient)**:  
    Khi tính đạo hàm để cập nhật trọng số từ đầu ra ngược về đầu vào theo quy tắc dây chuyền (Chain Rule):  
-   $\frac{\partial \text{Loss}}{\partial u} = \frac{\partial \text{Loss}}{\partial z_n} \cdot \frac{\partial z_n}{\partial z_{n-1}} \dots \frac{\partial z_1}{\partial u}$.  
+   $$\frac{\partial \text{Loss}}{\partial u} = \frac{\partial \text{Loss}}{\partial z_n} \cdot \frac{\partial z_n}{\partial z_{n-1}} \dots \frac{\partial z_1}{\partial u}$$  
    Nếu các đạo hàm trung gian nhỏ hơn 1, nhân liên tục qua 10 tầng sẽ khiến gradient suy giảm về $0.000000...$ Tầng đầu tiên hoàn toàn bị "tê liệt", không thể cập nhật trọng số.
+
 2. **Residual Block giải quyết như thế nào?**  
    Nhờ có phép cộng $v = F(u) + u$, khi lấy đạo hàm:  
-   $$
-   \frac{\partial v}{\partial u} = \frac{\partial F(u)}{\partial u} + 1
-   $$
-   Con số $+1$ kỳ diệu này đảm bảo gradient luôn có một "đường cao tốc" chảy thẳng ngược về đầu vào mà không bao giờ bị suy giảm về 0!
+
+$$
+\frac{\partial v}{\partial u} = \frac{\partial F(u)}{\partial u} + 1
+$$
+
+Con số $+1$ kỳ diệu này đảm bảo gradient luôn có một "đường cao tốc" chảy thẳng ngược về đầu vào mà không bao giờ bị suy giảm về 0!
 
 ---
 
@@ -122,6 +128,8 @@ Trong bài báo TiDE, nhóm tác giả Google không dùng Residual Block như m
 | **4. Temporal Decoder** | Kết hợp biến tương lai và vector giải mã để dự báo | `temporalDecoderHidden` |
 
 Toàn bộ mô hình không có một lớp Attention hay LSTM nào, chỉ là sự kết hợp nhịp nhàng giữa các khối Residual Block dày đặc, tạo nên tốc độ xử lý nhanh hơn 5 - 10 lần so với các đối thủ.
+
+> 💡 **Xem giải thích chi tiết cơ chế hoạt động:** [Chuyên đề phân tích chuyên sâu Phần 4.1: Khối Residual Block và Triển khai PyTorch](../explanation/section_4_1_residual_block.md).
 
 ---
 
