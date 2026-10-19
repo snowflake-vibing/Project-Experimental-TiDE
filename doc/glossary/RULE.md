@@ -1,13 +1,13 @@
 # QUY CHUẨN XÂY DỰNG TỪ ĐIỂN THUẬT NGỮ (GLOSSARY RULES)
 
 > **QUY TẮC BẮT BUỘC**:  
-> Trước khi khởi tạo hoặc chỉnh sửa bất kỳ thuật ngữ nào trong thư mục `glossary/`, **BẮT BUỘC PHẢI ĐỌC KỸ VÀ TUÂN THỦ TUYỆT ĐỐI** các quy chuẩn trong file `RULE.md` này.
+> Trước khi khởi tạo hoặc chỉnh sửa bất kỳ thuật ngữ nào trong thư mục `doc/glossary/`, **BẮT BUỘC PHẢI ĐỌC KỸ VÀ TUÂN THỦ TUYỆT ĐỐI** các quy chuẩn trong file `RULE.md` này.
 
 ---
 
 ## 1. Triết Lý Cốt Lõi: Kỹ Thuật Feynman (The Feynman Technique)
 
-Mục đích của `glossary/` không phải là sao chép lại các định nghĩa hàn lâm khô khan, mà là giúp người đọc **thấu hiểu bản chất trực giác sâu sắc** của từng khái niệm kỹ thuật trong bài toán dự báo chuỗi thời gian và mô hình TiDE.
+Mục đích của `doc/glossary/` không phải là sao chép lại các định nghĩa hàn lâm khô khan, mà là giúp người đọc **thấu hiểu bản chất trực giác sâu sắc** của từng khái niệm kỹ thuật trong bài toán dự báo chuỗi thời gian và mô hình TiDE.
 
 > *"Nếu bạn không thể giải thích một khái niệm phức tạp bằng ngôn từ đơn giản cho một đứa trẻ 10 tuổi hiểu, thì chính bạn cũng chưa thực sự hiểu nó."*  
 > — **Richard Feynman** (Giải Nobel Vật lý 1965)
@@ -22,7 +22,7 @@ Mục đích của `glossary/` không phải là sao chép lại các định ng
 
 ## 2. Cấu Trúc Khung Chuẩn Của Một Bài Thuật Ngữ (6 Phần Bắt Buộc)
 
-Mỗi file thuật ngữ trong `glossary/` (ví dụ: `dynamic_covariates.md`, `channel_independence.md`, `residual_block.md`...) **phải tuân thủ đúng khung 6 phần sau**:
+Mỗi file thuật ngữ trong `doc/glossary/` (ví dụ: `dynamic_covariates.md`, `channel_independence.md`, `residual_block.md`...) **phải tuân thủ đúng khung 6 phần sau**:
 
 ### Phần 1: Giải Thích Cho Đứa Trẻ 10 Tuổi (The 10-Year-Old Explanation)
 - Kể một câu chuyện đời thực có nhân vật, tình huống cụ thể (ví dụ: Bác Ba bán kem, chú bảo vệ trông xe, người nông dân dự báo mùa vụ...).

@@ -1,7 +1,7 @@
 # Giải Thích Chi Tiết Phần 4.1: Khối Residual Block Trong TiDE
 
 > [!NOTE]
-> **Điều hướng tài liệu**: [🏠 Tổng Quan Tài Liệu](../doc/00_tong_quan_tai_lieu.md) • [📖 Chương 4: Kiến Trúc TiDE](../doc/04_model_architecture.md) • [📚 Glossary: Residual Block](../glossary/residual_block.md)  
+> **Điều hướng tài liệu**: [🏠 Tổng Quan Tài Liệu](../00_tong_quan_tai_lieu.md) • [📖 Chương 4: Kiến Trúc TiDE](../04_model_architecture.md) • [📚 Glossary: Residual Block](../glossary/residual_block.md) • [🔍 Danh Mục Chuyên Đề](./README.md)  
 > **Mục tiêu**: Bóc tách chi tiết từng thành phần toán học, cơ chế vận hành nội tại và ý nghĩa hình học của **Residual Block** — đơn vị xử lý nền tảng xuất hiện xuyên suốt kiến trúc TiDE (Feature Projection, Dense Encoder, Dense Decoder, Temporal Decoder).
 
 ---
@@ -383,5 +383,6 @@ if __name__ == "__main__":
 
 > [!TIP]
 > **Đọc tiếp**:
-> - [Chương 4: Kiến Trúc Chi Tiết Mô Hình TiDE](../doc/04_model_architecture.md) để xem cách khối Residual Block này được ghép nối trong Feature Projection, Dense Encoder, Dense Decoder và Temporal Decoder.
+> - [Chương 4: Kiến Trúc Chi Tiết Mô Hình TiDE](../04_model_architecture.md) để xem cách khối Residual Block này được ghép nối trong Feature Projection, Dense Encoder, Dense Decoder và Temporal Decoder.
 > - [Thuật ngữ: Residual Block](../glossary/residual_block.md) để tiếp cận khái niệm này dưới góc nhìn trực quan theo kỹ thuật Feynman.
+> - [Danh mục Chuyên đề Phân tích Kỹ thuật](./README.md) để xem toàn bộ các bài giải thích chuyên sâu.

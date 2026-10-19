@@ -1,20 +1,20 @@
 # QUY CHUẨN SOẠN THẢO CHUYÊN ĐỀ PHÂN TÍCH KỸ THUẬT (EXPLANATION RULES)
 
 > **QUY TẮC BẮT BUỘC**:  
-> Trước khi khởi tạo hoặc chỉnh sửa bất kỳ tài liệu nào trong thư mục `explanation/`, **BẮT BUỘC PHẢI ĐỌC KỸ VÀ TUÂN THỦ TUYỆT ĐỐI** các quy chuẩn trong file `RULE.md` này.  
+> Trước khi khởi tạo hoặc chỉnh sửa bất kỳ tài liệu nào trong thư mục `doc/explanation/`, **BẮT BUỘC PHẢI ĐỌC KỸ VÀ TUÂN THỦ TUYỆT ĐỐI** các quy chuẩn trong file `RULE.md` này.  
 > Mục tiêu cốt lõi: **Giải thích chi tiết, logic đa tầng, dễ hiểu bản chất, không làm người đọc bị rối, và luôn gắn chặt với ví dụ Case Study thực tế có số liệu cụ thể.**
 
 ---
 
 ## 1. Mục Đích & Khác Biệt Giữa Các Thư Mục
 
-Để tài liệu không bị trùng lặp hoặc đi sai trọng tâm, cần phân định rõ vai trò của 3 thư mục chính:
+Để tài liệu không bị trùng lặp hoặc đi sai trọng tâm, cần phân định rõ vai trò của 3 khu vực chính:
 
 | Thư mục | Mục đích cốt lõi | Đối tượng phục vụ | Phong cách trình bày |
 | :--- | :--- | :--- | :--- |
 | **`doc/`** | Dịch thuật, tổng hợp và hệ thống hóa toàn bộ các chương của bài báo khoa học TiDE (Chương 1 đến Chương 6 + Phụ lục A, B). | Người cần đọc toàn văn tài liệu nghiên cứu chuẩn chỉ. | Phong cách học thuật, cấu trúc theo chương mục bài báo. |
-| **`glossary/`** | Giải thích trực giác từng khái niệm kỹ thuật đơn lẻ theo phương pháp Feynman (cho đứa trẻ 10 tuổi). | Người mới tiếp cận, cần hiểu nhanh bản chất và trực giác qua ẩn dụ đời thường. | Kể chuyện ngụ ngôn, ẩn dụ đời thực, không công thức nặng nề, tóm tắt 30 giây. |
-| **`explanation/`** | **Phân tích kỹ thuật chuyên sâu (Deep-Dive Technical Analysis)**: Giải phẫu từng công thức toán học, cơ chế hoạt động bên trong từng khối mạng, lý do thiết kế kiến trúc, mã nguồn thực thi và case study thực tế. | Kỹ sư AI/Data Scientist, người thực chiến muốn hiểu cặn kẽ bản chất toán học và cách code chạy. | **Phân tích logic từng bước (Step-by-step), bóc tách từng ký hiệu, số liệu thực tế, code PyTorch minh họa.** |
+| **`doc/glossary/`** | Giải thích trực giác từng khái niệm kỹ thuật đơn lẻ theo phương pháp Feynman (cho đứa trẻ 10 tuổi). | Người mới tiếp cận, cần hiểu nhanh bản chất và trực giác qua ẩn dụ đời thường. | Kể chuyện ngụ ngôn, ẩn dụ đời thực, không công thức nặng nề, tóm tắt 30 giây. |
+| **`doc/explanation/`** | **Phân tích kỹ thuật chuyên sâu (Deep-Dive Technical Analysis)**: Giải phẫu từng công thức toán học, cơ chế hoạt động bên trong từng khối mạng, lý do thiết kế kiến trúc, mã nguồn thực thi và case study thực tế. | Kỹ sư AI/Data Scientist, người thực chiến muốn hiểu cặn kẽ bản chất toán học và cách code chạy. | **Phân tích logic từng bước (Step-by-step), bóc tách từng ký hiệu, số liệu thực tế, code PyTorch minh họa.** |
 
 ---
 
@@ -43,9 +43,9 @@ Không chỉ mô tả *"Mô hình làm cái gì"*, mà phải trả lời 3 câu
 
 ---
 
-## 3. Khung Cấu Trúc Chuẩn Bắt Buộc Của Một File Trong `explanation/`
+## 3. Khung Cấu Trúc Chuẩn Bắt Buộc Của Một File Trong `doc/explanation/`
 
-Mỗi file trong `explanation/` (ví dụ: `section_4_1_residual_block.md`, `target_horizon_vector.md`, `feature_projection_mechanism.md`...) phải được cấu trúc theo 6 phần chuẩn sau:
+Mỗi file trong `doc/explanation/` (ví dụ: `section_4_1_residual_block.md`, `target_horizon_vector.md`, `feature_projection_mechanism.md`...) phải được cấu trúc theo 6 phần chuẩn sau:
 
 ```markdown
 # [TÊN CHUYÊN ĐỀ PHÂN TÍCH KỸ THUẬT: CỤ THỂ & RÕ RÀNG]
@@ -125,20 +125,20 @@ Phải có ít nhất 2 - 3 case study cụ thể:
 
 ---
 
-## 5. Quy Trình 4 Bước Khi Tạo File Mới Trong `explanation/`
+## 5. Quy Trình 4 Bước Khi Tạo File Mới Trong `doc/explanation/`
 
-Mỗi khi nhận yêu cầu tạo file giải thích mới trong `explanation/`, trợ lý AI phải thực hiện tuần tự 4 bước sau:
+Mỗi khi nhận yêu cầu tạo file giải thích mới trong `doc/explanation/`, trợ lý AI phải thực hiện tuần tự 4 bước sau:
 
 ```mermaid
 flowchart TD
-    Step1["Bước 1: Đọc kỹ RULE.md trong explanation/"] --> Step2["Bước 2: Soạn thảo nội dung theo khung 6 phần"]
+    Step1["Bước 1: Đọc kỹ RULE.md trong doc/explanation/"] --> Step2["Bước 2: Soạn thảo nội dung theo khung 6 phần"]
     Step2 --> Step3["Bước 3: Tạo liên kết 2 chiều giữa doc/ và README.md"]
     Step3 --> Step4["Bước 4: Đồng bộ sang project/ và Commit & Push lên GitHub"]
 ```
 
-1. **Bước 1**: Đọc kỹ `explanation/RULE.md` để nắm chuẩn cấu trúc và phong cách diễn đạt.
+1. **Bước 1**: Đọc kỹ `doc/explanation/RULE.md` để nắm chuẩn cấu trúc và phong cách diễn đạt.
 2. **Bước 2**: Soạn thảo file giải thích đầy đủ các phần: Đặt vấn đề, Bóc tách nguyên tử, Cơ chế bên trong, Case study thực tế (có số liệu), Mã nguồn PyTorch, Đúc kết.
 3. **Bước 3**: Thêm liên kết 2 chiều:
    - Trong file `doc/` tương ứng (ví dụ: `doc/03_problem_setting.md` hoặc `doc/04_model_architecture.md`), thêm khối trích dẫn liên kết đến bài giải thích chi tiết.
-   - Trong `README.md`, bổ sung tên bài viết vào mục **Chuyên Đề Phân Tích Kỹ Thuật**.
+   - Trong `doc/explanation/README.md` và root `README.md`, bổ sung tên bài viết vào mục **Chuyên Đề Phân Tích Kỹ Thuật**.
 4. **Bước 4**: Đồng bộ song song giữa thư mục repository và thư mục làm việc cục bộ `d:\PTDLKD\project\`, sau đó commit và push lên remote repository.

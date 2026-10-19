@@ -1,7 +1,7 @@
 # Giải Thích Chi Tiết Công Thức: Vector Mục Tiêu Tương Lai $y_{L+1:L+H}^{(i)}$
 
 > [!NOTE]
-> **Điều hướng tài liệu**: [🏠 Tổng Quan Tài Liệu](../doc/00_tong_quan_tai_lieu.md) • [📖 Chương 3: Thiết Lập Bài Toán](../doc/03_problem_setting.md) • [📚 Chuyên Đề Phân Tích](../README.md#4-chuyên-đề-phân-tích-kỹ-thuật-chuyên-sâu-explanation)  
+> **Điều hướng tài liệu**: [🏠 Tổng Quan Tài Liệu](../00_tong_quan_tai_lieu.md) • [📖 Chương 3: Thiết Lập Bài Toán](../03_problem_setting.md) • [🔍 Danh Mục Chuyên Đề](./README.md) • [🏠 Trang Chủ Repo](../../README.md)  
 > 🎯 **Mục tiêu chuyên đề**: Bóc tách chi tiết từng ký tự toán học trong công thức biểu diễn chuỗi tương lai cần dự báo $y_{L+1:L+H}^{(i)} = [y_{L+1}^{(i)}, y_{L+2}^{(i)}, \dots, y_{L+H}^{(i)}]^\top \in \mathbb{R}^H$, giải thích bản chất đại số tuyến tính (vector cột, phép chuyển vị), đối chiếu giá trị thực tế (Ground Truth) và giá trị dự báo, cùng 3 case study thực tế có số liệu cụ thể và mã nguồn PyTorch minh họa.
 
 ---
@@ -287,5 +287,6 @@ if __name__ == "__main__":
 
 > [!TIP]
 > **Tài liệu tham khảo chuyên sâu**:
-> - Đọc tiếp [Chương 3: Thiết Lập Bài Toán Dự Báo Đa Biến Trong TiDE](../doc/03_problem_setting.md) để tìm hiểu cách vector $y_{L+1:L+H}^{(i)}$ được tích hợp cùng các biến ngoại sinh động (dynamic covariates $x$) và thuộc tính tĩnh ($a$).
-> - Đọc tiếp [Chuyên đề Khối Residual Block](../explanation/section_4_1_residual_block.md) để hiểu cơ chế biến đổi số chiều từ vector đầu vào thành vector dự báo cuối cùng.
+> - Đọc tiếp [Chương 3: Thiết Lập Bài Toán Dự Báo Đa Biến Trong TiDE](../03_problem_setting.md) để tìm hiểu cách vector $y_{L+1:L+H}^{(i)}$ được tích hợp cùng các biến ngoại sinh động (dynamic covariates $x$) và thuộc tính tĩnh ($a$).
+> - Đọc tiếp [Chuyên đề Khối Residual Block](./section_4_1_residual_block.md) để hiểu cơ chế biến đổi số chiều từ vector đầu vào thành vector dự báo cuối cùng.
+> - Quay lại [Danh mục Chuyên đề Phân tích Kỹ thuật](./README.md) để tra cứu các chuyên đề khác.
