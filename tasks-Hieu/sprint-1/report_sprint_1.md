@@ -24,90 +24,61 @@ Dưới đây là sơ đồ kiến trúc tổng thể toàn diện của mô hì
 
 ```mermaid
 flowchart TD
-    %% ================= KHỐI NGUỒN ĐẦU VÀO =================
-    subgraph Inputs ["1. BA NGUỒN DỮ LIỆU ĐẦU VÀO"]
-        Y_raw["Chuỗi Mục Tiêu Quá Khứ:\ny(1:L) thuộc R^L"]
-        X_all["Biến Ngoại Sinh Động Toàn Thời Gian:\nx(1:L+H) thuộc R^(L+H x r)"]
-        A_static["Thuộc Tính Ngoại Sinh Tĩnh:\na thuộc R^p"]
-    end
+    Y_raw["Chuỗi Mục Tiêu Quá Khứ: y(1:L)"]
+    X_all["Biến Ngoại Sinh Động Toàn Thời Gian: x(1:L+H)"]
+    A_static["Thuộc Tính Ngoại Sinh Tĩnh: a"]
 
-    %% ================= LỚP VỎ CHUẨN HÓA REVIN =================
-    subgraph RevIN_Norm ["2. CHUẨN HÓA ĐẦU VÀO (RevIN Normalization)"]
-        Stats["Tính Trung Bình (mu) và Độ Lệch Chuẩn (sigma) của y(1:L)"]
-        Y_norm["y_norm(1:L) = (y - mu) / sigma\n(Chuẩn hóa về Mean 0, Std 1)"]
-        Y_raw --> Stats
-        Stats --> Y_norm
-    end
+    Stats["RevIN: Tính Trung Bình mu và Độ Lệch Chuẩn sigma của y(1:L)"]
+    Y_norm["Chuẩn Hóa Đầu Vào: y_norm = y trừ mu chia sigma"]
+    Y_raw --> Stats
+    Stats --> Y_norm
 
-    %% ================= KHỐI NÉN NGOẠI SINH FEATURE PROJECTION =================
-    subgraph FeatProj ["3. KHỐI CHIẾU ĐẶC TRƯNG (Feature Projection)"]
-        Proj_RB["Residual Block nén theo từng bước thời gian:\nChiếu từ r chiều xuống r_tilde = 4 chiều"]
-        X_tilde["Ma Trận Ngoại Sinh Đã Nén:\nx_tilde(1:L+H) thuộc R^(L+H x 4)"]
-        X_all --> Proj_RB
-        Proj_RB --> X_tilde
-    end
+    Proj_RB["Feature Projection: Residual Block nén r chiều xuống r_tilde = 4 chiều"]
+    X_tilde["Ma Trận Ngoại Sinh Đã Nén: x_tilde(1:L+H)"]
+    X_all --> Proj_RB
+    Proj_RB --> X_tilde
 
-    %% ================= TÁCH NHÁNH NGOẠI SINH QUÁ KHỨ & TƯƠNG LAI =================
-    X_tilde --> X_past["Ngoại sinh quá khứ:\nx_tilde(1:L)"]
-    X_tilde --> X_future["Ngoại sinh tương lai:\nx_tilde(L+1:L+H)"]
+    X_tilde --> X_past["Ngoại sinh quá khứ: x_tilde(1:L)"]
+    X_tilde --> X_future["Ngoại sinh tương lai: x_tilde(L+1:L+H)"]
 
-    %% ================= KHỐI DENSE ENCODER =================
-    subgraph EncoderZone ["4. BỘ MÃ HÓA TOÀN CỤC (Dense Encoder)"]
-        Flat_Past["Trải phẳng (Flatten) & Ghép nối:\n[ y_norm(1:L) ; x_tilde(1:L) ; a ]\nTổng số chiều: L + L*4 + p"]
-        Enc_Blocks["Xếp chồng n_e khối Dense Residual Blocks\n(Kích thước ẩn: hiddenSize)"]
-        Context_e["Vector Bối Cảnh Toàn Cục: e thuộc R^(hiddenSize)"]
-        
-        Y_norm --> Flat_Past
-        X_past --> Flat_Past
-        A_static --> Flat_Past
-        Flat_Past --> Enc_Blocks
-        Enc_Blocks --> Context_e
-    end
+    Flat_Past["Dense Encoder: Ghép nối vector y_norm(1:L) cùng x_tilde(1:L) và a"]
+    Enc_Blocks["Xếp chồng n_e khối Dense Residual Blocks"]
+    Context_e["Vector Bối Cảnh Toàn Cục: e"]
+    
+    Y_norm --> Flat_Past
+    X_past --> Flat_Past
+    A_static --> Flat_Past
+    Flat_Past --> Enc_Blocks
+    Enc_Blocks --> Context_e
 
-    %% ================= KHỐI DENSE DECODER =================
-    subgraph DecoderZone ["5. BỘ GIẢI MÃ TOÀN CỤC (Dense Decoder)"]
-        Dec_Blocks["Xếp chồng n_d khối Dense Residual Blocks\n(Kích thước ẩn: hiddenSize)"]
-        Dec_Flat["Vector giải mã phẳng:\nKích thước: H x p_dec"]
-        Dec_Matrix["Ma Trận Bối Cảnh Tương Lai:\nD thuộc R^(H x p_dec)\n(Tách thành H vector lát cắt: d_1, d_2, ..., d_H)"]
-        
-        Context_e --> Dec_Blocks
-        Dec_Blocks --> Dec_Flat
-        Dec_Flat --> Dec_Matrix
-    end
+    Dec_Blocks["Dense Decoder: Xếp chồng n_d khối Dense Residual Blocks"]
+    Dec_Matrix["Ma Trận Bối Cảnh Tương Lai: D gồm H vector lát cắt d_1 đến d_H"]
+    Context_e --> Dec_Blocks
+    Dec_Blocks --> Dec_Matrix
 
-    %% ================= KHỐI TEMPORAL DECODER (ĐƯỜNG CAO TỐC COVARIATES) =================
-    subgraph TempDecZone ["6. BỘ GIẢI MÃ THEO THỜI GIAN (Temporal Decoder)"]
-        Step_t["Tại mỗi bước thời gian tương lai t (1 <= t <= H):\nGhép vector lát cắt d_t và biến tương lai x_tilde(L+t)"]
-        TempDec_RB["Khối Residual Block theo thời gian\n(Kích thước đầu ra = 1)"]
-        Y_hat_NL["Vector Dự Báo Phi Tuyến:\ny_hat_NL(L+1:L+H) thuộc R^H"]
-        
-        Dec_Matrix --> Step_t
-        X_future --> Step_t
-        Step_t --> TempDec_RB
-        TempDec_RB --> Y_hat_NL
-    end
+    Step_t["Temporal Decoder: Tại mỗi bước t ghép vector d_t với biến tương lai x_tilde(L+t)"]
+    TempDec_RB["Khối Residual Block theo thời gian xuất ra 1 giá trị"]
+    Y_hat_NL["Vector Dự Báo Phi Tuyến: y_hat_NL(L+1:L+H)"]
+    
+    Dec_Matrix --> Step_t
+    X_future --> Step_t
+    Step_t --> TempDec_RB
+    TempDec_RB --> Y_hat_NL
 
-    %% ================= NHÁNH TẮT TUYẾN TÍNH TOÀN CỤC =================
-    subgraph GlobalSkipZone ["7. NHÁNH TẮT TUYẾN TÍNH (Global Linear Skip)"]
-        LinearSkip["Tầng Tuyến Tính Tuyến Đường Riêng:\nW_skip * y_norm(1:L) + b_skip"]
-        Y_hat_Linear["Vector Dự Báo Tuyến Tính:\ny_hat_Linear(L+1:L+H) thuộc R^H"]
-        Y_norm --> LinearSkip
-        LinearSkip --> Y_hat_Linear
-    end
+    LinearSkip["Global Linear Skip: Ánh xạ tuyến tính trực tiếp từ y_norm(1:L) sang H bước"]
+    Y_hat_Linear["Vector Dự Báo Tuyến Tính: y_hat_Linear(L+1:L+H)"]
+    Y_norm --> LinearSkip
+    LinearSkip --> Y_hat_Linear
 
-    %% ================= PHÉP CỘNG HỢP NHẤT DỰ BÁO =================
-    Add_Pred["Hợp nhất Dự Báo Chuẩn Hóa (+):\ny_hat_norm = y_hat_NL + y_hat_Linear"]
+    Add_Pred["Hợp nhất Dự Báo: y_hat_norm = y_hat_NL cộng y_hat_Linear"]
     Y_hat_NL --> Add_Pred
     Y_hat_Linear --> Add_Pred
 
-    %% ================= LỚP VỎ HOÀN NGUYÊN REVIN =================
-    subgraph RevIN_Denorm ["8. HOÀN NGUYÊN THANG ĐO (RevIN Denormalization)"]
-        Denorm["y_hat = y_hat_norm * sigma + mu\n(Nhân lại độ lệch chuẩn và cộng lại trung bình)"]
-        Final_Output["KẾT QUẢ DỰ BÁO THỰC TẾ CUỐI CÙNG:\ny_hat(L+1:L+H) thuộc R^H"]
-        Add_Pred --> Denorm
-        Stats -. "Truyền mu, sigma sang hoàn nguyên" .-> Denorm
-        Denorm --> Final_Output
-    end
+    Denorm["RevIN Hoàn Nguyên Thang Đo: y_hat = y_hat_norm nhân sigma cộng mu"]
+    Final_Output["KẾT QUẢ DỰ BÁO THỰC TẾ CUỐI CÙNG: y_hat(L+1:L+H)"]
+    Add_Pred --> Denorm
+    Stats -. "Truyền mu và sigma" .-> Denorm
+    Denorm --> Final_Output
 ```
 
 ---
@@ -125,9 +96,18 @@ Mô hình TiDE được thiết kế để tiếp nhận đầy đủ mọi dạ
 ### 2. Chuẩn Hóa & Hoàn Nguyên Đảo Nghịch Hai Chiều (RevIN)
 - **Vấn đề thực tế:** Dữ liệu chuỗi thời gian thường xuyên bị **trôi dạt phân phối (distribution shift)** do lạm phát, mùa vụ hoặc sự gia tăng tải tiêu thụ theo năm tháng.
 - **Cơ chế RevIN:**
-  - **Chiều đi (Normalize):** Tại đầu vào, tính giá trị trung bình $\mu^{(i)}$ và độ lệch chuẩn $\sigma^{(i)}$ của chính cửa sổ quá khứ $y_{1:L}^{(i)}$, sau đó đưa dữ liệu về phân phối chuẩn $y_{\text{norm}} = (y - \mu) / \sigma$.
+  - **Chiều đi (Normalize):** Tại đầu vào, tính giá trị trung bình $\mu^{(i)}$ và độ lệch chuẩn $\sigma^{(i)}$ của chính cửa sổ quá khứ $y_{1:L}^{(i)}$, sau đó đưa dữ liệu về phân phối chuẩn:
+  
+$$
+y_{\text{norm}, t}^{(i)} = \frac{y_t^{(i)} - \mu^{(i)}}{\sigma^{(i)}}
+$$
+
   - **Môi trường huấn luyện:** Mô hình nơ-ron chỉ cần tập trung học hình thù dao động sóng trong thế giới chuẩn hóa ($\text{Mean}=0, \text{Std}=1$).
-  - **Chiều về (Denormalize):** Tại ngõ ra cuối cùng, kết quả dự báo chuẩn hóa được hoàn nguyên về thang đo thực tế: $\hat{y} = \hat{y}_{\text{norm}} \cdot \sigma^{(i)} + \mu^{(i)}$.
+  - **Chiều về (Denormalize):** Tại ngõ ra cuối cùng, kết quả dự báo chuẩn hóa được hoàn nguyên về thang đo thực tế:
+  
+$$
+\hat{y}_{L+t}^{(i)} = \hat{y}_{\text{norm}, L+t}^{(i)} \cdot \sigma^{(i)} + \mu^{(i)}
+$$
 
 ---
 
@@ -150,7 +130,11 @@ Mô hình TiDE được thiết kế để tiếp nhận đầy đủ mọi dạ
 ### 5. Bộ Giải Mã Toàn Cục (Dense Decoder)
 - Nhận vector bối cảnh $e$ và đưa qua $n_d$ khối Dense Residual Block.
 - Đầu ra của khối cuối cùng được ánh xạ thành một vector có kích thước $H \times p_{\text{dec}}$, sau đó được tái định hình (**reshape**) thành ma trận tương lai:
-  $$D \in \mathbb{R}^{H \times p_{\text{dec}}} = \begin{bmatrix} d_1^\top \\ d_2^\top \\ \vdots \\ d_H^\top \end{bmatrix}$$
+
+$$
+D \in \mathbb{R}^{H \times p_{\text{dec}}} = \begin{bmatrix} d_1^\top \\ d_2^\top \\ \vdots \\ d_H^\top \end{bmatrix}
+$$
+
 - Trong đó, mỗi vector hàng $d_t \in \mathbb{R}^{p_{\text{dec}}}$ đại diện cho bối cảnh trừu tượng của riêng bước thời gian tương lai thứ $t$.
 
 ---
@@ -158,7 +142,11 @@ Mô hình TiDE được thiết kế để tiếp nhận đầy đủ mọi dạ
 ### 6. Bộ Giải Mã Theo Thời Gian (Temporal Decoder - Tuyến Cao Tốc Ngoại Sinh)
 - **Sự khác biệt đột phá của TiDE:** Thay vì bắt biến ngoại sinh tương lai phải đi xuyên qua Encoder (nơi thông tin dễ bị suy hao), TiDE tạo ra một **làn đường cao tốc riêng (Covariate Highway)** đưa thẳng $\tilde{x}_{L+t}$ vào ngõ ra.
 - Tại mỗi bước thời gian $t \in \{1, 2, \dots, H\}$:
-  $$\hat{y}_{L+t, \text{NL}} = \text{TemporalDecoder} \left( \begin{bmatrix} d_t \\ \tilde{x}_{L+t} \end{bmatrix} \right) \in \mathbb{R}$$
+
+$$
+\hat{y}_{L+t, \text{NL}} = \text{TemporalDecoder} \left( \begin{bmatrix} d_t \\ \tilde{x}_{L+t} \end{bmatrix} \right) \in \mathbb{R}
+$$
+
 - Khối này kết hợp:
   - $d_t$: Bối cảnh xu hướng vĩ mô dài hạn từ quá khứ.
   - $\tilde{x}_{L+t}$: Cú sốc cục bộ của chính thời điểm tương lai (ví dụ: khuyến mãi, nắng nóng cực đoan).
@@ -168,11 +156,18 @@ Mô hình TiDE được thiết kế để tiếp nhận đầy đủ mọi dạ
 
 ### 7. Nhánh Tắt Tuyến Tính Toàn Cục (Global Linear Skip Connection)
 - Tương tự như ResNet trong thị giác máy tính, TiDE bố trí một tầng tuyến tính đơn giản nối thẳng từ $y_{\text{norm}, 1:L}$ sang $H$ bước tương lai:
-  $$\hat{y}_{\text{Linear}} = W_{\text{skip}} \cdot y_{\text{norm}, 1:L} + b_{\text{skip}}$$
+
+$$
+\hat{y}_{\text{Linear}} = W_{\text{skip}} \cdot y_{\text{norm}, 1:L} + b_{\text{skip}}
+$$
+
 - **Ý nghĩa:** Nhánh này đóng vai trò như một mô hình DLinear thu nhỏ, đảm nhận việc nắm bắt xu hướng tuyến tính (trend) cơ bản.
 - Nhờ có nhánh tuyến tính gánh vác phần cơ bản, các khối mạng nơ-ron sâu (Encoder/Decoder) được giải phóng để chuyên tâm học các thành phần phi tuyến tính phức tạp!
 - Dự báo chuẩn hóa hoàn chỉnh là phép cộng:
-  $$\hat{y}_{\text{norm}} = \hat{y}_{\text{NL}} + \hat{y}_{\text{Linear}}$$
+
+$$
+\hat{y}_{\text{norm}} = \hat{y}_{\text{NL}} + \hat{y}_{\text{Linear}}
+$$
 
 ---
 
