@@ -119,7 +119,7 @@ Bảng này sẽ được chúng ta cập nhật liên tục khi hoàn thành t�
 
 | Chặng | Nhiệm vụ | Người thực hiện | Tự Check (Self-Check) | Dự kiến hoàn thành | Trạng thái |
 | :---: | :--- | :---: | :---: | :---: | :---: |
-| **Chặng 1** | Vẽ sơ đồ kiến trúc TiDE tổng thể bằng Mermaid | Hiệu & Antigravity | Đối chiếu Figure 1 trang 3 PDF | 21/10/2026 | ⏳ **Sẵn sàng bắt đầu** |
+| **Chặng 1** | Vẽ sơ đồ kiến trúc TiDE tổng thể bằng Mermaid | Hiệu & Antigravity | Đối chiếu Figure 1 trang 3 PDF | 21/10/2026 | ✅ **Hoàn thành** |
 | **Chặng 2** | Đối chiếu Forward Pass + Script test Tensor Shape | Hiệu & Antigravity | Chạy code terminal + nhẩm số chiều | 22/10/2026 | ⏳ Chờ chặng 1 |
 | **Chặng 3** | Bảng cấu hình siêu tham số & kết quả đối chuẩn 2 Dataset | Hiệu & Antigravity | Đối chiếu Table 1 & Table 6 PDF | 23/10/2026 | ⏳ Chờ chặng 2 |
 | **Chặng 4** | Đóng gói file báo cáo nghiệm thu `report_sprint_1.md` | Hiệu & Antigravity | Rà soát checklist & trả lời 3 câu hỏi phản biện | 24/10 (Trước 21h) | ⏳ Chờ chặng 3 |

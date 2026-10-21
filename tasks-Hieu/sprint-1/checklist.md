@@ -10,7 +10,7 @@
 
 | STT | Hạng mục công việc (Task Description) | Mục tiêu cụ thể / Tiêu chí nghiệm thu | Trạng thái | Ghi chú & Liên kết tài liệu |
 | :---: | :--- | :--- | :---: | :--- |
-| **1** | **Xây dựng Sơ đồ Kiến trúc Toàn diện TiDE** | Vẽ sơ đồ khối hoàn chỉnh (đầy đủ RevIN, Projection, Encoder, Decoder, Temporal Decoder, Global Skip Connection) bằng cú pháp Mermaid tiếng Việt. | 🔄 Đang làm | Đã có phác thảo ban đầu trong `doc/04_model_architecture.md`, cần làm phiên bản trực quan chi tiết cho Sprint 1. |
+| **1** | **Xây dựng Sơ đồ Kiến trúc Toàn diện TiDE** | Vẽ sơ đồ khối hoàn chỉnh (đầy đủ RevIN, Projection, Encoder, Decoder, Temporal Decoder, Global Skip Connection) bằng cú pháp Mermaid tiếng Việt. | ✅ Hoàn thành | Đã hoàn thành tại Phần 1 của `report_sprint_1.md`. |
 | **2** | **Giải phẫu Luồng Xử Lý (Forward Pass Walkthrough)** | Viết tài liệu giải thích chi tiết từng bước tính toán khi dữ liệu đi từ đầu vào $y_{1:L}, x_{1:L+H}, a$ tới đầu ra dự báo $\hat{y}_{L+1:L+H}$. | 🔄 Đang làm | Đối chiếu từng công thức trong Section 4 của Paper với từng dòng code PyTorch. |
 | **3** | **Theo dõi & Kiểm thử Kích thước Tensor (Tensor Shapes)** | Lập bảng theo dõi kích thước Tensor `(Batch, Steps, Features)` tại từng nút; viết script Python kiểm thử in shape qua từng khối không bị lỗi. | 🔄 Đang làm | Minh họa với kích thước cụ thể: $B=32, L=720, H=96, r=4, p=4$. |
 | **4** | **Tổng hợp Cấu hình Siêu tham số 2 Dataset** | Lập bảng cấu hình chi tiết (Lookback $L$, Horizon $H$, hidden size, dropout, learning rate...) cho 2 dataset đại diện từ Phụ lục B. | ⏳ Chờ làm | Chọn 2 dataset: **Electricity** (LTTF tiêu chuẩn) và **Traffic** (hoặc **Weather / M5**). |
