@@ -2,17 +2,18 @@
 
 > **Cộng Sự Cùng Tiến (Pair Programming):** Hiệu 🤝 Antigravity  
 > **Nhiệm vụ chính:** Hoàn thành toàn diện 4 yêu cầu Sprint 1 trước **21h00 ngày 24/10/2026**.  
-> **File báo cáo nghiệm thu đích:** `tasks-Hieu/sprint-1/report_sprint_1.md`
+> **File báo cáo nghiệm thu đích:** `tasks-Hieu/sprint-1/report_sprint_1.md`  
+> **Nguyên tắc cốt lõi:** *"Tin tưởng nhưng phải kiểm chứng (Trust, but Verify)"* — Không bao giờ nhận kết quả từ AI một cách thụ động, luôn có quy trình tự kiểm tra độc lập để nắm chắc 100% bản chất!
 
 ---
 
 ## 1. Cơ Chế Phối Hợp: Hiệu & Antigravity Làm Việc Như Thế Nào?
 
-Để bạn **vừa làm chủ kiến thức, vừa hoàn thành công việc nhanh chóng và chuẩn xác nhất**, chúng ta sẽ phối hợp theo mô hình phân công vai trò sau:
+Để bạn **vừa làm chủ kiến thức, vừa hoàn thành công việc nhanh chóng và chuẩn xác nhất**, chúng ta sẽ phối hợp theo mô hình 3 bước lặp: **Ra lệnh $\to$ AI thực thi $\to$ Bạn tự kiểm chứng (Self-Check)**.
 
 ```mermaid
 flowchart LR
-    Hieu["👤 BẠN (HIỆU) - CHỦ DỰ ÁN\n- Định hướng yêu cầu\n- Ra lệnh cho Antigravity\n- Đọc hiểu bản chất\n- Nghiệm thu từng mốc"] 
+    Hieu["👤 BẠN (HIỆU) - CHỦ DỰ ÁN\n- Định hướng yêu cầu\n- Ra lệnh cho Antigravity\n- TỰ CHECK LẠI ĐỘC LẬP\n- Nghiệm thu từng mốc"] 
     <-->
     AGY["🤖 ANTIGRAVITY - TRỢ LÝ KỸ THUẬT\n- Đọc và trích xuất PDF gốc\n- Soạn thảo sơ đồ Mermaid\n- Viết mã nguồn PyTorch minh họa\n- Lập bảng số liệu & Đối chiếu paper-code"]
 ```
@@ -68,20 +69,64 @@ Dưới đây là 4 chặng công việc bạn sẽ lần lượt ra lệnh cho 
 
 ---
 
-## 3. Nhật Ký Theo Dõi Tiến Độ Thực Tế (Live Progress Tracker)
+## 3. 🔍 QUY TRÌNH HIỆU TỰ CHECK LẠI ĐỘC LẬP (SELF-VERIFICATION PROTOCOL)
+
+> [!IMPORTANT]
+> **"Chắc gì AI đã đúng 100%!"** — Đây là tư duy cực kỳ chuẩn xác của một Kỹ sư AI chuyên nghiệp. Để bạn tự tin 100% khi báo cáo trước Giảng viên hoặc Nhóm, đây là bộ công cụ và các bước cụ thể để **chính bạn tự kiểm chứng lại mọi sản phẩm Antigravity tạo ra**:
+
+### 🔍 Bước 1: Tự Check Sơ Đồ Kiến Trúc (Check Chặng 1)
+- [ ] **Mở trực tiếp bài báo gốc:** Mở file PDF [`project/Hieu_paper_TiDE-Time-series-Dense-Encoder.pdf`](../../project/Hieu_paper_TiDE-Time-series-Dense-Encoder.pdf) tại **Trang 3, Hình 1 (Figure 1: Architecture of TiDE)**.
+- [ ] **So sánh đối chiếu:**
+  - Nhìn xem sơ đồ của Antigravity có đủ 5 khối như Figure 1 không: (1) Feature Projection, (2) Dense Encoder, (3) Dense Decoder, (4) Temporal Decoder, (5) Global Linear Residual?
+  - Xem nhánh Skip Connection toàn cục có nối thẳng từ $y_{1:L}$ sang $\hat{y}$ ở cuối hay không?
+  - Điểm khác biệt mở rộng: Kiểm tra xem Antigravity có vẽ thêm cơ chế RevIN bọc ngoài (như mô tả ở Section 4.3 của bài báo) hay không?
+
+### 🔍 Bước 2: Tự Check Luồng Forward Pass & Kích Thước Tensor (Check Chặng 2)
+- [ ] **Tự chạy code kiểm chứng (Không tin vào mắt, tin vào máy chạy):**
+  - Mở PowerShell trên máy tính của bạn và chạy trực tiếp script Python kiểm thử shape:
+    ```powershell
+    python d:\PTDLKD\Project-Experimental-TiDE\tasks-Hieu\sprint-1\test_tensor_shapes.py
+    ```
+  - Xem terminal có in ra lỗi `RuntimeError: The size of tensor a must match the size of tensor b` hay không? Nếu code chạy mượt từ đầu tới cuối và in ra kết quả `(B, H)` $\to$ **Chuẩn xác 100%!**
+- [ ] **Tự bấm máy tính cộng trừ số chiều (Mental Math Check):**
+  - Kiểm tra chiều đầu vào Encoder: $L + (L+H) \times \tilde{r} + p_{\text{static}}$.
+  - Ví dụ: $L=720, H=96, \tilde{r}=4$, không có static ($p_{\text{static}}=0$):
+    $$720 + (720 + 96) \times 4 = 720 + 816 \times 4 = 720 + 3264 = 3984$$
+  - Hãy nhìn xem số chiều Antigravity tính có đúng bằng **3984** hay không? Nếu đúng $\to$ AI không chém gió!
+
+### 🔍 Bước 3: Tự Check Số Liệu Cấu Hình & Kết Quả 2 Dataset (Check Chặng 3)
+- [ ] **Tự mở PDF đối chiếu số liệu bảng thực nghiệm:**
+  - Mở file PDF tại **Trang 7, Bảng 1 (Table 1: Multivariate Long-term forecasting results)**:
+    - Tìm dòng **Electricity**: Cột $H=96$, kiểm tra xem MSE của TiDE có đúng là **0.174** (hoặc xấp xỉ theo seed) và MAE là **0.270** hay không? So sánh với PatchTST (**0.181**) xem có đúng TiDE tốt hơn không?
+    - Tìm dòng **Traffic**: Cột $H=96$, kiểm tra xem MSE của TiDE có đúng là **0.400** hay không?
+  - Mở file PDF tại **Trang 17, Bảng 6 (Table 6: Hyperparameter values for LTSF datasets)**:
+    - Tìm cột `Electricity`: Kiểm tra `hiddenSize` (thường là 512), `numEncoderLayers` (1 hoặc 2), `temporalWidth` (4), `dropout` (0.3 hoặc 0.5) xem số liệu Antigravity đưa ra có trùng khớp 100% với Bảng 6 của tác giả không!
+
+### 🔍 Bước 4: Tự Thử Thách Phản Biện (Devil's Advocate Questions)
+Tự hỏi bản thân 3 câu hỏi này, nếu bạn trả lời được tức là bạn đã hoàn toàn làm chủ kiến thức:
+1. *"Tại sao trong TiDE phải nén biến ngoại sinh từ $r$ xuống $\tilde{r}=4$ bằng Feature Projection mà không để nguyên?"*  
+   👉 *Trả lời được: Để tránh bùng nổ số chiều khi flatten đưa vào Encoder.*
+2. *"Nhánh Linear Skip toàn cục đóng vai trò gì?"*  
+   👉 *Trả lời được: Nắm bắt xu hướng tuyến tính (trend) cơ bản, giải phóng cho mạng phi tuyến chỉ cần học phần dao động phức tạp.*
+3. *"Temporal Decoder khác gì Dense Decoder?"*  
+   👉 *Trả lời được: Dense Decoder giải mã toàn cục ra ma trận; Temporal Decoder xử lý độc lập từng bước thời gian để chèn trực tiếp biến ngoại sinh tương lai vào.*
+
+---
+
+## 4. Nhật Ký Theo Dõi Tiến Độ Thực Tế (Live Progress Tracker)
 
 Bảng này sẽ được chúng ta cập nhật liên tục khi hoàn thành từng bước:
 
-| Chặng | Nhiệm vụ | Người thực hiện | Dự kiến hoàn thành | Trạng thái |
-| :---: | :--- | :---: | :---: | :---: |
-| **Chặng 1** | Vẽ sơ đồ kiến trúc TiDE tổng thể bằng Mermaid | Hiệu & Antigravity | 21/10/2026 | ⏳ **Sẵn sàng bắt đầu** |
-| **Chặng 2** | Đối chiếu Forward Pass (Paper vs Code) + Script Tensor Shape | Hiệu & Antigravity | 22/10/2026 | ⏳ Chờ chặng 1 |
-| **Chặng 3** | Bảng cấu hình siêu tham số & kết quả đối chuẩn 2 Dataset | Hiệu & Antigravity | 23/10/2026 | ⏳ Chờ chặng 2 |
-| **Chặng 4** | Đóng gói file báo cáo nghiệm thu `report_sprint_1.md` | Hiệu & Antigravity | 24/10 (Trước 21h) | ⏳ Chờ chặng 3 |
+| Chặng | Nhiệm vụ | Người thực hiện | Tự Check (Self-Check) | Dự kiến hoàn thành | Trạng thái |
+| :---: | :--- | :---: | :---: | :---: | :---: |
+| **Chặng 1** | Vẽ sơ đồ kiến trúc TiDE tổng thể bằng Mermaid | Hiệu & Antigravity | Đối chiếu Figure 1 trang 3 PDF | 21/10/2026 | ⏳ **Sẵn sàng bắt đầu** |
+| **Chặng 2** | Đối chiếu Forward Pass + Script test Tensor Shape | Hiệu & Antigravity | Chạy code terminal + nhẩm số chiều | 22/10/2026 | ⏳ Chờ chặng 1 |
+| **Chặng 3** | Bảng cấu hình siêu tham số & kết quả đối chuẩn 2 Dataset | Hiệu & Antigravity | Đối chiếu Table 1 & Table 6 PDF | 23/10/2026 | ⏳ Chờ chặng 2 |
+| **Chặng 4** | Đóng gói file báo cáo nghiệm thu `report_sprint_1.md` | Hiệu & Antigravity | Rà soát checklist & trả lời 3 câu hỏi phản biện | 24/10 (Trước 21h) | ⏳ Chờ chặng 3 |
 
 ---
 
 ## 💡 Lời Khuyên Dành Riêng Cho Hiệu:
-1. Bạn không cần lo lắng về việc nhớ hết các công thức toán phức tạp, Antigravity sẽ bóc tách và giải thích từng bước bằng ngôn ngữ dễ hiểu nhất.
-2. Mỗi khi đọc xong một phần do Antigravity viết, nếu có chỗ nào chưa hiểu rõ, hãy hỏi ngay: *"Chỗ này nghĩa là sao?", "Tại sao lại có số chiều này?"* để nắm vững 100% bản chất.
+1. Bạn có trọn quyền nghi ngờ và yêu cầu Antigravity chỉ rõ: *"Công thức này lấy ở trang nào, dòng nào của paper?"*
+2. Mỗi khi Antigravity đưa code, bạn hãy copy chạy thử trên máy của mình. Kết quả máy tính chạy mới là sự thật khách quan nhất!
 3. Bất cứ lúc nào bạn sẵn sàng, hãy ra lệnh: **"Hãy bắt đầu Chặng 1 đi Antigravity!"** chúng ta sẽ tiến hành ngay lập tức!
