@@ -1,135 +1,101 @@
-# PHẦN 3: THEO DÕI KÍCH THƯỚC TENSOR & SCRIPT KIỂM THỬ CHẠY THẬT
+# PHẦN 3: THEO DÕI KÍCH THƯỚC TENSOR & KIỂM THỬ THỰC TẾ TRÊN FILE CSV BENCHMARK
 
 > 👤 **Người thực hiện:** Hiệu  
 > 🤖 **Trợ lý kỹ thuật:** Antigravity  
-> 📄 **Mục tiêu:** Chứng minh luồng dữ liệu thông suốt qua từng nút mạng, không bị lỗi lệch chiều (*dimension mismatch*).
+> 📄 **Mục tiêu:** Chứng minh luồng dữ liệu thông suốt qua từng nút mạng, trích xuất trực tiếp từ file dữ liệu CSV thật (`ETTh1.csv`) và kiểm tra không bị lỗi lệch chiều (*dimension mismatch*).
 
 ---
 
-## 1. Bảng Kích Thước Tensor Qua Từng Tầng Mạng
+## 1. Dữ Liệu Nguồn Thực Tế (Real Benchmark Dataset)
 
-Dưới đây là bảng theo dõi kích thước Tensor chi tiết với cấu hình thực tế chuẩn trên tập **Electricity Benchmark**:
-- Kích thước batch: $B = 32$
-- Chiều dài quá khứ (Lookback): $L = 720$
-- Tầm nhìn tương lai (Horizon): $H = 96$
-- Số biến ngoại sinh ban đầu: $r = 8$
-- Số chiều nén Feature Projection: $\tilde{r} = 4$
-- Số chiều giải mã Decoder: $p = 4$
-- Số nơ-ron tầng ẩn: $\text{hiddenSize} = 512$
-- Thuộc tính tĩnh: $p_{\text{static}} = 0$ (LTTF setting)
+Thay vì dùng dữ liệu giả lập ngẫu nhiên (`torch.randn`), mô hình đã được nạp dữ liệu thực tế từ tập benchmark tiêu chuẩn:
+- **Tập dữ liệu:** [`data/ETTh1.csv`](../../data/ETTh1.csv) (Electricity Transformer Temperature - 1 giờ).
+- **Tổng số dòng dữ liệu:** 17,420 mốc thời gian.
+- **Biến mục tiêu ($y$):** Cột nhiệt độ dầu máy biến áp `OT` (Oil Temperature).
+- **Biến ngoại sinh động ($x$):** Trích xuất tự động 7 đặc trưng thời gian chuẩn GluonTS từ cột `date` thông qua module [`time_features.py`](./time_features.py) của Google Research:
+  1. `moh`: Phút trong giờ (Minute of Hour)
+  2. `hod`: Giờ trong ngày (Hour of Day)
+  3. `dom`: Ngày trong tháng (Day of Month)
+  4. `dow`: Ngày trong tuần (Day of Week)
+  5. `doy`: Ngày trong năm (Day of Year)
+  6. `moy`: Tháng trong năm (Month of Year)
+  7. `woy`: Tuần trong năm (Week of Year)
 
-| Bước Xử Lý | Tên Tensor | Ký Hiệu Toán Học | Kích Thước Tensor PyTorch (`Shape`) | Diễn Giải Chi Tiết |
+---
+
+## 2. Bảng Kích Thước Tensor Qua Từng Tầng Mạng (Chạy Thực Tế Trên Batch Thật)
+
+Cấu hình thử nghiệm chuẩn theo bài báo TiDE:
+- Batch size: $B = 32$
+- Lookback window: $L = 720$ (30 ngày lịch sử)
+- Forecast horizon: $H = 96$ (4 ngày dự báo)
+- Số biến ngoại sinh trích xuất từ CSV: $r = 7$
+- Số chiều nén Feature Projection: $\tilde{r} = 4$ (`temporalWidth = 4`)
+- Số chiều giải mã Decoder: $p = 4$ (`decoderOutputDim = 4`)
+- Tầng ẩn: $\text{hiddenSize} = 512$
+
+| Bước Xử Lý | Tên Tensor | Ký Hiệu Toán Học | Kích Thước Tensor Thực Tế | Diễn Giải Chi Tiết |
 | :---: | :--- | :---: | :---: | :--- |
-| **Input 1** | Chuỗi quá khứ | $y_{1:L}$ | `torch.Size([32, 720])` | 32 mẫu, mỗi mẫu có 720 bước lịch sử. |
-| **Input 2** | Ngoại sinh động | $x_{1:L+H}$ | `torch.Size([32, 816, 8])` | 32 mẫu, $720 + 96 = 816$ bước, mỗi bước có 8 biến thời gian. |
-| **RevIN** | Quá khứ chuẩn hóa | $y_{\text{norm}}$ | `torch.Size([32, 720])` | Chuẩn hóa về mean=0, std=1. |
-| **Proj** | Ngoại sinh sau nén | $\tilde{x}_{1:L+H}$ | `torch.Size([32, 816, 4])` | Chiếu từ $r=8$ xuống $\tilde{r}=4$ chiều. |
-| **Flatten**| Ngoại sinh trải phẳng | $\text{vec}(\tilde{x})$ | `torch.Size([32, 3264])` | $816 \text{ bước} \times 4 = 3264$ chiều phẳng. |
+| **Input 1** | Cắt từ CSV (`OT`) | $y_{1:L}$ | `torch.Size([32, 720])` | 32 mẫu, mỗi mẫu có 720 bước lịch sử thực tế. |
+| **Input 2** | Ngoại sinh từ `date` | $x_{1:L+H}$ | `torch.Size([32, 816, 7])` | $720 + 96 = 816$ bước thời gian, mỗi bước có $r=7$ đặc trưng. |
+| **Ground Truth**| Nhãn thật tương lai | $y_{L+1:L+H}$ | `torch.Size([32, 96])` | 96 bước nhiệt độ thực tế dùng để tính loss. |
+| **RevIN** | Quá khứ chuẩn hóa | $y_{\text{norm}}$ | `torch.Size([32, 720])` | Đưa về phân phối chuẩn $\text{Mean}=0, \text{Std}=1$. |
+| **Feature Proj** | Ngoại sinh sau nén | $\tilde{x}_{1:L+H}$ | `torch.Size([32, 816, 4])` | Chiếu từ $r=7$ chiều xuống $\tilde{r}=4$ chiều tinh gọn. |
+| **Flatten** | Trải phẳng ngoại sinh | $\text{vec}(\tilde{x})$ | `torch.Size([32, 3264])` | $816 \times 4 = 3264$ chiều phẳng. |
 | **Concat** | Đầu vào Encoder | $u_{\text{enc}}$ | `torch.Size([32, 3984])` | $720 (y) + 3264 (\tilde{x}) = 3984$ chiều. |
-| **Encoder**| Vector bối cảnh ẩn | $e$ | `torch.Size([32, 512])` | Nén toàn bộ quá khứ thành 512 đặc trưng. |
-| **Decoder**| Vector giải mã phẳng | $g$ | `torch.Size([32, 384])` | $H \times p = 96 \times 4 = 384$ chiều. |
-| **Unflatten**| Đặc trưng tương lai | $d_{L+1:L+H}$ | `torch.Size([32, 96, 4])` | Tách thành 96 bước, mỗi bước có $p=4$ đặc trưng. |
-| **FutCov** | Ngoại sinh tương lai | $\tilde{x}_{L+1:L+H}$ | `torch.Size([32, 96, 4])` | Cắt lấy 96 bước cuối của tensor ngoại sinh. |
-| **Stack**  | Đầu vào TempDec | $[d ; \tilde{x}]$ | `torch.Size([32, 96, 8])` | Ghép $d$ ($p=4$) và $\tilde{x}$ ($\tilde{r}=4$) thành $4+4=8$ chiều. |
-| **TempDec**| Dự báo phi tuyến | $\hat{y}_{\text{NL}}$ | `torch.Size([32, 96])` | Sinh con số dự báo phi tuyến cho từng bước. |
-| **Skip**   | Dự báo tuyến tính | $\hat{y}_{\text{Lin}}$ | `torch.Size([32, 96])` | Ánh xạ tuyến tính từ 720 bước sang 96 bước. |
-| **Sum**    | Dự báo chuẩn hóa | $\hat{y}_{\text{norm}}$ | `torch.Size([32, 96])` | Cộng 2 nhánh: $\hat{y}_{\text{NL}} + \hat{y}_{\text{Lin}}$. |
-| **Denorm** | Dự báo thực tế | $\hat{y}_{L+1:L+H}$ | `torch.Size([32, 96])` | Nhân lại std và cộng lại mean $\to$ kết quả cuối cùng! |
+| **Dense Enc** | Vector bối cảnh ẩn | $e$ | `torch.Size([32, 512])` | Nén tri thức quá khứ thành vector 512 chiều. |
+| **Dense Dec** | Vector giải mã phẳng | $g$ | `torch.Size([32, 384])` | $H \times p = 96 \times 4 = 384$ chiều phẳng. |
+| **Unflatten** | Ma trận tương lai | $d_{L+1:L+H}$ | `torch.Size([32, 96, 4])` | Tái định hình $g$ thành 96 bước, mỗi bước $p=4$ đặc trưng. |
+| **FutCov** | Ngoại sinh tương lai | $\tilde{x}_{L+1:L+H}$ | `torch.Size([32, 96, 4])` | Cắt lấy 96 bước cuối của tensor ngoại sinh đã nén. |
+| **Stack** | Đầu vào TempDec | $[d ; \tilde{x}]$ | `torch.Size([32, 96, 8])` | Ghép $d$ ($p=4$) và $\tilde{x}$ ($\tilde{r}=4$) thành $4+4=8$ chiều. |
+| **Temp Dec** | Dự báo phi tuyến | $\hat{y}_{\text{NL}}$ | `torch.Size([32, 96])` | Sinh con số dự báo phi tuyến cho từng bước. |
+| **Linear Skip** | Dự báo tuyến tính | $\hat{y}_{\text{Lin}}$ | `torch.Size([32, 96])` | Ánh xạ tuyến tính trực tiếp từ 720 bước sang 96 bước. |
+| **Hợp nhất** | Dự báo chuẩn hóa | $\hat{y}_{\text{norm}}$ | `torch.Size([32, 96])` | Cộng 2 nhánh: $\hat{y}_{\text{NL}} + \hat{y}_{\text{Lin}}$. |
+| **RevIN Denorm**| Dự báo thực tế cuối | $\hat{y}_{L+1:L+H}$ | `torch.Size([32, 96])` | Nhân lại $\sigma$ và cộng lại $\mu$ $\to$ đơn vị nhiệt độ thực tế! |
 
 ---
 
-## 2. Script Python Kiểm Thử Chạy Thật (`test_tensor_shapes.py`)
+## 3. Hướng Dẫn Tự Chạy Script Kiểm Thử Trên Máy Tính Của Bạn
 
-File script kiểm thử độc lập đã được tạo tại `tasks-Hieu/sprint-1/test_tensor_shapes.py`. Bạn có thể mở terminal và chạy trực tiếp để kiểm chứng:
+File script hoàn chỉnh kết nối file CSV thực tế và mô hình TiDE nằm tại [`test_tensor_shapes.py`](./test_tensor_shapes.py).
 
-```bash
+Bạn mở terminal PowerShell và gõ:
+
+```powershell
 python tasks-Hieu/sprint-1/test_tensor_shapes.py
 ```
 
-### Mã nguồn script kiểm thử:
+### Kết quả chạy thực tế:
 
-```python
-import torch
-import torch.nn as nn
+```
+===========================================================================
+ KIEM TRA LUONG TENSOR TRICH XUAT TRUC TIEP TU FILE CSV BENCHMARK
+===========================================================================
+[*] File CSV nguon: d:\PTDLKD\Project-Experimental-TiDE\data\ETTh1.csv
+[*] Tong so dong trong file CSV       : 17420
+[*] So luong mau cat duoc (N samples) : 16605
 
-def run_test():
-    print("=" * 70)
-    print(" KIỂM THỬ KÍCH THƯỚC TENSOR (TENSOR SHAPES) - MÔ HÌNH TiDE")
-    print("=" * 70)
+[*] Kich thuoc du lieu thuc te lay tu file CSV:
+    [01] batch_y (Lookback qua khu L=720)           : torch.Size([32, 720])
+    [02] batch_x (Ngoai sinh dong toan bo L+H=816): torch.Size([32, 816, 7]) (r=7 dac trung thoi gian)
+    [03] batch_target (Ground truth nhan tuong lai) : torch.Size([32, 96])
+---------------------------------------------------------------------------
+[04] y_norm (Sau chuan hoa RevIN)              : torch.Size([32, 720])
+[05] x_proj (Sau Feature Projection r->4)      : torch.Size([32, 816, 4])
+[06] x_flat (Ngoai sinh trai phang)            : torch.Size([32, 3264])
+[07] enc_in (Dau vao Encoder)                  : torch.Size([32, 3984]) (Ky vong: 3984)
+[08] Vector boi canh an e (Dense Encoder)      : torch.Size([32, 512])
+[09] Vector giai ma phang g (Dense Decoder)    : torch.Size([32, 384]) (H * p = 384)
+[10] Ma tran tuong lai d (Unflatten)           : torch.Size([32, 96, 4])
+[11] x_future (Ngoai sinh tuong lai)           : torch.Size([32, 96, 4])
+[12] temp_in (Dau vao TempDec)                 : torch.Size([32, 96, 8])
+[13] y_nl (Du bao phi tuyen tu TemporalDecoder): torch.Size([32, 96])
+[14] y_lin (Du bao tuyen tinh LinearSkip)      : torch.Size([32, 96])
+[15] y_hat (Du bao thuc te cuoi cung)          : torch.Size([32, 96])
 
-    # 1. Cấu hình siêu tham số (Setup Hyperparameters)
-    B = 32          # Batch size
-    L = 720         # Lookback window
-    H = 96          # Forecast horizon
-    r = 8           # Số biến ngoại sinh ban đầu
-    r_tilde = 4     # Số chiều nén Feature Projection (temporalWidth = 4)
-    p = 4           # decoderOutputDim
-    hidden_size = 512
+[*] Loss MSE khoi tao voi du lieu that tu CSV  : 20.2063
 
-    print(f"Cấu hình: Batch={B}, L={L}, H={H}, r={r}, r_tilde={r_tilde}, p={p}\n")
-
-    # 2. Khởi tạo dữ liệu giả lập (Mock Tensors)
-    y = torch.randn(B, L)
-    x = torch.randn(B, L + H, r)
-    print(f"[01] Input y (Quá khứ)              : {y.shape}")
-    print(f"[02] Input x (Ngoại sinh động)       : {x.shape}")
-
-    # 3. RevIN Normalization
-    mean = y.mean(dim=1, keepdim=True)
-    std = y.std(dim=1, keepdim=True) + 1e-5
-    y_norm = (y - mean) / std
-    print(f"[03] y_norm (Sau chuẩn hóa RevIN)   : {y_norm.shape}")
-
-    # 4. Feature Projection: r -> r_tilde
-    proj = nn.Linear(r, r_tilde)
-    x_proj = proj(x)
-    print(f"[04] x_proj (Sau Feature Projection): {x_proj.shape}")
-
-    # 5. Flatten & Concat đầu vào Encoder
-    x_flat = x_proj.flatten(start_dim=1)
-    enc_in = torch.cat([y_norm, x_flat], dim=-1)
-    expected_enc_dim = L + (L + H) * r_tilde
-    print(f"[05] x_flat (Ngoại sinh trải phẳng) : {x_flat.shape}")
-    print(f"[06] enc_in (Đầu vào Encoder)       : {enc_in.shape} (Kỳ vọng: {expected_enc_dim})")
-    assert enc_in.shape[1] == expected_enc_dim, "Lệch chiều đầu vào Encoder!"
-
-    # 6. Dense Encoder: enc_in -> e
-    encoder = nn.Sequential(nn.Linear(expected_enc_dim, hidden_size), nn.ReLU())
-    e = encoder(enc_in)
-    print(f"[07] Vector bối cảnh ẩn e           : {e.shape}")
-
-    # 7. Dense Decoder: e -> g
-    decoder = nn.Sequential(nn.Linear(hidden_size, H * p), nn.ReLU())
-    g = decoder(e)
-    print(f"[08] Vector giải mã phẳng g         : {g.shape} (H * p = {H * p})")
-
-    # 8. Unflatten: g -> d
-    d = g.view(B, H, p)
-    print(f"[09] Ma trận tương lai d (Unflatten): {d.shape}")
-
-    # 9. Stack ngoại sinh tương lai & Temporal Decoder
-    x_future = x_proj[:, L:, :]
-    temp_in = torch.cat([d, x_future], dim=-1)
-    temp_dec = nn.Linear(p + r_tilde, 1)
-    y_nl = temp_dec(temp_in).squeeze(-1)
-    print(f"[10] x_future (Ngoại sinh tương lai): {x_future.shape}")
-    print(f"[11] temp_in (Đầu vào TempDec)      : {temp_in.shape}")
-    print(f"[12] y_nl (Dự báo phi tuyến)        : {y_nl.shape}")
-
-    # 10. Global Linear Skip
-    skip = nn.Linear(L, H)
-    y_lin = skip(y_norm)
-    print(f"[13] y_lin (Dự báo tuyến tính)      : {y_lin.shape}")
-
-    # 11. Hợp nhất & Denormalize
-    y_hat_norm = y_nl + y_lin
-    y_hat = y_hat_norm * std + mean
-    print(f"[14] y_hat (Dự báo thực tế cuối)    : {y_hat.shape}")
-
-    print("\n" + "=" * 70)
-    print(" KẾT QUẢ: 100% LUỒNG TENSOR HOÀN HẢO, KHÔNG LỖI LỆCH CHIỀU!")
-    print("=" * 70)
-
-if __name__ == "__main__":
-    run_test()
+===========================================================================
+ KET LUAN: DU LIEU THAT TU FILE CSV DA DUOC NAP VA XU LY 100% HOAN HAO!
+===========================================================================
 ```
