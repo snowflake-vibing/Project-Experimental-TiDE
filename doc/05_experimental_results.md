@@ -55,6 +55,8 @@ Dưới đây là bảng trích xuất kết quả đối chuẩn trên 3 tập 
 2. **Trên tập Electricity (321 chuỗi)**: TiDE ngang ngửa với PatchTST và vượt trội rõ rệt các mô hình DLinear, FEDformer, Autoformer.
 3. So với các Transformer đời đầu (Informer, Autoformer), TiDE cải thiện độ chính xác từ **40% đến 60%** sai số.
 
+> 📖 **Xem bài phân tích chuyên sâu**: Đọc bài giải mã chi tiết tại sao TiDE lại đánh bại các mô hình Transformer trên hai tập dữ liệu lớn nhất này kèm bảng siêu tham số chuẩn từ Phụ lục B.3 tại: [`./explanation/benchmark_electricity_traffic_deep_dive.md`](./explanation/benchmark_electricity_traffic_deep_dive.md).
+
 ---
 
 ## 5.3. Bài Toán Dự Báo Nhu Cầu Bán Lẻ Thực Tế (M5 Competition)

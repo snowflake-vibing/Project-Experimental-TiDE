@@ -60,6 +60,7 @@ Các bài phân tích mổ xẻ chuyên sâu về mặt toán học, cơ chế n
 - [`doc/explanation/section_4_1_residual_block.md`](./doc/explanation/section_4_1_residual_block.md): **Giải thích chi tiết Phần 4.1: Khối Residual Block** – Cơ chế biến đổi số chiều $d_{\text{in}} \to d_{\text{hidden}}$, hàm kích hoạt phi tuyến tính ReLU, vai trò của Dropout, Skip Connection, Layer Normalization và mã nguồn PyTorch minh họa.
 - [`doc/explanation/target_horizon_vector.md`](./doc/explanation/target_horizon_vector.md): **Giải phẫu công thức vector nhãn tương lai $y_{L+1:L+H}^{(i)}$** – Bóc tách chi tiết từng ký tự toán học ($y, (i), L, H, L+1, L+H, :, [\dots], \top, \mathbb{R}^H$), 3 case study thực tế (Điện lực, Chuỗi bán lẻ Walmart M5, Giao thông) và code trích xuất PyTorch Tensor.
 - [`doc/explanation/forward_pass_step_by_step.md`](./doc/explanation/forward_pass_step_by_step.md): **Đối chiếu chi tiết Forward Pass: Toán học Section 4 vs Code PyTorch** – Bảng đối chiếu 1:1 từng công thức toán cạnh từng dòng code PyTorch, theo dõi chi tiết Tensor Shapes qua 8 bước và script chạy thử giả lập ([`simulate_forward_pass.py`](./simulate_forward_pass.py)).
+- [`doc/explanation/benchmark_electricity_traffic_deep_dive.md`](./doc/explanation/benchmark_electricity_traffic_deep_dive.md): **Phân tích thực nghiệm siêu benchmark: Electricity & Traffic (TiDE vs Transformers)** – Trích xuất bảng siêu tham số chuẩn từ Phụ lục B.3, bảng đối chuẩn Table 2 và phân tích 5 nguyên nhân TiDE đánh bại các mô hình Transformer.
 
 ---
 

@@ -73,3 +73,7 @@ Dưới đây là bảng thông số cấu hình tối ưu được sử dụng 
 1. **`revIn`**: Rất quan trọng đối với các bộ dữ liệu có xu hướng phi dừng mạnh như Traffic và ETT (bật `revIn = True` giúp giảm lỗi đáng kể).
 2. **`hiddenSize`**: Các tập dữ liệu lớn như Electricity và ETTm1 hưởng lợi từ kích thước ẩn lớn ($1024$), trong khi Traffic chỉ cần $256$.
 3. **`dropoutLevel`**: Nên đặt từ $0.3$ đến $0.5$ trên các tập nhỏ để hạn chế overfitting, và có thể để $0.0$ trên Weather.
+
+---
+
+> 📖 **Xem chuyên đề phân tích sâu**: Đọc bài so sánh chi tiết giữa cấu hình siêu tham số và kết quả đối đầu của TiDE vs Transformers trên 2 tập Traffic & Electricity tại: [`./explanation/benchmark_electricity_traffic_deep_dive.md`](./explanation/benchmark_electricity_traffic_deep_dive.md).
