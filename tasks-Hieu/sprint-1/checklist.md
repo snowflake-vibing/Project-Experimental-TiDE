@@ -66,11 +66,7 @@
   python tasks-Hieu/sprint-1/test_tensor_shapes.py
   ```
 - [ ] Kiểm tra xem terminal có in ra đầy đủ 14 bước kích thước tensor không, có bị lỗi `RuntimeError` hay `AssertionError` nào không.
-- [ ] Tự nhẩm lại phép tính số chiều đầu vào Encoder:
-  $$
-  \text{dim}_{\text{enc}} = L + (L + H) \times \tilde{r} = 720 + (720 + 96) \times 4 = 3984
-  $$
-  Kiểm tra xem con số $3984$ có khớp chính xác với kết quả in ra trên terminal hay không.
+- [ ] Tự nhẩm lại phép tính số chiều đầu vào Encoder: $\text{dim}_{\text{enc}} = L + (L + H) \times \tilde{r} = 720 + (720 + 96) \times 4 = 3984$. Kiểm tra xem con số $3984$ có khớp chính xác với kết quả in ra trên terminal hay không.
 
 ---
 
