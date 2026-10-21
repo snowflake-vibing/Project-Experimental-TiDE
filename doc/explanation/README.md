@@ -24,6 +24,7 @@ Các tài liệu trong thư mục này được xây dựng theo **Quy chuẩn c
 | **00** | [`RULE.md`](./RULE.md) | **Quy Chuẩn Soạn Thảo Chuyên Đề Phân Tích Kỹ Thuật** | Bộ khung 6 phần bắt buộc, quy chuẩn hiển thị LaTeX/KaTeX, Mermaid chuẩn GitHub và quy trình 4 bước kiểm duyệt. |
 | **01** | [`section_4_1_residual_block.md`](./section_4_1_residual_block.md) | **Giải Thích Chi Tiết Phần 4.1: Khối Residual Block** | Cơ chế chuyển đổi số chiều $d_{\text{in}} \to d_{\text{hidden}}$, hàm kích hoạt ReLU, nghịch lý Linear Collapse, Inverted Dropout, Skip Connection, LayerNorm vs BatchNorm và code PyTorch hoàn chỉnh. |
 | **02** | [`target_horizon_vector.md`](./target_horizon_vector.md) | **Giải Phẫu Công Thức: Vector Mục Tiêu Tương Lai $y_{L+1:L+H}^{(i)}$** | Mổ xẻ 10 thành phần toán học, giải thích bản chất vector cột $\top \in \mathbb{R}^H$, phân biệt Ground Truth $y$ vs Prediction $\hat{y}$, tính MSE loss, 3 case study thực tế và PyTorch Dataset slicing. |
+| **03** | [`forward_pass_step_by_step.md`](./forward_pass_step_by_step.md) | **Đối Chiếu Chi Tiết Forward Pass: Section 4 Toán Học vs PyTorch Code** | Bảng đối chiếu 1:1 từng công thức trong Section 4 cạnh từng dòng code PyTorch, theo dõi Tensor Shapes qua 8 bước và script giả lập kiểm chứng ($B=32, L=720, H=96$). |
 
 ---
 

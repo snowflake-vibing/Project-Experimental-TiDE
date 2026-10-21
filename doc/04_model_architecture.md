@@ -216,3 +216,7 @@ $$
 $$
 \hat{y}_{\text{final}}^{(i)} = \hat{y}_{\text{norm}}^{(i)} \cdot \sigma^{(i)} + \mu^{(i)}
 $$
+
+---
+
+> 🔗 **Xem đối chiếu Forward Pass chi tiết**: Đọc chuyên đề đối chiếu 1:1 từng công thức toán trong Chương 4 này cạnh từng dòng code PyTorch, theo dõi Tensor Shapes qua 8 bước và chạy script giả lập tại: [`./explanation/forward_pass_step_by_step.md`](./explanation/forward_pass_step_by_step.md).

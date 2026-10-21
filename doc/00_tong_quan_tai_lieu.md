@@ -60,6 +60,7 @@ Bộ tài liệu này được cấu trúc theo từng chương của bài báo 
 - [`./explanation/RULE.md`](./explanation/RULE.md): **Quy chuẩn chuyên đề phân tích kỹ thuật** – Tiêu chuẩn logic đa tầng, bóc tách nguyên tử, case study và mã nguồn PyTorch.
 - [`./explanation/section_4_1_residual_block.md`](./explanation/section_4_1_residual_block.md): **Giải thích chi tiết Phần 4.1: Khối Residual Block** – Cơ chế chuyển đổi số chiều $d_{\text{in}} \to d_{\text{hidden}}$, hàm ReLU, Dropout, Skip Connection, Layer Normalization và code PyTorch.
 - [`./explanation/target_horizon_vector.md`](./explanation/target_horizon_vector.md): **Giải phẫu công thức vector nhãn tương lai $y_{L+1:L+H}^{(i)}$** – Bóc tách 10 thành phần toán học, vector cột $\top \in \mathbb{R}^H$, phân biệt Ground Truth vs Prediction, 3 case study và Dataset slicing trong PyTorch.
+- [`./explanation/forward_pass_step_by_step.md`](./explanation/forward_pass_step_by_step.md): **Đối chiếu chi tiết Forward Pass: Toán học Section 4 vs Code PyTorch** – Bảng đối chiếu 1:1 từng công thức toán cạnh từng dòng code PyTorch, theo dõi Tensor Shapes qua 8 bước và script chạy thử giả lập.
 
 ---
 
