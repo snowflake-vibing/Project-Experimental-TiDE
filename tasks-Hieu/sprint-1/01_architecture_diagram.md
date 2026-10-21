@@ -8,7 +8,7 @@
 
 ## 1. Sơ Đồ Kiến Trúc Khớp Tuyệt Đối Với Figure 1 Của Bài Báo (Mermaid Diagram)
 
-Sơ đồ dưới đây được tái hiện chuẩn xác 100% theo **Figure 1 (Overview of TiDE architecture, Trang 5)**:
+Sơ đồ dưới đây được tái hiện chuẩn xác 100% theo **Figure 1 (Overview of TiDE architecture, Trang 5)** với toàn bộ chú thích bằng **Tiếng Việt có dấu đầy đủ và chuẩn xác**:
 
 - Đúng chuẩn các biến toán học gốc:
   - Chuỗi quá khứ: $y_{1:L}^{(i)}$
@@ -25,48 +25,48 @@ Sơ đồ dưới đây được tái hiện chuẩn xác 100% theo **Figure 1 (
 
 ```mermaid
 flowchart TD
-    Y_lookback["y(i) 1:L (Lookback)"]
-    A_attr["a(i) (Attributes)"]
-    X_cov["x(i) 1:L+H (Dynamic Covariates)"]
+    Y_lookback["y(i) 1:L (Chuỗi quá khứ)"]
+    A_attr["a(i) (Thuộc tính tĩnh)"]
+    X_cov["x(i) 1:L+H (Ngoại sinh động)"]
 
-    FeatProj["Feature Projection (per time-step)"]
+    FeatProj["Chiếu đặc trưng Feature Projection (theo từng bước)"]
     X_tilde["x_tilde(i) 1:L+H"]
     X_cov --> FeatProj
     FeatProj --> X_tilde
 
-    ConcatNode["Concat: y(i) 1:L, Flatten x_tilde(i) 1:L+H, a(i)"]
+    ConcatNode["Ghép nối Concat: y(i) 1:L, Trải phẳng x_tilde(i) 1:L+H, a(i)"]
     Y_lookback --> ConcatNode
     A_attr --> ConcatNode
-    X_tilde -->|"Flatten"| ConcatNode
+    X_tilde -->|"Trải phẳng Flatten"| ConcatNode
 
-    DenseEnc["Dense Encoder (x n_e)"]
+    DenseEnc["Bộ mã hóa Dense Encoder (x n_e tầng)"]
     Enc_e["e(i)"]
     ConcatNode --> DenseEnc
     DenseEnc --> Enc_e
 
-    DenseDec["Dense Decoder (x n_d)"]
+    DenseDec["Bộ giải mã Dense Decoder (x n_d tầng)"]
     Vec_g["g(i)"]
     Enc_e --> DenseDec
     DenseDec --> Vec_g
 
-    UnflattenOp["Unflatten"]
+    UnflattenOp["Tái cấu trúc Unflatten"]
     Vec_g -->|"Unflatten"| UnflattenOp
 
-    StackNode["Stack: d(i) L+1:L+H va x_tilde(i) L+1:L+H"]
+    StackNode["Xếp chồng Stack: d(i) L+1:L+H và x_tilde(i) L+1:L+H"]
     UnflattenOp -->|"d(i) L+1:L+H"| StackNode
     X_tilde -->|"x_tilde(i) L+1:L+H"| StackNode
 
-    TempDec["Temporal Decoder (per time-step)"]
+    TempDec["Bộ giải mã theo thời gian Temporal Decoder (theo từng bước)"]
     StackNode --> TempDec
 
-    LinearSkip["Residual (Linear Skip)"]
+    LinearSkip["Nhánh tắt tuyến tính Residual Skip"]
     Y_lookback --> LinearSkip
 
-    AddFinal["Cong hai nhanh (+)"]
+    AddFinal["Cộng hai nhánh (+)"]
     TempDec --> AddFinal
     LinearSkip --> AddFinal
 
-    Predictions["y_hat(i) L+1:L+H (Predictions)"]
+    Predictions["y_hat(i) L+1:L+H (Dự báo tương lai)"]
     AddFinal --> Predictions
 ```
 
@@ -94,30 +94,30 @@ Dưới đây là bảng tra cứu chi tiết toàn bộ các ký hiệu, chỉ 
 
 ## 3. Giải Thích 5 Thao Tác Nối Ghép Cốt Lõi (Operations Walkthrough)
 
-1. **`Feature Projection (per time-step)`**:
+1. **`Feature Projection (theo từng bước)`**:
    - Áp dụng độc lập một khối Residual Block nhỏ cho từng bước thời gian $t \in \{1, \dots, L+H\}$ để nén vector ngoại sinh $x_t^{(i)} \in \mathbb{R}^r$ xuống vector $\tilde{x}_t^{(i)} \in \mathbb{R}^{\tilde{r}}$ với $\tilde{r} = 4$.
 
-2. **`Flatten`**:
+2. **`Trải phẳng Flatten`**:
    - Trải phẳng ma trận ngoại sinh 2D $\tilde{x}_{1:L+H}^{(i)} \in \mathbb{R}^{(L+H) \times \tilde{r}}$ thành vector 1D có độ dài $(L+H) \times \tilde{r}$.
 
-3. **`Concat` (Ghép nối đầu vào Encoder)**:
+3. **`Ghép nối Concat` (Đầu vào Encoder)**:
    - Nối 3 nguồn thông tin thành vector 1D duy nhất đưa vào Encoder:
 
 $$
 u_{\text{enc}}^{(i)} = \begin{bmatrix} y_{1:L}^{(i)} \\ \text{vec}(\tilde{x}_{1:L+H}^{(i)}) \\ a^{(i)} \end{bmatrix} \in \mathbb{R}^{L + (L+H)\tilde{r} + p_{\text{static}}}
 $$
 
-4. **`Unflatten` (Tái định hình)**:
+4. **`Tái cấu trúc Unflatten`**:
    - Nhận vector 1D $g^{(i)} \in \mathbb{R}^{H \cdot p}$ từ Dense Decoder và biến đổi ngược trở lại thành ma trận 2D $d_{L+1:L+H}^{(i)} \in \mathbb{R}^{H \times p}$.
 
-5. **`Stack` & `Temporal Decoder (per time-step)`**:
+5. **`Xếp chồng Stack` & `Temporal Decoder (theo từng bước)`**:
    - Tại mỗi bước thời gian tương lai $t \in \{L+1, \dots, L+H\}$, ghép cặp vector đặc trưng $d_t^{(i)} \in \mathbb{R}^p$ và biến ngoại sinh tương lai $\tilde{x}_t^{(i)} \in \mathbb{R}^{\tilde{r}}$ thành vector đầu vào cho khối Temporal Decoder để xuất ra giá trị dự báo phi tuyến:
 
 $$
 \hat{y}_{t,\text{NL}}^{(i)} = \text{TemporalDecoder} \left( \begin{bmatrix} d_t^{(i)} \\ \tilde{x}_t^{(i)} \end{bmatrix} \right) \in \mathbb{R}
 $$
 
-6. **`Residual (+)` (Nhánh tắt tuyến tính toàn cục)**:
+6. **`Cộng hai nhánh (+)` (Nhánh tắt tuyến tính Residual Skip)**:
    - Cộng kết quả phi tuyến của Temporal Decoder với dự báo tuyến tính từ nhánh Skip:
 
 $$
