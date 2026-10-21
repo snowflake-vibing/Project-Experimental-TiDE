@@ -21,7 +21,17 @@
 ## 1.1. Sơ Đồ Kiến Trúc Khớp Tuyệt Đối Với Figure 1 Của Bài Báo (Mermaid Diagram)
 
 Sơ đồ dưới đây được tái hiện chuẩn xác 100% theo **Figure 1 (Overview of TiDE architecture, Trang 5)**:
-- Đúng chuẩn các biến toán học gốc: $y_{1:L}^{(i)}$, $x_{1:L+H}^{(i)}$, $a^{(i)}$, $\tilde{x}_{1:L+H}^{(i)}$, $e^{(i)}$, $g^{(i)}$, $d_{L+1:L+H}^{(i)}$, $\tilde{x}_{L+1:L+H}^{(i)}$, $\hat{y}_{L+1:L+H}^{(i)}$.
+
+- Đúng chuẩn các biến toán học gốc:
+  - Chuỗi quá khứ: $y_{1:L}^{(i)}$
+  - Ngoại sinh động: $x_{1:L+H}^{(i)}$
+  - Thuộc tính tĩnh: $a^{(i)}$
+  - Ngoại sinh sau nén: $\tilde{x}_{1:L+H}^{(i)}$
+  - Vector mã hóa: $e^{(i)}$
+  - Vector giải mã phẳng: $g^{(i)}$
+  - Đặc trưng giải mã tương lai: $d_{L+1:L+H}^{(i)}$
+  - Ngoại sinh tương lai: $\tilde{x}_{L+1:L+H}^{(i)}$
+  - Dự báo tương lai: $\hat{y}_{L+1:L+H}^{(i)}$
 - Đúng các thao tác nối ghép: `Flatten`, `Concat`, `Unflatten`, `Stack`, `Residual (+)` và `per time-step`.
 - Đúng số tầng nơ-ron: $n_e$ khối Dense Encoder và $n_d$ khối Dense Decoder.
 
