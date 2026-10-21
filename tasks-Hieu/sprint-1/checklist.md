@@ -1,43 +1,71 @@
 # BẢNG TIẾN ĐỘ & CHECKLIST CÔNG VIỆC SPRINT 1
 
 > 👤 **Người thực hiện:** Hiệu  
+> 🤖 **Trợ lý kỹ thuật:** Antigravity  
 > ⏰ **Hạn chót hoàn thành:** 21h00 – 24/10/2026  
-> 🎯 **Mục tiêu nghiệm thu:** Hoàn thành đầy đủ 4 hạng mục kỹ thuật cốt lõi theo `requirement.md`.
+> 🎯 **Mục tiêu nghiệm thu:** Hoàn thành đầy đủ 4 hạng mục kỹ thuật cốt lõi theo `requirement.md` và kiểm chứng độc lập.
 
 ---
 
-## 📋 Bảng Checklist Công Việc Chi Tiết
+## 📋 1. Bảng Checklist Công Việc Chi Tiết Theo Từng File Báo Cáo
 
-| STT | Hạng mục công việc (Task Description) | Mục tiêu cụ thể / Tiêu chí nghiệm thu | Trạng thái | Ghi chú & Liên kết tài liệu |
-| :---: | :--- | :--- | :---: | :--- |
-| **1** | **Xây dựng Sơ đồ Kiến trúc Toàn diện TiDE** | Vẽ sơ đồ khối hoàn chỉnh (đầy đủ RevIN, Projection, Encoder, Decoder, Temporal Decoder, Global Skip Connection) bằng cú pháp Mermaid tiếng Việt. | ✅ Hoàn thành | Đã hoàn thành tại Phần 1 của `report_sprint_1.md`. |
-| **2** | **Giải phẫu Luồng Xử Lý (Forward Pass Walkthrough)** | Viết tài liệu giải thích chi tiết từng bước tính toán khi dữ liệu đi từ đầu vào $y_{1:L}, x_{1:L+H}, a$ tới đầu ra dự báo $\hat{y}_{L+1:L+H}$. | 🔄 Đang làm | Đối chiếu từng công thức trong Section 4 của Paper với từng dòng code PyTorch. |
-| **3** | **Theo dõi & Kiểm thử Kích thước Tensor (Tensor Shapes)** | Lập bảng theo dõi kích thước Tensor `(Batch, Steps, Features)` tại từng nút; viết script Python kiểm thử in shape qua từng khối không bị lỗi. | 🔄 Đang làm | Minh họa với kích thước cụ thể: $B=32, L=720, H=96, r=4, p=4$. |
-| **4** | **Tổng hợp Cấu hình Siêu tham số 2 Dataset** | Lập bảng cấu hình chi tiết (Lookback $L$, Horizon $H$, hidden size, dropout, learning rate...) cho 2 dataset đại diện từ Phụ lục B. | ⏳ Chờ làm | Chọn 2 dataset: **Electricity** (LTTF tiêu chuẩn) và **Traffic** (hoặc **Weather / M5**). |
-| **5** | **Đối chuẩn & Phân tích Kết quả Thực nghiệm** | Trích xuất bảng kết quả MSE/MAE của TiDE và các baseline (PatchTST, DLinear, FEDformer...) trên 2 dataset đã chọn từ Bảng 1 của Paper; viết nhận xét đánh giá. | ⏳ Chờ làm | Lấy số liệu chính xác từ Bảng 1 trang 7 bài báo gốc. |
-| **6** | **Rà soát & Đóng gói Báo cáo Sprint 1** | Tổng hợp toàn bộ 5 mục trên vào file báo cáo hoàn chỉnh của Sprint 1, kiểm tra định dạng và sẵn sàng nghiệm thu trước deadline. | ⏳ Chờ làm | Deadline nghiệm thu: **21h00 - 24/10/2026**. |
-
----
-
-## 🔍 Kế Hoạch Thực Hiện Từng Ngày (Action Plan)
-
-```mermaid
-flowchart LR
-    D1["Ngày 21/10:\nHoàn thiện Sơ đồ kiến trúc & Bảng luồng Tensor"] --> D2["Ngày 22/10:\nĐối chiếu Forward Pass: Paper vs Code PyTorch"]
-    D2 --> D3["Ngày 23/10:\nThu thập Cấu hình & Kết quả 2 Dataset (Electricity & Traffic)"]
-    D3 --> D4["Ngày 24/10 (Trước 21h):\nRà soát chất lượng, chạy test code & Nghiệm thu Sprint 1"]
-```
-
-- **Ngày 21/10:** Hoàn thiện sơ đồ kiến trúc tổng thể và bảng biến đổi kích thước Tensor qua từng tầng.
-- **Ngày 22/10:** Viết phân tích đối chiếu song song giữa công thức toán học và mã nguồn triển khai của hàm `forward()`.
-- **Ngày 23/10:** Khai thác Phụ lục B và Bảng thực nghiệm của bài báo để tổng hợp cấu hình siêu tham số và số liệu MSE/MAE của 2 tập dữ liệu.
-- **Ngày 24/10:** Tích hợp thành báo cáo hoàn chỉnh, chạy script test tensor shape để kiểm chứng và hoàn thành trước 21h00.
+| STT | Hạng Mục Công Việc | Tài Liệu Tương Ứng | Trạng Thái Antigravity Soạn | Trạng Thái Hiệu Tự Check | Ghi Chú & Nội Dung Trọng Tâm |
+| :---: | :--- | :--- | :---: | :---: | :--- |
+| **1** | **Sơ đồ Kiến trúc TiDE & Giải thích Ký hiệu** | [`01_architecture_diagram.md`](./01_architecture_diagram.md) | ✅ Hoàn thành | ✅ **ĐÃ TỰ CHECK** | Khớp 100% với Figure 1 (Trang 5 PDF), tiếng Việt có dấu, đầy đủ các biến $y, x, a, \tilde{x}, e, g, d, \hat{y}$ và 5 thao tác. |
+| **2** | **Giải phẫu Luồng Forward Pass (Paper vs Code)** | [`02_forward_pass_walkthrough.md`](./02_forward_pass_walkthrough.md) | ✅ Hoàn thành | ⏳ **CHƯA CHECK** | Bảng đối chiếu 11 bước, phân tích sâu từng tầng toán học và code PyTorch class `TiDEForwardPass`. |
+| **3** | **Theo dõi Kích thước Tensor & Script Kiểm thử** | [`03_tensor_shapes_and_testing.md`](./03_tensor_shapes_and_testing.md)<br>[`test_tensor_shapes.py`](./test_tensor_shapes.py) | ✅ Hoàn thành | ⏳ **CHƯA CHECK** | Bảng shape chi tiết từng nút mạng; script Python chạy thành công trên terminal, kiểm chứng không lệch chiều. |
+| **4** | **Cấu hình Siêu tham số & Kết quả 2 Dataset** | [`04_hyperparameters_and_benchmarks.md`](./04_hyperparameters_and_benchmarks.md) | ✅ Hoàn thành | ⏳ **CHƯA CHECK** | 2 tập `Electricity` & `Traffic`; bảng siêu tham số từ Table 8, bảng kết quả MSE/MAE từ Table 1 của paper. |
+| **5** | **Biên bản Tự kiểm chứng & Phản biện** | [`05_self_verification.md`](./05_self_verification.md) | ✅ Hoàn thành | ⏳ **CHƯA CHECK** | Ghi nhận bằng chứng đối chiếu thực tế và câu trả lời bộ 3 câu hỏi phản biện hóc búa nhất. |
 
 ---
 
-## 📌 Tiêu Chí Đánh Giá Hoàn Thành (Definition of Done - DoD)
-- [ ] Có sơ đồ kiến trúc rõ ràng, không lỗi render Mermaid.
-- [ ] Giải thích mạch lạc luồng forward pass, liên kết chính xác giữa công thức toán và code.
-- [ ] Có bảng kích thước tensor và script code mẫu chạy thành công mà không bị lỗi shape mismatch.
-- [ ] Đầy đủ thông số cấu hình và bảng kết quả đối chuẩn MSE/MAE cho 2 dataset từ bài báo gốc.
-- [ ] Văn bản sử dụng 100% Tiếng Việt có dấu chuẩn xác, định dạng Markdown sạch đẹp.
+## 🔍 2. Nhật Ký Hiệu Tự Kiểm Chứng Độc Lập (Self-Verification Log)
+
+> Nguyên tắc: *"Tin tưởng nhưng phải kiểm chứng (Trust, but Verify)"* — Chỉ đánh dấu hoàn thành sau khi chính bạn đã trực tiếp đối chiếu với file PDF gốc hoặc chạy code kiểm thử trên máy tính cá nhân.
+
+### [x] Phần 1: Tự Check Sơ Đồ Kiến Trúc & Ký Hiệu Toán Học (ĐÃ HOÀN THÀNH ✅)
+- [x] Mở trực tiếp file PDF [`Hieu_paper_TiDE-Time-series-Dense-Encoder.pdf`](../../project/Hieu_paper_TiDE-Time-series-Dense-Encoder.pdf) tại **Trang 5, Hình 1 (Figure 1)**.
+- [x] Đối chiếu đầy đủ 3 nguồn đầu vào: $y_{1:L}^{(i)}$ (Lookback), $x_{1:L+H}^{(i)}$ (Dynamic Covariates), $a^{(i)}$ (Attributes).
+- [x] Đối chiếu đúng các biến trung gian: $\tilde{x}_{1:L+H}^{(i)}$, vector mã hóa $e^{(i)}$, vector giải mã phẳng $g^{(i)}$, ma trận bối cảnh $d_{L+1:L+H}^{(i)}$, ngoại sinh tương lai $\tilde{x}_{L+1:L+H}^{(i)}$, và dự báo cuối $\hat{y}_{L+1:L+H}^{(i)}$.
+- [x] Đối chiếu đúng 5 thao tác nối ghép: `Feature Projection (per time-step)`, `Flatten`, `Concat`, `Unflatten`, `Stack` và nhánh tắt `Residual (+)`.
+- [x] Sơ đồ Mermaid viết bằng tiếng Việt có dấu đầy đủ, hiển thị chuẩn xác không lỗi cú pháp trên GitHub.
+
+---
+
+### [ ] Phần 2: Tự Check Giải Phẫu Luồng Forward Pass (CHƯA CHECK ⏳)
+- [ ] Đọc file [`02_forward_pass_walkthrough.md`](./02_forward_pass_walkthrough.md) và đối chiếu với Mục 4 của bài báo (Trang 4-6).
+- [ ] Kiểm tra xem 11 bước xử lý có ánh xạ đúng từ công thức toán sang code PyTorch không.
+- [ ] Kiểm tra xem bản thân đã hiểu rõ bản chất tại sao phải làm từng bước (như tại sao phải nén ngoại sinh, tại sao phải flatten trước Encoder, tại sao phải unflatten sau Decoder).
+
+---
+
+### [ ] Phần 3: Tự Check Kích Thước Tensor & Chạy Script Test (CHƯA CHECK ⏳)
+- [ ] Mở PowerShell trên máy tính và tự gõ lệnh chạy script:
+  ```powershell
+  python tasks-Hieu/sprint-1/test_tensor_shapes.py
+  ```
+- [ ] Kiểm tra xem terminal có in ra đầy đủ 14 bước kích thước tensor không, có bị lỗi `RuntimeError / AssertionError` nào không.
+- [ ] Tự nhẩm lại phép tính số chiều đầu vào Encoder: $720 + (720 + 96) \times 4 = 3984$ xem có khớp với kết quả in ra không.
+
+---
+
+### [ ] Phần 4: Tự Check Cấu Hình & Kết Quả 2 Dataset (CHƯA CHECK ⏳)
+- [ ] Mở file PDF tại **Trang 7, Bảng 1 (Table 1)**: Soi số liệu MSE/MAE của `Electricity` (0.174) và `Traffic` (0.400) với các đối thủ PatchTST, DLinear.
+- [ ] Mở file PDF tại **Trang 21, Bảng 8 (Table 8)**: Soi các siêu tham số `hiddenSize`, `numEncoderLayers`, `numDecoderLayers`, `decoderOutputDim`, `temporalWidth=4`.
+
+---
+
+### [ ] Phần 5: Tự Trả Lời Bộ 3 Câu Hỏi Phản Biện (CHƯA CHECK ⏳)
+- [ ] Đọc và tự trả lời trôi chảy 3 câu hỏi phản biện trong file [`05_self_verification.md`](./05_self_verification.md):
+  1. *Tại sao phải dùng Feature Projection nén từ $r$ xuống $\tilde{r}=4$?*
+  2. *Vai trò sống còn của nhánh Global Linear Skip Connection là gì?*
+  3. *Sự khác biệt bản chất giữa Dense Decoder và Temporal Decoder là gì?*
+
+---
+
+## 📌 3. Tiêu Chí Đánh Giá Hoàn Thành Nghiệm Thu (Definition of Done - DoD)
+- [x] Đã có sơ đồ kiến trúc hoàn chỉnh tiếng Việt có dấu, khớp 100% với Figure 1 của paper (Đã nghiệm thu Phần 1).
+- [ ] Hiệu đã tự đọc hiểu và duyệt qua Phần 2 (Forward Pass).
+- [ ] Hiệu đã tự chạy lệnh kiểm thử Tensor shape trên máy tính thật (Phần 3).
+- [ ] Hiệu đã tự đối chiếu bảng số liệu thực nghiệm Table 1 & Table 8 trong PDF (Phần 4).
+- [ ] Hiệu đã tự trả lời được 3 câu hỏi phản biện cốt lõi (Phần 5).
