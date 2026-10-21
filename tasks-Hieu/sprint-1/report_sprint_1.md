@@ -8,7 +8,7 @@
 ---
 
 ## MỤC LỤC BÁO CÁO
-1. [Phần 1: Sơ Đồ Kiến Trúc TiDE Toàn Diện & Phân Tích Luồng Dữ Liệu](#phần-1-sơ-đồ-kiến-trúc-tide-toàn-diện--phân-tích-luồng-dữ-liệu)
+1. [Phần 1: Sơ Đồ Kiến Trúc Chuẩn Xác Theo Bài Báo (Figure 1 TiDE) & Giải Thích Từng Ký Hiệu](#phần-1-sơ-đồ-kiến-trúc-chuẩn-xác-theo-bài-báo-figure-1-tide--giải-thích-từng-ký-hiệu)
 2. [Phần 2: Giải Phẫu Luồng Forward Pass (Paper vs Code PyTorch)](#phần-2-giải-phẫu-luồng-forward-pass-paper-vs-code-pytorch)
 3. [Phần 3: Theo Dõi Kích Thước Tensor & Script Kiểm Thử Chạy Thật](#phần-3-theo-dõi-kích-thước-tensor--script-kiểm-thử-chạy-thật)
 4. [Phần 4: Cấu Hình Siêu Tham Số & Kết Quả Đối Chuẩn Trên 2 Dataset](#phần-4-cấu-hình-siêu-tham-số--kết-quả-đối-chuẩn-trên-2-dataset)
@@ -16,151 +16,109 @@
 
 ---
 
-# PHẦN 1: SƠ ĐỒ KIẾN TRÚC TiDE TOÀN DIỆN & PHÂN TÍCH LUỒNG DỮ LIỆU
+# PHẦN 1: SƠ ĐỒ KIẾN TRÚC CHUẨN XÁC THEO BÀI BÁO (FIGURE 1 TiDE) & GIẢI THÍCH TỪNG KÝ HIỆU
 
-## 1.1. Sơ Đồ Kiến Trúc Tổng Thể (Mermaid Architecture Diagram)
+## 1.1. Sơ Đồ Kiến Trúc Khớp Tuyệt Đối Với Figure 1 Của Bài Báo (Mermaid Diagram)
 
-Dưới đây là sơ đồ kiến trúc tổng thể toàn diện của mô hình TiDE, thể hiện chi tiết:
-- **3 nguồn dữ liệu đầu vào** ($y_{1:L}, x_{1:L+H}, a$) và cơ chế chuẩn hóa 2 chiều **RevIN**.
-- **Khối Feature Projection** nén $r \to \tilde{r} = 4$.
-- **Thao tác Flatten (Trải phẳng)** các nguồn dữ liệu thành vector đầu vào Encoder $u_{\text{enc}} \in \mathbb{R}^{L + (L+H)\tilde{r} + p_{\text{static}}}$.
-- **Khối Dense Encoder** sinh vector bối cảnh ẩn $e \in \mathbb{R}^{\text{hiddenSize}}$.
-- **Khối Dense Decoder** sinh vector giải mã phẳng **$g \in \mathbb{R}^{H \cdot p}$**.
-- **Thao tác Unflatten / Reshape** biến đổi vector $g$ thành ma trận đặc trưng tương lai **$D \in \mathbb{R}^{p \times H}$** gồm $H$ vector lát cắt $d_1, d_2, \dots, d_H$.
-- **Khối Temporal Decoder** (Covariate Highway) và **Global Linear Skip Connection**.
+Sơ đồ dưới đây được tái hiện chuẩn xác 100% theo **Figure 1 (Overview of TiDE architecture, Trang 5)**:
+- Đúng chuẩn các biến toán học gốc: $y_{1:L}^{(i)}$, $x_{1:L+H}^{(i)}$, $a^{(i)}$, $\tilde{x}_{1:L+H}^{(i)}$, $e^{(i)}$, $g^{(i)}$, $d_{L+1:L+H}^{(i)}$, $\tilde{x}_{L+1:L+H}^{(i)}$, $\hat{y}_{L+1:L+H}^{(i)}$.
+- Đúng các thao tác nối ghép: `Flatten`, `Concat`, `Unflatten`, `Stack`, `Residual (+)` và `per time-step`.
+- Đúng số tầng nơ-ron: $n_e$ khối Dense Encoder và $n_d$ khối Dense Decoder.
 
 ```mermaid
 flowchart TD
-    %% ================= KHỐI NGUỒN ĐẦU VÀO =================
-    Y_raw["Chuỗi Mục Tiêu Quá Khứ: y(1:L)"]
-    X_all["Biến Ngoại Sinh Động Toàn Thời Gian: x(1:L+H)"]
-    A_static["Thuộc Tính Ngoại Sinh Tĩnh: a"]
+    %% ================= 3 NGUỒN ĐẦU VÀO =================
+    Y_lookback["y(i)_(1:L)\nLookback"]
+    A_attr["a(i)\nAttributes"]
+    X_cov["x(i)_(1:L+H)\nDynamic Covariates"]
 
-    %% ================= REVIN CHUẨN HÓA ĐẦU VÀO =================
-    Stats["RevIN: Tính Trung Bình mu và Độ Lệch Chuẩn sigma của y(1:L)"]
-    Y_norm["Chuẩn Hóa Đầu Vào: y_norm = y trừ mu chia sigma"]
-    Y_raw --> Stats
-    Stats --> Y_norm
+    %% ================= FEATURE PROJECTION =================
+    FeatProj["Feature Projection\n(per time-step)"]
+    X_tilde["x_tilde(i)_(1:L+H)"]
+    X_cov --> FeatProj
+    FeatProj --> X_tilde
 
-    %% ================= FEATURE PROJECTION NÉN NGOẠI SINH =================
-    Proj_RB["Feature Projection: Residual Block nén r chiều xuống r_tilde = 4 chiều"]
-    X_tilde["Ma Trận Ngoại Sinh Đã Nén: x_tilde(1:L+H)"]
-    X_all --> Proj_RB
-    Proj_RB --> X_tilde
-
-    %% ================= PHÉP TOÁN FLATTEN & GHÉP NỐI ĐẦU VÀO ENCODER =================
-    Flatten_Op["THAO TÁC FLATTEN VÀ CONCATENATE: Trải phẳng x_tilde và ghép với y_norm và a"]
-    U_enc["Vector Đầu Vào Encoder: u_enc thuộc R^(L + (L+H)*r_tilde + p_static)"]
-    Y_norm --> Flatten_Op
-    X_tilde --> Flatten_Op
-    A_static --> Flatten_Op
-    Flatten_Op --> U_enc
+    %% ================= FLATTEN & CONCAT =================
+    ConcatNode["Concat:\n[ y(i)_(1:L) ; Flatten(x_tilde(i)_(1:L+H)) ; a(i) ]"]
+    Y_lookback --> ConcatNode
+    A_attr --> ConcatNode
+    X_tilde -->|"Flatten"| ConcatNode
 
     %% ================= DENSE ENCODER =================
-    Enc_Blocks["Dense Encoder: Xếp chồng n_e khối Dense Residual Blocks"]
-    Context_e["Vector Bối Cảnh Toàn Cục: e thuộc R^(hiddenSize)"]
-    U_enc --> Enc_Blocks
-    Enc_Blocks --> Context_e
+    DenseEnc["Dense Encoder\nx n_e"]
+    Enc_e["e(i)"]
+    ConcatNode --> DenseEnc
+    DenseEnc --> Enc_e
 
-    %% ================= DENSE DECODER & VECTOR g =================
-    Dec_Blocks["Dense Decoder: Xếp chồng n_d khối Dense Residual Blocks"]
-    Vector_g["VECTOR GIẢI MÃ PHẲNG: g thuộc R^(H * p)"]
-    Context_e --> Dec_Blocks
-    Dec_Blocks --> Vector_g
+    %% ================= DENSE DECODER =================
+    DenseDec["Dense Decoder\nx n_d"]
+    Vec_g["g(i)"]
+    Enc_e --> DenseDec
+    DenseDec --> Vec_g
 
-    %% ================= THAO TÁC UNFLATTEN / RESHAPE =================
-    Unflatten_Op["THAO TÁC UNFLATTEN VÀ RESHAPE: Biến đổi vector g thành Ma Trận Tương Lai"]
-    Matrix_D["Ma Trận Đặc Trưng Tương Lai: D thuộc R^(p x H) gồm H vector lát cắt d_1 đến d_H"]
-    Vector_g --> Unflatten_Op
-    Unflatten_Op --> Matrix_D
+    %% ================= UNFLATTEN & STACK =================
+    UnflattenOp["Unflatten"]
+    Vec_g -->|"Unflatten"| UnflattenOp
 
-    %% ================= TEMPORAL DECODER (COVARIATE HIGHWAY) =================
-    Step_t["Temporal Decoder: Tại mỗi bước t ghép vector d_t với biến tương lai x_tilde(L+t)"]
-    TempDec_RB["Khối Residual Block theo thời gian xuất ra 1 giá trị"]
-    Y_hat_NL["Vector Dự Báo Phi Tuyến: y_hat_NL(L+1:L+H)"]
-    Matrix_D --> Step_t
-    X_tilde -. "Đường cao tốc ngoại sinh tương lai x_tilde(L+t)" .-> Step_t
-    Step_t --> TempDec_RB
-    TempDec_RB --> Y_hat_NL
+    StackNode["Stack:\n[ d(i)_(L+1:L+H) ; x_tilde(i)_(L+1:L+H) ]"]
+    UnflattenOp -->|"d(i)_(L+1:L+H)"| StackNode
+    X_tilde -->|"x_tilde(i)_(L+1:L+H)"| StackNode
 
-    %% ================= GLOBAL LINEAR SKIP =================
-    LinearSkip["Global Linear Skip: Ánh xạ tuyến tính trực tiếp từ y_norm(1:L) sang H bước"]
-    Y_hat_Linear["Vector Dự Báo Tuyến Tính: y_hat_Linear(L+1:L+H)"]
-    Y_norm --> LinearSkip
-    LinearSkip --> Y_hat_Linear
+    %% ================= TEMPORAL DECODER =================
+    TempDec["Temporal Decoder\n(per time-step)"]
+    StackNode --> TempDec
 
-    %% ================= PHÉP CỘNG HỢP NHẤT DỰ BÁO =================
-    Add_Pred["Hợp nhất Dự Báo: y_hat_norm = y_hat_NL cộng y_hat_Linear"]
-    Y_hat_NL --> Add_Pred
-    Y_hat_Linear --> Add_Pred
+    %% ================= RESIDUAL SKIP & PREDICTIONS =================
+    LinearSkip["Residual\n(Linear Skip)"]
+    Y_lookback --> LinearSkip
 
-    %% ================= REVIN HOÀN NGUYÊN THANG ĐO =================
-    Denorm["RevIN Hoàn Nguyên Thang Đo: y_hat = y_hat_norm nhân sigma cộng mu"]
-    Final_Output["KẾT QUẢ DỰ BÁO THỰC TẾ CUỐI CÙNG: y_hat(L+1:L+H)"]
-    Add_Pred --> Denorm
-    Stats -. "Truyền mu và sigma" .-> Denorm
-    Denorm --> Final_Output
+    AddFinal["(+)"]
+    TempDec --> AddFinal
+    LinearSkip --> AddFinal
+
+    Predictions["y_hat(i)_(L+1:L+H)\nPredictions"]
+    AddFinal --> Predictions
 ```
 
 ---
 
-## 1.2. Phân Tích Sâu: Bản Chất Của Vector $g^{(i)}$, Thao Tác Flatten & Unflatten
+## 1.2. Bảng Giải Thích Tận Gốc Từng Ký Hiệu & Chỉ Số Trong Sơ Đồ
 
-### 1. Thao Tác Flatten (Trải Phẳng) Trước Khối Dense Encoder
-- **Động cơ:** Trong kiến trúc mạng MLP (Multi-Layer Perceptron) cổ điển, các tầng Linear chỉ có thể nhận đầu vào là một **vector 1 chiều phẳng** thay vì ma trận 2D hoặc tensor 3D như Transformer hay RNN.
-- **Cách thức thực hiện:**
-  - Chuỗi lịch sử đã chuẩn hóa: $y_{\text{norm}, 1:L}^{(i)} \in \mathbb{R}^L$.
-  - Ma trận ngoại sinh sau nén: $\tilde{x}_{1:L+H}^{(i)} \in \mathbb{R}^{(L+H) \times \tilde{r}}$. Ma trận này được **trải phẳng (Flatten)** thành một vector 1 chiều có độ dài $(L+H) \times \tilde{r}$.
-  - Thuộc tính tĩnh: $a^{(i)} \in \mathbb{R}^{p_{\text{static}}}$.
-- **Vector đầu vào hợp nhất $u_{\text{enc}}^{(i)}$:**
+Dưới đây là bảng tra cứu chi tiết toàn bộ các ký hiệu, chỉ số trên và chỉ số dưới xuất hiện trong Figure 1 của bài báo, giúp bạn nắm vững 100% ý nghĩa toán học:
 
-$$
-u_{\text{enc}}^{(i)} = \begin{bmatrix} y_{\text{norm}, 1:L}^{(i)} \\ \text{vec}(\tilde{x}_{1:L+H}^{(i)}) \\ a^{(i)} \end{bmatrix} \in \mathbb{R}^{L + (L+H)\tilde{r} + p_{\text{static}}}
-$$
-
----
-
-### 2. Vector Giải Mã Phẳng $g^{(i)}$ (Dense Decoder Output Vector)
-- **Định nghĩa trong bài báo:** Sau khi vector bối cảnh ẩn $e^{(i)} \in \mathbb{R}^{\text{hiddenSize}}$ đi qua $n_d$ khối Dense Residual Blocks của Decoder, tầng tuyến tính cuối cùng của Dense Decoder ánh xạ ra một vector phẳng duy nhất ký hiệu là **$g^{(i)}$**.
-- **Kích thước toán học:**
-  - $H$: Tầm nhìn dự báo tương lai (Forecast Horizon).
-  - $p$: Siêu tham số `decoderOutputDim` (số chiều đặc trưng giải mã cho mỗi bước thời gian tương lai, thường chọn $p = 4$ đến $32$).
-  - Vector $g^{(i)}$ có kích thước:
-
-$$
-g^{(i)} = \text{DenseDecoder}(e^{(i)}) \in \mathbb{R}^{H \cdot p}
-$$
+| Ký Hiệu Trong Sơ Đồ | Tên Gọi & Vị Trí Trong Mạng | Chỉ Số & Ý Nghĩa Chi Tiết | Kích Thước Toán Học |
+| :--- | :--- | :--- | :---: |
+| **$y_{1:L}^{(i)}$** | **Lookback** (Chuỗi quá khứ) | - $(i)$: Chuỗi thời gian thứ $i$ trong tập dữ liệu đa biến.<br>- $1:L$: Dải thời gian từ bước $1$ đến bước nhìn lại $L$. | $\mathbb{R}^L$ |
+| **$x_{1:L+H}^{(i)}$** | **Dynamic Covariates** (Biến ngoại sinh động) | - $1:L+H$: Dải thời gian bao phủ cả quá khứ ($L$) và tương lai ($H$).<br>- $r$: Số lượng biến ngoại sinh tại mỗi bước thời gian. | $\mathbb{R}^{(L+H) \times r}$ |
+| **$a^{(i)}$** | **Attributes** (Thuộc tính tĩnh) | - Thông tin cố định của chuỗi thứ $i$ (ví dụ: mã cửa hàng, loại trạm biến áp), không phụ thuộc vào thời gian $t$. | $\mathbb{R}^{p_{\text{static}}}$ |
+| **$\tilde{x}_{1:L+H}^{(i)}$** | **Projected Covariates** (Ngoại sinh đã nén) | - Dấu ngã $\sim$: Biểu thị dữ liệu đã được ánh xạ qua khối nén Feature Projection.<br>- $\tilde{r}$: Chiều đặc trưng sau nén (`temporalWidth = 4`). | $\mathbb{R}^{(L+H) \times \tilde{r}}$ |
+| **$e^{(i)}$** | **Encoding Vector** (Vector mã hóa bối cảnh) | - $e$: Chữ viết tắt của *Encoding* / *Embedding*.<br>- Vector bối cảnh ẩn toàn cục của chuỗi $i$ do Encoder sinh ra. | $\mathbb{R}^{\text{hiddenSize}}$ |
+| **$g^{(i)}$** | **Dense Decoder Output** (Vector giải mã phẳng) | - Đầu ra của Dense Decoder trước khi tách theo từng bước thời gian.<br>- Là một vector 1 chiều phẳng có độ dài $H \cdot p$. | $\mathbb{R}^{H \cdot p}$ |
+| **$d_{L+1:L+H}^{(i)}$** | **Decoded Feature Matrix** (Đặc trưng giải mã tương lai) | - $d$: Chữ viết tắt của *Decoded features*.<br>- $L+1:L+H$: Dải $H$ bước tương lai.<br>- Kết quả sau khi `Unflatten` vector $g^{(i)}$ thành $H$ vector lát cắt $d_t \in \mathbb{R}^p$. | $\mathbb{R}^{H \times p}$ |
+| **$\tilde{x}_{L+1:L+H}^{(i)}$** | **Future Projected Covariates** (Ngoại sinh tương lai) | - Phần đuôi gồm $H$ bước tương lai của ma trận $\tilde{x}_{1:L+H}^{(i)}$, được đưa thẳng tới Temporal Decoder (Covariate Highway). | $\mathbb{R}^{H \times \tilde{r}}$ |
+| **$\hat{y}_{L+1:L+H}^{(i)}$** | **Predictions** (Kết quả dự báo tương lai) | - Dấu mũ $\wedge$: Biểu thị giá trị ước lượng / dự báo của mô hình.<br>- $L+1:L+H$: Dải giá trị cần dự báo từ thời điểm $L+1$ đến $L+H$. | $\mathbb{R}^H$ |
+| **$n_e$** | Số khối Residual Block trong Dense Encoder | - Siêu tham số `numEncoderLayers` (thường chọn $n_e \in \{1, 2, 3\}$). | Số nguyên dương |
+| **$n_d$** | Số khối Residual Block trong Dense Decoder | - Siêu tham số `numDecoderLayers` (thường chọn $n_d \in \{1, 2, 3\}$). | Số nguyên dương |
 
 ---
 
-### 3. Thao Tác Unflatten / Reshape (Tái Cấu Trúc Thành Ma Trận Tương Lai $D^{(i)}$)
-- **Vấn đề:** Vector $g^{(i)}$ là một dải $H \cdot p$ con số phẳng, chưa thể hiện được cấu trúc phân tách theo từng mốc thời gian $t = 1, 2, \dots, H$.
-- **Thao tác Unflatten (trong PyTorch là `reshape` hoặc `view`):**
-  - Biến đổi vector 1D $g^{(i)} \in \mathbb{R}^{H \cdot p}$ ngược trở lại thành ma trận 2D $D^{(i)} \in \mathbb{R}^{p \times H}$ (hoặc $\mathbb{R}^{H \times p}$):
+## 1.3. Giải Thích 5 Thao Tác Nối Ghép Cốt Lõi (Operations Walkthrough)
 
-$$
-D^{(i)} = \text{Unflatten}(g^{(i)}) = \begin{bmatrix} d_1^{(i)}, d_2^{(i)}, \dots, d_H^{(i)} \end{bmatrix} \in \mathbb{R}^{p \times H}
-$$
-
-- **Ý nghĩa của từng vector lát cắt $d_t^{(i)} \in \mathbb{R}^p$:**
-  - Mỗi cột $d_t^{(i)}$ chính là "chân dung đặc trưng bối cảnh" riêng biệt của bước thời gian tương lai thứ $t$.
-  - Cột $d_t^{(i)}$ sau đó được ghép đôi trực tiếp với biến ngoại sinh tương lai $\tilde{x}_{L+t}^{(i)}$ để đưa vào khối **Temporal Decoder**, sinh ra con số dự báo phi tuyến cho bước $t$.
-
----
-
-## 1.3. Bảng Tóm Tắt Vai Trò Từng Phân Khu Trong Kiến Trúc
-
-| Thành Phần Kiến Trúc | Ký Hiệu Toán Học | Kích Thước Tensor Mẫu ($B=32, L=720, H=96, \tilde{r}=4, p=4$) | Vai Trò Cốt Lõi |
-| :--- | :---: | :---: | :--- |
-| **RevIN Normalization** | $y_{\text{norm}, 1:L}$ | `(32, 720)` | Đưa dữ liệu về $\text{Mean}=0, \text{Std}=1$, triệt tiêu hiện tượng trôi dạt phân phối. |
-| **Feature Projection** | $\tilde{x}_{1:L+H}$ | `(32, 816, 4)` | Nén biến ngoại sinh từ $r$ chiều xuống $\tilde{r}=4$ chiều, chống bùng nổ số chiều. |
-| **Flatten & Concat** | $u_{\text{enc}}$ | `(32, 3984)` | Trải phẳng và ghép tất cả thông tin quá khứ thành 1 vector 1D đưa vào Encoder. |
-| **Dense Encoder** | $e$ | `(32, 512)` | Chắt lọc toàn bộ tri thức chuỗi lịch sử thành 1 vector bối cảnh ẩn toàn cục. |
-| **Dense Decoder** | **$g$** | **`(32, 384)`** ($96 \times 4$) | **Vector phẳng giải mã bối cảnh tương lai toàn bộ Horizon $H$.** |
-| **Unflatten / Reshape** | **$D$** | **`(32, 96, 4)`** | **Tách vector $g$ thành $H=96$ vector lát cắt $d_t \in \mathbb{R}^4$.** |
-| **Temporal Decoder** | $\hat{y}_{\text{NL}}$ | `(32, 96)` | Ghép $d_t$ với ngoại sinh tương lai $\tilde{x}_{L+t}$ sinh dự báo phi tuyến từng bước. |
-| **Global Linear Skip** | $\hat{y}_{\text{Linear}}$ | `(32, 96)` | Ánh xạ tuyến tính trực tiếp từ quá khứ sang tương lai, học xu hướng (trend). |
-| **RevIN Denormalization** | $\hat{y}_{L+1:L+H}$ | `(32, 96)` | Nhân lại $\sigma$ và cộng lại $\mu$ để đưa dự báo về thang đo thực tế ban đầu. |
+1. **`Feature Projection (per time-step)`**:
+   - Áp dụng độc lập một khối Residual Block nhỏ cho từng bước thời gian $t \in \{1, \dots, L+H\}$ để nén vector ngoại sinh $x_t^{(i)} \in \mathbb{R}^r$ xuống vector $\tilde{x}_t^{(i)} \in \mathbb{R}^{\tilde{r}}$ với $\tilde{r} = 4$.
+2. **`Flatten`**:
+   - Trải phẳng ma trận ngoại sinh 2D $\tilde{x}_{1:L+H}^{(i)} \in \mathbb{R}^{(L+H) \times \tilde{r}}$ thành vector 1D có độ dài $(L+H) \times \tilde{r}$.
+3. **`Concat` (Ghép nối đầu vào Encoder)**:
+   - Nối 3 nguồn thông tin thành vector 1D duy nhất đưa vào Encoder:
+   $$u_{\text{enc}}^{(i)} = \begin{bmatrix} y_{1:L}^{(i)} \\ \text{vec}(\tilde{x}_{1:L+H}^{(i)}) \\ a^{(i)} \end{bmatrix} \in \mathbb{R}^{L + (L+H)\tilde{r} + p_{\text{static}}}$$
+4. **`Unflatten` (Tái định hình)**:
+   - Nhận vector 1D $g^{(i)} \in \mathbb{R}^{H \cdot p}$ từ Dense Decoder và biến đổi ngược trở lại thành ma trận 2D $d_{L+1:L+H}^{(i)} \in \mathbb{R}^{H \times p}$.
+5. **`Stack` & `Temporal Decoder (per time-step)`**:
+   - Tại mỗi bước thời gian tương lai $t \in \{L+1, \dots, L+H\}$, ghép cặp vector đặc trưng $d_t^{(i)} \in \mathbb{R}^p$ và biến ngoại sinh tương lai $\tilde{x}_t^{(i)} \in \mathbb{R}^{\tilde{r}}$ thành vector đầu vào cho khối Temporal Decoder để xuất ra giá trị dự báo phi tuyến:
+   $$\hat{y}_{t,\text{NL}}^{(i)} = \text{TemporalDecoder} \left( \begin{bmatrix} d_t^{(i)} \\ \tilde{x}_t^{(i)} \end{bmatrix} \right) \in \mathbb{R}$$
+6. **`Residual (+)` (Nhánh tắt tuyến tính toàn cục)**:
+   - Cộng kết quả phi tuyến của Temporal Decoder với dự báo tuyến tính từ nhánh Skip:
+   $$\hat{y}_{L+1:L+H}^{(i)} = \hat{y}_{\text{NL}}^{(i)} + \left( W_{\text{skip}} \cdot y_{1:L}^{(i)} + b_{\text{skip}} \right)$$
 
 ---
 
