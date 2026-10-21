@@ -9,7 +9,7 @@
 
 | STT | Nội Dung Kiểm Chứng | Phương Pháp Kiểm Chứng Thực Tế | Kết Quả Đối Chiếu | Trạng Thái |
 | :---: | :--- | :--- | :--- | :---: |
-| **1** | **Sơ đồ kiến trúc & Ký hiệu** | Mở trực tiếp file PDF [`project/Hieu_paper_TiDE-Time-series-Dense-Encoder.pdf`](../../project/Hieu_paper_TiDE-Time-series-Dense-Encoder.pdf) tại **Trang 5 (Figure 1)**. | Trùng khớp 100% các biến: $y_{1:L}^{(i)}, x_{1:L+H}^{(i)}, a^{(i)}, \tilde{x}, e^{(i)}, g^{(i)}, d, \hat{y}$ và các thao tác `Flatten`, `Unflatten`, `Concat`, `Stack`. | ✅ ĐẠT |
+| **1** | **Sơ đồ kiến trúc & Ký hiệu** | Mở trực tiếp file PDF [`Hieu_paper_TiDE-Time-series-Dense-Encoder.pdf`](../../Hieu_paper_TiDE-Time-series-Dense-Encoder.pdf) tại **Trang 5 (Figure 1)**. | Trùng khớp 100% các biến: $y_{1:L}^{(i)}, x_{1:L+H}^{(i)}, a^{(i)}, \tilde{x}, e^{(i)}, g^{(i)}, d, \hat{y}$ và các thao tác `Flatten`, `Unflatten`, `Concat`, `Stack`. | ✅ ĐẠT |
 | **2** | **Công thức nén Feature Projection** | Đọc Mục 4.1 (Trang 4-5) và Phụ lục B.3 (Trang 20) của paper. | Xác nhận bài báo định nghĩa nén về $\tilde{r} \ll r$ và cố định cứng `temporalWidth = 4` cho toàn bộ các thực nghiệm. | ✅ ĐẠT |
 | **3** | **Kiểm thử kích thước Tensor chạy thật** | Mở PowerShell trên máy và chạy lệnh: `python tasks-Hieu/sprint-1/test_tensor_shapes.py`. | Script chạy thành công từ đầu tới cuối, terminal in ra kết quả `torch.Size([32, 96])`, không gặp lỗi lệch chiều (`assert` pass). | ✅ ĐẠT |
 | **4** | **Số liệu Benchmark 2 Dataset** | Mở trực tiếp Bảng 1 (Trang 7) và Bảng 8 (Trang 21) của paper. | Số liệu MSE/MAE của `Electricity` (0.174) và `Traffic` (0.400) trùng khớp chính xác từng con số thập phân so với bảng của Google Research. | ✅ ĐẠT |
