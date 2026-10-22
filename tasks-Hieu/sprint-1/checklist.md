@@ -14,19 +14,19 @@
 | Chỉ số theo dõi | Trạng thái hiện tại | Tỷ lệ hoàn thành |
 | :--- | :---: | :---: |
 | **Tài liệu Antigravity soạn thảo** | 5/5 tài liệu hoàn tất | **100%** ✅ |
-| **Nội dung Hiệu đã tự kiểm chứng** | 2/5 hạng mục đã duyệt | **40%** 🔄 |
+| **Nội dung Hiệu đã tự kiểm chứng** | 3/5 hạng mục đã duyệt | **60%** 🔄 |
 | **Mục tiêu thời gian (Deadline)** | 21h00 – 24/10/2026 | *Đúng tiến độ* ⏱️ |
 
 ---
 
 ## 📋 1. Bảng Checklist Công Việc Chi Tiết Theo Từng File Báo Cáo
 
-| STT | Hạng Mục Công Việc | Tài Liệu Tương Ứng | Trạng Thái Soạn Thảo | Trạng Thái Hiệu Tự Check | Ghi Chú & Nội Dung Trọng Tâm |
+| STT | Hạng Mục Công Việc | Tài Liệu Tương Ứng | Trạng Thái Soạn Thảo | Trạng Thái Hiệu TỰ Check | Ghi Chú & Nội Dung Trọng Tâm |
 | :---: | :--- | :--- | :---: | :---: | :--- |
 | **01** | **Sơ đồ Kiến trúc TiDE & Ký hiệu Toán học** | [`01_architecture_diagram.md`](./01_architecture_diagram.md) | ✅ Hoàn thành | ✅ **ĐÃ TỰ CHECK** | Khớp 100% với Figure 1 (Trang 5 PDF), tiếng Việt có dấu, đầy đủ các biến $y, x, a, \tilde{x}, e, g, d, \hat{y}$ và 5 thao tác. |
 | **02** | **Giải phẫu Luồng Forward Pass (Paper vs Code)** | [`02_forward_pass_walkthrough.md`](./02_forward_pass_walkthrough.md) | ✅ Hoàn thành | ✅ **ĐÃ TỰ CHECK** | Bảng đối chiếu 11 bước, phân tích sâu từng tầng toán học Section 4 và code PyTorch class `TiDEForwardPass`. |
-| **03** | **Theo dõi Kích thước Tensor & Script Kiểm thử** | [`03_tensor_shapes_and_testing.md`](./03_tensor_shapes_and_testing.md)<br>[`test_tensor_shapes.py`](./test_tensor_shapes.py) | ✅ Hoàn thành | ⏳ **CHƯA CHECK** | Bảng shape chi tiết từng nút mạng; script Python chạy thành công trên terminal, kiểm chứng không lệch chiều. |
-| **04** | **Cấu hình Siêu tham số & Kết quả 2 Dataset** | [`04_hyperparameters_and_benchmarks.md`](./04_hyperparameters_and_benchmarks.md) | ✅ Hoàn thành | ⏳ **CHƯA CHECK** | 2 tập `Electricity` & `Traffic`; bảng siêu tham số từ Table 8, bảng kết quả MSE/MAE từ Table 2 của bài báo. |
+| **03** | **Theo dõi Kích thước Tensor & Script Kiểm thử** | [`03_tensor_shapes_and_testing.md`](./03_tensor_shapes_and_testing.md)<br>[`test_tensor_shapes.py`](./test_tensor_shapes.py) | ✅ Hoàn thành | ✅ **ĐÃ TỰ CHECK** | Bảng shape chi tiết từng nút mạng; script Python chạy thành công trên terminal, kiểm chứng không lệch chiều. |
+| **04** | **Cấu hình Siêu tham số & Kết quả 7 Datasets** | [`04_hyperparameters_and_benchmarks.md`](./04_hyperparameters_and_benchmarks.md) | ✅ Hoàn thành | ⏳ **CHƯA CHECK** | Cả 7 tập benchmark; bảng siêu tham số từ Table 8, bảng kết quả MSE/MAE từ Table 2 của bài báo. |
 | **05** | **Biên bản Tự kiểm chứng & Câu hỏi Phản biện** | [`05_self_verification.md`](./05_self_verification.md) | ✅ Hoàn thành | ⏳ **CHƯA CHECK** | Ghi nhận bằng chứng đối chiếu thực tế từng trang PDF và câu trả lời bộ 3 câu hỏi phản biện hóc búa nhất. |
 
 ---
@@ -59,18 +59,18 @@
 
 ---
 
-### 2.3. Phần 3: Kích Thước Tensor & Chạy Script Test (⏳ CHƯA CHECK)
+### 2.3. Phần 3: Kích Thước Tensor & Chạy Script Test (✅ ĐÃ HOÀN THÀNH)
 
-- [ ] Mở PowerShell trên máy tính và tự gõ lệnh chạy script kiểm thử:
+- [x] Mở PowerShell trên máy tính và tự gõ lệnh chạy script kiểm thử:
   ```powershell
   python tasks-Hieu/sprint-1/test_tensor_shapes.py
   ```
-- [ ] Kiểm tra xem terminal có in ra đầy đủ 14 bước kích thước tensor không, có bị lỗi `RuntimeError` hay `AssertionError` nào không.
-- [ ] Tự nhẩm lại phép tính số chiều đầu vào Encoder: $\text{dim}_{\text{enc}} = L + (L + H) \times \tilde{r} = 720 + (720 + 96) \times 4 = 3984$. Kiểm tra xem con số $3984$ có khớp chính xác với kết quả in ra trên terminal hay không.
+- [x] Kiểm tra xem terminal có in ra đầy đủ 14 bước kích thước tensor không, có bị lỗi `RuntimeError` hay `AssertionError` nào không.
+- [x] Tự nhẩm lại phép tính số chiều đầu vào Encoder: $\text{dim}_{\text{enc}} = L + (L + H) \times \tilde{r} = 720 + (720 + 96) \times 4 = 3984$. Kiểm tra xem con số $3984$ có khớp chính xác với kết quả in ra trên terminal hay không.
 
 ---
 
-### 2.4. Phần 4: Cấu Hình Siêu Tham Số & Kết Quả 2 Dataset (⏳ CHƯA CHECK)
+### 2.4. Phần 4: Cấu Hình Siêu Tham Số & Kết Quả 7 Datasets (⏳ CHƯA CHECK)
 
 - [ ] Mở file PDF gốc tại **Trang 8, Bảng 2 (Table 2)**:
   - Soi số liệu MSE/MAE của tập `Electricity` qua 4 horizon ($H \in \{96, 192, 336, 720\}$).
@@ -97,7 +97,7 @@
 
 - [x] **DoD 1**: Đã có sơ đồ kiến trúc hoàn chỉnh tiếng Việt có dấu, khớp 100% với Figure 1 của paper (Đã nghiệm thu Phần 1).
 - [x] **DoD 2**: Hiệu đã tự đọc hiểu và duyệt qua file Forward Pass Walkthrough (Phần 2).
-- [ ] **DoD 3**: Hiệu đã trực tiếp chạy lệnh kiểm thử Tensor shape trên terminal máy tính thật và kết quả pass 100% (Phần 3).
+- [x] **DoD 3**: Hiệu đã trực tiếp chạy lệnh kiểm thử Tensor shape trên terminal máy tính thật và kết quả pass 100% (Phần 3).
 - [ ] **DoD 4**: Hiệu đã tự đối chiếu bảng số liệu thực nghiệm Table 2 & Table 8 trong PDF gốc (Phần 4).
 - [ ] **DoD 5**: Hiệu đã tự trả lời tự tin, mạch lạc 3 câu hỏi phản biện cốt lõi mà không cần nhìn tài liệu (Phần 5).
 
