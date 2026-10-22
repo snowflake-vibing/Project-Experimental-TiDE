@@ -42,15 +42,19 @@ Bộ tài liệu này được cấu trúc theo từng chương của bài báo 
 
 ## 3. Từ Điển Thuật Ngữ (Feynman Technique Glossary)
 
+Các khái niệm kỹ thuật cốt lõi được giải thích theo phương pháp Feynman trong thư mục [`doc/glossary/`](./glossary), được **sắp xếp theo bảng chữ cái (Alphabetical Order)**:
+
 - 📖 **[Xem danh mục Glossary tổng hợp (`doc/glossary/README.md`)](./glossary/README.md)**
 - [`./glossary/RULE.md`](./glossary/RULE.md): **Quy chuẩn xây dựng Glossary** – Nguyên tắc bắt buộc đọc khi viết giải thích thuật ngữ theo phương pháp Feynman.
+- [`./glossary/co_adaptation.md`](./glossary/co_adaptation.md): **Co-adaptation là gì?** – Nhóm bạn làm bài tập dựa dẫm, sự đồng thích nghi tai hại giữa các nơ-ron và cơ chế giải độc bằng Dropout $p=0.3 - 0.5$.
 - [`./glossary/dynamic_covariates.md`](./glossary/dynamic_covariates.md): **Dynamic Covariates là gì?** – Câu chuyện quầy kem bác Ba, bản chất "động", bảng dữ liệu mẫu và cơ chế "đường cao tốc" (Highway) của TiDE.
 - [`./glossary/feature_projection.md`](./glossary/feature_projection.md): **Feature Projection là gì?** – Chiếc balo cắm trại và túi hút chân không, phép chiếu giảm chiều và giải bài toán bùng nổ số chiều.
-- [`./glossary/overfitting.md`](./glossary/overfitting.md): **Overfitting là gì?** – Học sinh học vẹt đề thi, nhận diện qua biểu đồ phân kỳ loss và 5 tầng phòng thủ của TiDE.
-- [`./glossary/residual_block.md`](./glossary/residual_block.md): **Residual Block là gì?** – Người thợ sửa tranh trên tấm kính trong suốt, cơ chế học phần dư và triệt tiêu vanishing gradient.
-- [`./glossary/temporal_decoder.md`](./glossary/temporal_decoder.md): **Temporal Decoder là gì?** – Người đưa thư hỏa tốc trong tiệm pizza, làn đường cao tốc (Covariate Highway) phản ứng tức thì với sự kiện tương lai.
 - [`./glossary/hadamard_product.md`](./glossary/hadamard_product.md): **Ký hiệu phép nhân Hadamard $\odot$ là gì?** – Chiếc máy tính tiền siêu thị, phép nhân từng phần tử tương ứng và vai trò nút vặn âm lượng trong Layer Normalization.
+- [`./glossary/overfitting.md`](./glossary/overfitting.md): **Overfitting là gì?** – Học sinh học vẹt đề thi, nhận diện qua biểu đồ phân kỳ loss và 5 tầng phòng thủ của TiDE.
+- [`./glossary/relu.md`](./glossary/relu.md): **ReLU là gì?** – Chiếc van một chiều chống ngập nước, hàm kích hoạt tuyến tính từng đoạn $\max(0, x)$ và cỗ máy tạo tính phi tuyến không suy hao gradient.
+- [`./glossary/residual_block.md`](./glossary/residual_block.md): **Residual Block là gì?** – Người thợ sửa tranh trên tấm kính trong suốt, cơ chế học phần dư và triệt tiêu vanishing gradient.
 - [`./glossary/revin.md`](./glossary/revin.md): **RevIN là gì?** – Chuyện đổi tiền khi đi du lịch nước ngoài, cơ chế chuẩn hóa đảo nghịch 2 chiều và trị căn bệnh trôi dạt phân phối (Non-stationarity).
+- [`./glossary/temporal_decoder.md`](./glossary/temporal_decoder.md): **Temporal Decoder là gì?** – Người đưa thư hỏa tốc trong tiệm pizza, làn đường cao tốc (Covariate Highway) phản ứng tức thì với sự kiện tương lai.
 
 ---
 

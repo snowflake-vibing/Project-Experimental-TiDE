@@ -37,17 +37,19 @@ Toàn bộ nội dung bài báo khoa học đã được dịch nghĩa, tổng h
 
 ## 💡 Từ Điển Thuật Ngữ (Feynman Glossary)
 
-Giải thích các khái niệm cốt lõi bằng **phương pháp Feynman** (ngắn gọn, trực quan, dùng ẩn dụ đời thực, không dùng thuật ngữ rườm rà) trong thư mục [`doc/glossary/`](./doc/glossary):
+Giải thích các khái niệm cốt lõi bằng **phương pháp Feynman** (ngắn gọn, trực quan, dùng ẩn dụ đời thực, không dùng thuật ngữ rườm rà) trong thư mục [`doc/glossary/`](./doc/glossary), đã được **sắp xếp theo thứ tự bảng chữ cái (Alphabetical Order)**:
 
 - 📖 **[Xem danh mục Glossary tổng hợp (`doc/glossary/README.md`)](./doc/glossary/README.md)**
 - [`doc/glossary/RULE.md`](./doc/glossary/RULE.md): **Quy chuẩn xây dựng Glossary** – Nguyên tắc bắt buộc đọc khi viết giải thích thuật ngữ theo phương pháp Feynman.
+- [`doc/glossary/co_adaptation.md`](./doc/glossary/co_adaptation.md): **Co-adaptation là gì?** – Nhóm bạn làm bài tập dựa dẫm, sự đồng thích nghi tai hại giữa các nơ-ron và cơ chế giải độc bằng Dropout $p=0.3 - 0.5$.
 - [`doc/glossary/dynamic_covariates.md`](./doc/glossary/dynamic_covariates.md): **Dynamic Covariates là gì?** – Câu chuyện quầy bán kem của bác Ba, bóc tách thuật ngữ, bảng dữ liệu mẫu và bí quyết giúp TiDE vượt trội.
 - [`doc/glossary/feature_projection.md`](./doc/glossary/feature_projection.md): **Feature Projection là gì?** – Chiếc balo đi cắm trại và túi hút chân không, phép chiếu giảm chiều không gian và giải bài toán bùng nổ số chiều.
-- [`doc/glossary/overfitting.md`](./doc/glossary/overfitting.md): **Overfitting là gì?** – Người học sinh học vẹt đề thi, nhận biết qua biểu đồ phân kỳ Loss và 5 tầng phòng thủ của TiDE.
-- [`doc/glossary/residual_block.md`](./doc/glossary/residual_block.md): **Residual Block là gì?** – Người thợ sửa tranh trên tấm kính trong suốt, cơ chế học phần dư và giải quyết triệt tiêu gradient.
-- [`doc/glossary/temporal_decoder.md`](./doc/glossary/temporal_decoder.md): **Temporal Decoder là gì?** – Người đưa thư hỏa tốc trong tiệm pizza, làn đường cao tốc (Covariate Highway) giúp phản ứng tức thì với sự kiện tương lai.
 - [`doc/glossary/hadamard_product.md`](./doc/glossary/hadamard_product.md): **Ký hiệu phép nhân Hadamard $\odot$ là gì?** – Chiếc máy tính tiền siêu thị, phép nhân từng phần tử tương ứng và vai trò nút vặn âm lượng trong Layer Normalization.
+- [`doc/glossary/overfitting.md`](./doc/glossary/overfitting.md): **Overfitting là gì?** – Người học sinh học vẹt đề thi, nhận biết qua biểu đồ phân kỳ Loss và 5 tầng phòng thủ của TiDE.
+- [`doc/glossary/relu.md`](./doc/glossary/relu.md): **ReLU là gì?** – Chiếc van một chiều chống ngập nước, hàm kích hoạt tuyến tính từng đoạn $\max(0, x)$ và cỗ máy tạo tính phi tuyến không suy hao gradient.
+- [`doc/glossary/residual_block.md`](./doc/glossary/residual_block.md): **Residual Block là gì?** – Người thợ sửa tranh trên tấm kính trong suốt, cơ chế học phần dư và giải quyết triệt tiêu gradient.
 - [`doc/glossary/revin.md`](./doc/glossary/revin.md): **RevIN là gì?** – Chuyện đổi tiền khi đi du lịch nước ngoài, cơ chế chuẩn hóa đảo nghịch 2 chiều và trị căn bệnh trôi dạt phân phối (Non-stationarity).
+- [`doc/glossary/temporal_decoder.md`](./doc/glossary/temporal_decoder.md): **Temporal Decoder là gì?** – Người đưa thư hỏa tốc trong tiệm pizza, làn đường cao tốc (Covariate Highway) giúp phản ứng tức thì với sự kiện tương lai.
 
 ---
 
