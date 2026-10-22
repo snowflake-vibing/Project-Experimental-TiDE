@@ -122,7 +122,9 @@ $$
 \hat{y} = W_{\text{total}} \cdot x + b_{\text{total}}
 $$
 
-> *(Trong đó: $W_{\text{total}} = W_3 \cdot W_2 \cdot W_1$ là một ma trận trọng số gộp duy nhất, $b_{\text{total}}$ là hệ số bù gộp).*
+Trong đó:
+- $W_{\text{total}} = W_3 \cdot W_2 \cdot W_1$ là ma trận trọng số gộp duy nhất.
+- $b_{\text{total}}$ là hệ số bù gộp (bias).
 
 > ⚠️ **Hậu quả kinh hoàng**:  
 > Tích của 3 ma trận $W_3 \cdot W_2 \cdot W_1$ chỉ là **MỘT MA TRẬN DUY NHẤT** $W_{\text{total}}$!  
@@ -137,7 +139,7 @@ flowchart LR
     Equivalent["Toán học chứng minh tương đương 100%"]
 
     subgraph MotTangDuyNhat ["Chỉ Là 1 Tầng Linear Regression Cổ Điển"]
-        X2["Đầu vào x"] --> LAll["W_tong * x + b_tong"] --> Y2["Đầu ra y"]
+        X2["Đầu vào x"] --> LAll["W_total * x + b_total"] --> Y2["Đầu ra y"]
     end
 
     MangSauGiaTao -.-> Equivalent -.-> MotTangDuyNhat
@@ -158,11 +160,7 @@ Một mô hình thuần tuyến tính (do không có ReLU) chỉ có thể vẽ 
 Bạn có thể hỏi: *"Nếu không có ReLU thì tôi dùng hàm Sigmoid hay Tanh để tạo phi tuyến tính có được không?"*
 
 Câu trả lời là **không thể huấn luyện được mạng sâu** vì:
-1. **Đạo hàm của Sigmoid tối đa chỉ là $0.25$**. Khi truyền ngược qua mạng TiDE có nhiều tầng Encoder và Decoder, gradient bị nhân dồn liên tiếp:
-   $$
-   0.25 \times 0.25 \times 0.25 \times 0.25 \approx 0.0039
-   $$
-   Tín hiệu đạo hàm nhanh chóng tiến về $0$. Các tầng đầu tiên của mô hình bị "đóng băng" (tê liệt hoàn toàn), không học được bất cứ điều gì!
+1. **Đạo hàm của Sigmoid tối đa chỉ là $0.25$**: Khi truyền ngược qua mạng TiDE có nhiều tầng Encoder và Decoder, gradient bị nhân dồn liên tiếp: $0.25 \times 0.25 \times 0.25 \times 0.25 \approx 0.0039$. Tín hiệu đạo hàm nhanh chóng tiến về $0$, khiến các tầng đầu tiên của mô hình bị "đóng băng" (tê liệt hoàn toàn), không học được bất cứ điều gì!
 2. **Chi phí tính toán đắt đỏ**: Sigmoid và Tanh chứa hàm số mũ $e^x$ và phép chia rất nặng nề cho phần cứng GPU. Trong khi đó, ReLU chỉ là một phép so sánh nhị phân đơn giản (`x > 0`), giúp TiDE chạy nhanh gấp 5 - 10 lần các mô hình khác!
 
 | Tiêu chí | KHÔNG DÙNG ReLU (Chỉ dùng Linear) | DÙNG Sigmoid / Tanh | DÙNG ReLU (Lựa chọn của TiDE) |
