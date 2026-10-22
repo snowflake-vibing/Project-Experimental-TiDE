@@ -1,0 +1,78 @@
+# ==============================================================================
+# CẤU HÌNH THỰC NGHIỆM CHUẨN CHO 2 TẬP DỮ LIỆU: ELECTRICITY & TRAFFIC
+# Trích xuất chuẩn xác từ bài báo: "Long-term Forecasting with TiDE" (Google Research, 2023)
+# Nguồn tham chiếu: Table 1 (Trang 7), Table 2 (Trang 8), Table 8 (Trang 21)
+# Người thực hiện: Hiệu (Sprint 1)
+# ==============================================================================
+
+global_settings:
+  lookback_window: 720                  # L: Độ dài cửa sổ quan sát lịch sử (720 giờ = 30 ngày)
+  forecast_horizons: [96, 192, 336, 720]# H: 4 mốc tương lai đánh giá LTTF (4 ngày, 8 ngày, 2 tuần, 1 tháng)
+  temporal_width: 4                     # r_tilde: Số chiều nén ngoại sinh sau Feature Projection (cố định cứng)
+  batch_size: 512                       # Kích thước batch huấn luyện chuẩn
+  loss_function: "MSE"                  # Mean Squared Error Loss
+  optimizer: "Adam"
+  lr_scheduler: "CosineAnnealing"
+
+datasets:
+  # ----------------------------------------------------------------------------
+  # 1. TẬP DỮ LIỆU: ELECTRICITY (Phụ tải điện lực)
+  # ----------------------------------------------------------------------------
+  electricity:
+    data_path: "data/electricity.csv"
+    description: "Phụ tải điện tiêu thụ hàng giờ của 321 khách hàng (2012 - 2014)"
+    num_series: 321
+    total_time_points: 26304
+    frequency: "1h"
+    target_column: "OT"
+
+    # Siêu tham số tối ưu (Trích xuất từ Table 8 - Trang 21):
+    model_params:
+      hidden_size: 1024                 # hiddenSize: Kích thước tầng ẩn
+      num_encoder_layers: 2             # numEncoderLayers (n_e): 2 khối Residual Blocks
+      num_decoder_layers: 2             # numDecoderLayers (n_d): 2 khối Residual Blocks
+      decoder_output_dim: 8             # decoderOutputDim (p): 8 chiều giải mã mỗi bước
+      temporal_decoder_hidden: 64       # temporalDecoderHidden: Tầng ẩn của Temporal Decoder
+      dropout_level: 0.5                # dropoutLevel: Xác suất ngắt kết nối 50%
+      layer_norm: true                  # layerNorm: Bật chuẩn hóa LayerNorm
+      rev_in: false                     # revIn: Không bật RevIN (phân phối phụ tải ổn định)
+      learning_rate: 0.000999           # 9.99e-4
+
+    # Kết quả thực nghiệm đối chuẩn (Trích xuất từ Table 2 - Trang 8):
+    benchmark_paper:
+      h96:  { mse: 0.132, mae: 0.229 }
+      h192: { mse: 0.147, mae: 0.243 }
+      h336: { mse: 0.161, mae: 0.261 }
+      h720: { mse: 0.196, mae: 0.294 }
+      average: { mse: 0.159, mae: 0.257 }
+
+  # ----------------------------------------------------------------------------
+  # 2. TẬP DỮ LIỆU: TRAFFIC (Lưu lượng giao thông California PeMS)
+  # ----------------------------------------------------------------------------
+  traffic:
+    data_path: "data/traffic.csv"
+    description: "Tỷ lệ chiếm dụng làn đường từ 862 trạm cảm biến freeway California"
+    num_series: 862
+    total_time_points: 17544
+    frequency: "1h"
+    target_column: "OT"
+
+    # Siêu tham số tối ưu (Trích xuất từ Table 8 - Trang 21):
+    model_params:
+      hidden_size: 256                  # hiddenSize: Mạng nhỏ gọn để tránh tràn VRAM với 862 chuỗi
+      num_encoder_layers: 1             # numEncoderLayers (n_e): 1 khối Residual Block
+      num_decoder_layers: 1             # numDecoderLayers (n_d): 1 khối Residual Block
+      decoder_output_dim: 16            # decoderOutputDim (p): 16 chiều giải mã mỗi bước
+      temporal_decoder_hidden: 64       # temporalDecoderHidden: Tầng ẩn của Temporal Decoder
+      dropout_level: 0.3                # dropoutLevel: Xác suất ngắt kết nối 30%
+      layer_norm: false                 # layerNorm: Không bật LayerNorm
+      rev_in: true                      # revIn: Bắt buộc bật RevIN trị lệch phân phối
+      learning_rate: 0.0000655          # 6.55e-5
+
+    # Kết quả thực nghiệm đối chuẩn (Trích xuất từ Table 2 - Trang 8):
+    benchmark_paper:
+      h96:  { mse: 0.336, mae: 0.253 }
+      h192: { mse: 0.346, mae: 0.257 }
+      h336: { mse: 0.355, mae: 0.260 }
+      h720: { mse: 0.386, mae: 0.273 }
+      average: { mse: 0.356, mae: 0.261 }
