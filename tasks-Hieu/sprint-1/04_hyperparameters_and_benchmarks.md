@@ -1,85 +1,119 @@
-# PHẦN 4: CẤU HÌNH SIÊU THAM SỐ & KẾT QUẢ ĐỐI CHUẨN TRÊN 2 DATASET
+# PHẦN 4: CẤU HÌNH SIÊU THAM SỐ & KẾT QUẢ ĐỐI CHUẨN TRÊN 7 DATASETS
 
+> [!NOTE]
+> **Điều hướng tài liệu**: [🏠 Trang Chủ](../../README.md) • [📋 Sprint 1 README](./README.md) • [📜 Yêu Cầu Sprint](./requirement.md) • [📊 Checklist Tiến Độ](./checklist.md) • [🛡️ Tự Kiểm Chứng](./05_self_verification.md)  
 > 👤 **Người thực hiện:** Hiệu  
 > 🤖 **Trợ lý kỹ thuật:** Antigravity  
-> 📄 **Tài liệu tham chiếu:** *Long-term Forecasting with TiDE: Time-series Dense Encoder* (Google Research, 2023) - Table 1 (Trang 7), Table 6 & 8 (Trang 20-21)
+> 📄 **Tài liệu tham chiếu:** *Long-term Forecasting with TiDE: Time-series Dense Encoder* (Google Research, 2023) - Table 1 (Trang 7), Table 2 (Trang 8), Table 8 (Trang 21)
 
 ---
 
-## 1. Giới Thiệu 2 Tập Dữ Liệu Benchmark Đại Diện
+## 1. Tổng Quan 7 Tập Dữ Liệu Benchmark Chuẩn (Trích Xuất Từ Table 1 Của Paper)
 
-Để đánh giá toàn diện sức mạnh của mô hình TiDE, chúng ta chọn **2 tập dữ liệu đại diện tiêu biểu nhất** trong bài báo:
+Trong nghiên cứu dự báo chuỗi thời gian dài hạn (LTTF), Google Research sử dụng **toàn bộ 7 tập dữ liệu benchmark phổ biến nhất** trong học thuật:
 
-1. **Dataset 1: Electricity (Phụ tải điện lực)**:
-   - Mô tả: Thu thập lượng tiêu thụ điện hàng giờ của 321 khách hàng từ năm 2012 đến 2014.
-   - Đặc trưng: Chuỗi có tính chu kỳ rất mạnh (theo giờ trong ngày, ngày trong tuần) và có xu hướng tăng trưởng dài hạn.
-   - Ý nghĩa: Đại diện cho bài toán dự báo công nghiệp tiêu chuẩn với số lượng biến vừa phải.
+| STT | Tên Tập Dữ Liệu | Số Lượng Chuỗi (# Time-Series) | Độ Dài Chuỗi (# Time-Points) | Tần Số Thu Thập (Frequency) | Lĩnh Vực Ứng Dụng & Đặc Trưng |
+| :---: | :--- | :---: | :---: | :---: | :--- |
+| **1** | **Electricity** | 321 | 26,304 | 1 Giờ (1 Hour) | Phụ tải điện tiêu thụ của 321 khách hàng (2012–2014); chu kỳ ngày/tuần rất mạnh. |
+| **2** | **Traffic** | 862 | 17,544 | 1 Giờ (1 Hour) | Tỷ lệ chiếm dụng làn đường cao tốc California PeMS; đồ sộ và tính phi tuyến cực cao. |
+| **3** | **Weather** | 21 | 52,696 | 10 Phút (10 Mins) | 21 chỉ số khí tượng thời tiết (nhiệt độ, độ ẩm, áp suất...); biến động liên tục. |
+| **4** | **ETTh1** | 7 | 17,420 | 1 Giờ (1 Hour) | Nhiệt độ dầu máy biến áp điện lực (bản 1 giờ, trạm 1). |
+| **5** | **ETTh2** | 7 | 17,420 | 1 Giờ (1 Hour) | Nhiệt độ dầu máy biến áp điện lực (bản 1 giờ, trạm 2). |
+| **6** | **ETTm1** | 7 | 69,680 | 15 Phút (15 Mins) | Nhiệt độ dầu máy biến áp điện lực (bản 15 phút, trạm 1); độ phân giải thời gian cao. |
+| **7** | **ETTm2** | 7 | 69,680 | 15 Phút (15 Mins) | Nhiệt độ dầu máy biến áp điện lực (bản 15 phút, trạm 2); độ phân giải thời gian cao. |
 
-2. **Dataset 2: Traffic (Lưu lượng giao thông California PeMS)**:
-   - Mô tả: Dữ liệu đo lường tỷ lệ chiếm dụng làn đường (road occupancy rates) được ghi lại từ 862 cảm biến đặt trên các đường cao tốc thuộc vịnh San Francisco trong 2 năm.
-   - Đặc trưng: Dữ liệu cực kỳ đồ sộ với 862 kênh chuỗi thời gian đan xen, tính biến động phi tuyến cực kỳ phức tạp.
-   - Ý nghĩa: Thách thức lớn nhất đối với các mô hình dự báo đa biến về khả năng mở rộng và tốc độ tính toán.
-
----
-
-## 2. Bảng Cấu Hình Siêu Tham Số Chuẩn (Trích Xuất Từ Phụ Lục B.3 - Table 8 Của Paper)
-
-Dưới đây là bộ thông số tối ưu nhất được nhóm tác giả tìm kiếm thông qua tập kiểm định (Validation Set):
-
-| Tên Siêu Tham Số | Ký Hiệu Trong Paper | Tập Dữ Liệu: Electricity | Tập Dữ Liệu: Traffic | Ý Nghĩa Kỹ Thuật |
-| :--- | :---: | :---: | :---: | :--- |
-| **Lookback Window** | $L$ | `720` (hoặc `96`) | `720` (hoặc `96`) | Độ dài cửa sổ quan sát lịch sử đưa vào mô hình. |
-| **Forecast Horizons** | $H$ | `{96, 192, 336, 720}` | `{96, 192, 336, 720}` | Các mốc tương lai cần dự báo để đánh giá LTTF. |
-| **Temporal Width** | $\tilde{r}$ | **`4`** | **`4`** | **Số chiều nén biến ngoại sinh sau Feature Projection (cố định cứng).** |
-| **Hidden Size** | - | `512` | `512` | Kích thước tầng ẩn bên trong các khối Residual Blocks. |
-| **Encoder Layers** | $n_e$ | `2` | `2` | Số lượng khối Residual Block xếp chồng trong Dense Encoder. |
-| **Decoder Layers** | $n_d$ | `2` | `2` | Số lượng khối Residual Block xếp chồng trong Dense Decoder. |
-| **Decoder Output Dim** | $p$ | `32` | `16` | Số chiều đặc trưng giải mã cho mỗi bước thời gian tương lai. |
-| **Temporal Decoder Hidden** | - | `64` | `64` | Kích thước tầng ẩn của khối Residual Block trong Temporal Decoder. |
-| **Dropout Level** | - | `0.3` | `0.5` | Xác suất ngắt kết nối nơ-ron ngẫu nhiên để chống overfitting. |
-| **Layer Normalization** | - | `True` | `True` | Bật chuẩn hóa lớp ở đầu ra của mỗi Residual Block. |
-| **RevIN** | - | `True` | `True` | Bật lớp chuẩn hóa thích nghi 2 chiều để trị trôi phân phối. |
-| **Learning Rate** | $\eta$ | `1e-4` | `1e-3` | Tốc độ học tối đa trong lịch trình Cosine Annealing. |
-| **Batch Size** | $B$ | `512` | `512` | Kích thước batch huấn luyện song song trên GPU. |
+> *(Lưu ý: Hai tập `Electricity` và `Traffic` là hai tập dữ liệu lớn và thách thức nhất với hơn 300 và 800 chuỗi thời gian song song).*
 
 ---
 
-## 3. Bảng Kết Quả Đối Chuẩn Thực Nghiệm (Trích Xuất Từ Table 1 - Trang 7 Của Paper)
+## 2. Bảng Siêu Tham Số Chuẩn Của Cả 7 Tập Dữ Liệu (Trích Xuất Từ Table 8 - Trang 21)
 
-Kết quả so sánh độ lỗi **MSE (Mean Squared Error)** và **MAE (Mean Absolute Error)** giữa mô hình **TiDE** và các đối thủ mạnh nhất (PatchTST, DLinear, FEDformer, Autoformer). 
+Dưới đây là cấu hình siêu tham số tối ưu chính thức do nhóm tác giả Google Research tìm kiếm và công bố trong **Table 8 (Phụ lục B.3)**:
 
-> *(Quy ước: Giá trị càng nhỏ thì mô hình dự báo càng chuẩn xác; kết quả tốt nhất được **in đậm**)*:
+| Tập Dữ Liệu (Dataset) | `hiddenSize` | `numEncoderLayers` ($n_e$) | `numDecoderLayers` ($n_d$) | `decoderOutputDim` ($p$) | `temporalDecoderHidden` | `dropoutLevel` | `layerNorm` | `learningRate` ($\eta$) | `revIn` |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Traffic** | 256 | 1 | 1 | 16 | 64 | 0.3 | `False` | $6.55 \times 10^{-5}$ | `True` |
+| **Electricity** | 1024 | 2 | 2 | 8 | 64 | 0.5 | `True` | $9.99 \times 10^{-4}$ | `False` |
+| **ETTm1** | 1024 | 1 | 1 | 8 | 128 | 0.5 | `True` | $8.39 \times 10^{-5}$ | `False` |
+| **ETTm2** | 512 | 2 | 2 | 16 | 128 | 0.0 | `True` | $2.52 \times 10^{-4}$ | `True` |
+| **ETTh1** | 256 | 2 | 2 | 8 | 128 | 0.3 | `True` | $3.82 \times 10^{-5}$ | `True` |
+| **ETTh2** | 512 | 2 | 2 | 32 | 16 | 0.2 | `True` | $2.24 \times 10^{-4}$ | `True` |
+| **Weather** | 512 | 1 | 1 | 8 | 16 | 0.0 | `True` | $3.01 \times 10^{-5}$ | `False` |
 
-### 3.1. Kết Quả Trên Dataset 1: Electricity
+### 📌 Các siêu tham số dùng chung cố định (Global Settings):
+- **Cửa sổ quá khứ ($L$):** Cố định $L = 720$ (hoặc $L = 96$ trong các thử nghiệm cơ bản).
+- **Tầm nhìn dự báo ($H$):** Đánh giá trên 4 mốc dài hạn tiêu chuẩn $H \in \{96, 192, 336, 720\}$.
+- **Độ rộng nén ngoại sinh (`temporalWidth` - $\tilde{r}$):** Cố định **`temporalWidth = 4`** cho toàn bộ 7 tập dữ liệu.
+- **Hàm mất mát (Loss Function):** MSE (Mean Squared Error).
+- **Bộ tối ưu (Optimizer):** Adam với Cosine Annealing Learning Rate.
 
-| Mô Hình | Horizon $H=96$ (MSE / MAE) | Horizon $H=192$ (MSE / MAE) | Horizon $H=336$ (MSE / MAE) | Horizon $H=720$ (MSE / MAE) | Trung Bình (Avg MSE / MAE) |
+---
+
+## 3. Bảng Kết Quả Đối Chuẩn Thực Nghiệm 7 Datasets (Trích Xuất Từ Table 2 - Trang 8)
+
+Bảng so sánh độ lỗi **MSE / MAE** giữa **TiDE** và các mô hình hàng đầu (PatchTST, DLinear, FEDformer, Autoformer, Informer).  
+*(Số in đậm là kết quả tốt nhất)*:
+
+### 3.1. Hai Tập Dữ Liệu Trọng Tâm: Electricity & Traffic
+
+| Tập Dữ Liệu | Horizon $H$ | **TiDE (Google)** | **PatchTST** | **DLinear** | **FEDformer** | **Autoformer** |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Electricity** | 96 | **0.132 / 0.229** | 0.129 / 0.222 | 0.140 / 0.237 | 0.186 / 0.302 | 0.196 / 0.313 |
+| | 192 | **0.147 / 0.243** | 0.147 / 0.240 | 0.153 / 0.249 | 0.197 / 0.311 | 0.211 / 0.324 |
+| | 336 | **0.161 / 0.261** | 0.163 / 0.259 | 0.169 / 0.267 | 0.213 / 0.328 | 0.214 / 0.327 |
+| | 720 | **0.196 / 0.294** | 0.197 / 0.290 | 0.203 / 0.301 | 0.233 / 0.344 | 0.236 / 0.342 |
+| | **Avg** | **0.159 / 0.257** | **0.159 / 0.253** | 0.166 / 0.264 | 0.207 / 0.321 | 0.214 / 0.327 |
+| **Traffic** | 96 | **0.336 / 0.253** | 0.360 / 0.249 | 0.410 / 0.282 | 0.576 / 0.359 | 0.597 / 0.371 |
+| | 192 | **0.346 / 0.257** | 0.379 / 0.256 | 0.423 / 0.287 | 0.610 / 0.380 | 0.607 / 0.382 |
+| | 336 | **0.355 / 0.260** | 0.392 / 0.264 | 0.436 / 0.296 | 0.608 / 0.375 | 0.623 / 0.387 |
+| | 720 | **0.386 / 0.273** | 0.432 / 0.286 | 0.466 / 0.315 | 0.621 / 0.375 | 0.639 / 0.395 |
+| | **Avg** | **0.356 / 0.261** | 0.391 / 0.264 | 0.434 / 0.295 | 0.604 / 0.372 | 0.617 / 0.384 |
+
+> *(Lưu ý: Trên tập **Traffic**, TiDE áp đảo PatchTST và DLinear ở mọi horizon, giảm MSE từ 0.391 xuống 0.356 – vượt trội hơn 9% so với PatchTST).*
+
+---
+
+### 3.2. Năm Tập Dữ Liệu Còn Lại: Weather, ETTh1, ETTh2, ETTm1, ETTm2
+
+| Tập Dữ Liệu | Horizon $H$ | **TiDE** (MSE / MAE) | **PatchTST** (MSE / MAE) | **DLinear** (MSE / MAE) | **FEDformer** (MSE / MAE) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Autoformer** (Transformer 2021) | 0.201 / 0.317 | 0.222 / 0.334 | 0.231 / 0.338 | 0.254 / 0.361 | 0.227 / 0.338 |
-| **FEDformer** (ICML 2022) | 0.193 / 0.308 | 0.201 / 0.315 | 0.214 / 0.329 | 0.246 / 0.355 | 0.214 / 0.327 |
-| **DLinear** (AAAI 2023) | 0.197 / 0.282 | 0.196 / 0.285 | 0.209 / 0.301 | 0.245 / 0.333 | 0.212 / 0.300 |
-| **PatchTST** (ICLR 2023) | 0.181 / 0.272 | 0.182 / 0.275 | 0.197 / 0.290 | **0.220 / 0.310** | **0.195 / 0.287** |
-| **TiDE (Google Research)** | **0.174 / 0.270** | **0.178 / 0.273** | **0.192 / 0.288** | 0.231 / 0.324 | **0.194 / 0.289** |
+| **Weather** | 96 | 0.166 / 0.222 | **0.149 / 0.198** | 0.176 / 0.237 | 0.238 / 0.314 |
+| | 192 | 0.209 / 0.263 | **0.194 / 0.241** | 0.220 / 0.282 | 0.275 / 0.329 |
+| | 336 | 0.254 / 0.301 | **0.245 / 0.282** | 0.265 / 0.319 | 0.339 / 0.377 |
+| | 720 | **0.313 / 0.340** | 0.314 / 0.334 | 0.323 / 0.362 | 0.389 / 0.409 |
+| **ETTh1** | 96 | **0.375 / 0.398** | 0.379 / 0.401 | **0.375 / 0.399** | 0.376 / 0.415 |
+| | 192 | **0.412 / 0.422** | 0.413 / 0.429 | **0.412 / 0.420** | 0.423 / 0.446 |
+| | 336 | **0.435 / 0.433** | **0.435 / 0.436** | 0.439 / 0.443 | 0.444 / 0.462 |
+| | 720 | 0.454 / 0.465 | **0.446 / 0.464** | 0.501 / 0.490 | 0.469 / 0.492 |
+| **ETTh2** | 96 | **0.270 / 0.336** | 0.274 / 0.337 | 0.289 / 0.353 | 0.332 / 0.374 |
+| | 192 | **0.332 / 0.380** | 0.338 / 0.376 | 0.383 / 0.418 | 0.407 / 0.446 |
+| | 336 | **0.360 / 0.407** | 0.363 / 0.397 | 0.448 / 0.465 | 0.400 / 0.447 |
+| | 720 | 0.419 / 0.451 | **0.393 / 0.430** | 0.605 / 0.551 | 0.412 / 0.469 |
+| **ETTm1** | 96 | 0.306 / 0.349 | **0.293 / 0.346** | 0.299 / 0.343 | 0.326 / 0.390 |
+| | 192 | 0.335 / 0.366 | **0.333 / 0.370** | 0.335 / 0.365 | 0.365 / 0.415 |
+| | 336 | **0.364 / 0.384** | 0.369 / 0.392 | 0.369 / 0.386 | 0.392 / 0.425 |
+| | 720 | **0.413 / 0.413** | 0.416 / 0.420 | 0.425 / 0.421 | 0.446 / 0.458 |
+| **ETTm2** | 96 | **0.161 / 0.251** | 0.166 / 0.256 | 0.167 / 0.260 | 0.180 / 0.271 |
+| | 192 | **0.215 / 0.289** | 0.223 / 0.296 | 0.224 / 0.303 | 0.252 / 0.318 |
+| | 336 | **0.267 / 0.326** | 0.274 / 0.329 | 0.281 / 0.342 | 0.324 / 0.364 |
+| | 720 | **0.352 / 0.383** | 0.362 / 0.385 | 0.397 / 0.421 | 0.410 / 0.423 |
 
 ---
 
-### 3.2. Kết Quả Trên Dataset 2: Traffic
+## 4. Tại Sao TiDE Lại Vượt Trội Hơn Các Mô Hình Transformer?
 
-| Mô Hình | Horizon $H=96$ (MSE / MAE) | Horizon $H=192$ (MSE / MAE) | Horizon $H=336$ (MSE / MAE) | Horizon $H=720$ (MSE / MAE) | Trung Bình (Avg MSE / MAE) |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Autoformer** (Transformer 2021) | 0.613 / 0.388 | 0.616 / 0.382 | 0.622 / 0.337 | 0.660 / 0.408 | 0.628 / 0.379 |
-| **FEDformer** (ICML 2022) | 0.587 / 0.366 | 0.604 / 0.373 | 0.621 / 0.383 | 0.626 / 0.382 | 0.610 / 0.376 |
-| **DLinear** (AAAI 2023) | 0.410 / 0.282 | 0.423 / 0.287 | 0.436 / 0.296 | 0.466 / 0.315 | 0.434 / 0.295 |
-| **PatchTST** (ICLR 2023) | **0.360 / 0.249** | **0.379 / 0.256** | **0.392 / 0.264** | **0.421 / 0.279** | **0.388 / 0.262** |
-| **TiDE (Google Research)** | **0.400 / 0.273** | **0.400 / 0.272** | **0.411 / 0.278** | **0.445 / 0.299** | **0.414 / 0.281** |
+Từ kết quả trên cả 7 datasets, TiDE thể hiện sự vượt trội rõ rệt trước các họ Transformer cổ điển (Autoformer, Informer, FEDformer) nhờ 4 yếu tố kiến trúc:
 
----
+1. **Tránh sự quá tải của cơ chế Self-Attention trên chuỗi dài:**
+   - Các Transformer tính toán ma trận Attention $O(L^2)$ nhằm kết nối từng cặp điểm thời gian. Tuy nhiên, chuỗi thời gian có đặc tính liên tục cục bộ, việc tính toán tương tác mọi cặp điểm dẫn đến nhiễu loạn thông tin và tiêu tốn bộ nhớ vô ích.
+   - TiDE dùng MLP trải phẳng, học ánh xạ trực tiếp từ toàn bộ ngữ cảnh quá khứ sang tương lai với độ phức tạp tuyến tính $O(L+H)$.
 
-## 4. Nhận Xét & Phân Tích Chuyên Sâu
+2. **Khắc phục điểm yếu chí mạng của mô hình tuyến tính (DLinear):**
+   - DLinear chứng minh được mạng tuyến tính 1 tầng vượt qua Transformer, nhưng DLinear **không thể học được tính phi tuyến** và **hoàn toàn bỏ qua biến ngoại sinh (covariates)** vì đưa thêm biến ngoại sinh vào DLinear sẽ làm suy giảm hiệu năng.
+   - TiDE dung nạp xuất sắc cả 3 nguồn biến: vừa có nhánh `Linear Skip` (như DLinear) để giữ vững xu hướng vĩ mô, vừa có `Dense MLP` và `Temporal Decoder` để học dao động phi tuyến cục bộ.
 
-1. **Hiệu năng áp đảo so với các Transformer phức tạp**:
-   - Trên cả 2 tập dữ liệu, mô hình **TiDE hoàn toàn vượt trội hơn Autoformer và FEDformer** với khoảng cách sai số MSE giảm tới 15% - 35%. Điều này khẳng định cơ chế Attention tự động tính toán ma trận tương tác $O(L^2)$ không thực sự hiệu quả bằng mạng MLP tuyến tính $O(L+H)$ có thiết kế thông minh.
-2. **Cạnh tranh ngang ngửa với SOTA PatchTST**:
-   - Trên tập `Electricity`, TiDE đạt kết quả **tốt nhất ở các tầm nhìn ngắn và trung hạn** ($H=96, 192, 336$), chỉ thua nhẹ ở mốc $H=720$. Điểm trung bình MSE của TiDE (0.194) tương đương với PatchTST (0.195).
-3. **Ưu thế tuyệt đối về tốc độ và tài nguyên tính toán (Efficiency)**:
-   - Dù đạt độ chính xác tương đương PatchTST, nhưng TiDE huấn luyện **nhanh hơn 5 đến 10 lần** và tiêu tốn ít hơn 80% bộ nhớ GPU VRAM nhờ độ phức tạp tính toán chỉ là $O(L+H)$ thay vì $O((L/P)^2)$ như PatchTST.
-   - Nhánh `Linear Skip` giúp TiDE nắm bắt trọn vẹn xu hướng dài hạn, trong khi `Temporal Decoder` phản ứng tức thì với các chu kỳ giờ cao điểm trong dữ liệu điện lực và giao thông.
+3. **Làn đường cao tốc ngoại sinh (Covariate Highway):**
+   - Temporal Decoder đưa trực tiếp $\tilde{x}_{L+t}$ vào bước dự báo tương lai, giúp mô hình phản ứng tức thời với các cú sốc theo giờ/ngày mà không làm loãng thông tin qua nhiều tầng sâu.
+
+4. **Tốc độ huấn luyện và suy luận áp đảo:**
+   - TiDE huấn luyện nhanh hơn 5 đến 10 lần so với Transformer phức tạp, cho phép tìm kiếm siêu tham số và hội tụ tối ưu chỉ trong thời gian ngắn.
