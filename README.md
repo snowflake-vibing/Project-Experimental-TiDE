@@ -66,6 +66,15 @@ Các bài phân tích mổ xẻ chuyên sâu về mặt toán học, cơ chế n
 
 ---
 
+## 🧠 Tư Duy Phản Biện Trong Thiết Kế Kiến Trúc (Critical Thinking)
+
+Chất vấn tận cùng các quyết định thiết kế của Google Research, đặt lên bàn cân các giải pháp thay thế và phân tích kịch bản cực đoan trong thư mục [`doc/critical-thinking/`](./doc/critical-thinking):
+
+- 📖 **[Xem danh mục Chuyên mục Phản biện (`doc/critical-thinking/README.md`)](./doc/critical-thinking/README.md)**
+- [`doc/critical-thinking/why_use_relu.md`](./doc/critical-thinking/why_use_relu.md): **Tại sao TiDE lại dùng ReLU mà không phải các lựa chọn khác?** – Đặt lên bàn cân đối đầu với DLinear (tại sao cần phi tuyến?), đối đầu với GELU/SiLU (tại sao từ chối chuẩn mực Transformer?), và 3 cơ chế bảo vệ TiDE khỏi thảm họa "Dying ReLU".
+
+---
+
 ## 🏛️ Sơ Đồ Kiến Trúc TiDE
 
 ```mermaid
