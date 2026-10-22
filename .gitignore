@@ -1,0 +1,8 @@
+
+# Ignore large dataset CSV files (>50MB exceeds GitHub limits)
+data/*.csv
+!data/ETTh1.csv
+!data/ETTh2.csv
+!data/weather.csv
+__pycache__/
+*.pyc

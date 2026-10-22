@@ -1,101 +1,96 @@
-# PHẦN 3: THEO DÕI KÍCH THƯỚC TENSOR & KIỂM THỬ THỰC TẾ TRÊN FILE CSV BENCHMARK
+# PHẦN 3: THEO DÕI KÍCH THƯỚC TENSOR & KIỂM THỬ THỰC TẾ TRÊN TOÀN BỘ 7 TẬP BENCHMARK TiDE
 
 > 👤 **Người thực hiện:** Hiệu  
 > 🤖 **Trợ lý kỹ thuật:** Antigravity  
-> 📄 **Mục tiêu:** Chứng minh luồng dữ liệu thông suốt qua từng nút mạng, trích xuất trực tiếp từ file dữ liệu CSV thật (`ETTh1.csv`) và kiểm tra không bị lỗi lệch chiều (*dimension mismatch*).
+> 📄 **Tài liệu tham chiếu:** *Long-term Forecasting with TiDE: Time-series Dense Encoder* (Google Research, 2023) - Table 1
 
 ---
 
-## 1. Dữ Liệu Nguồn Thực Tế (Real Benchmark Dataset)
+## 1. Dữ Liệu Nguồn Thực Tế: Đầy Đủ Toàn Bộ 7 Tập Benchmark LTTF
 
-Thay vì dùng dữ liệu giả lập ngẫu nhiên (`torch.randn`), mô hình đã được nạp dữ liệu thực tế từ tập benchmark tiêu chuẩn:
-- **Tập dữ liệu:** [`data/ETTh1.csv`](../../data/ETTh1.csv) (Electricity Transformer Temperature - 1 giờ).
-- **Tổng số dòng dữ liệu:** 17,420 mốc thời gian.
-- **Biến mục tiêu ($y$):** Cột nhiệt độ dầu máy biến áp `OT` (Oil Temperature).
-- **Biến ngoại sinh động ($x$):** Trích xuất tự động 7 đặc trưng thời gian chuẩn GluonTS từ cột `date` thông qua module [`time_features.py`](./time_features.py) của Google Research:
-  1. `moh`: Phút trong giờ (Minute of Hour)
-  2. `hod`: Giờ trong ngày (Hour of Day)
-  3. `dom`: Ngày trong tháng (Day of Month)
-  4. `dow`: Ngày trong tuần (Day of Week)
-  5. `doy`: Ngày trong năm (Day of Year)
-  6. `moy`: Tháng trong năm (Month of Year)
-  7. `woy`: Tuần trong năm (Week of Year)
+Toàn bộ **7/7 tập dữ liệu benchmark chuẩn** được nhóm tác giả Google Research sử dụng trong bài báo đều đã được tải về thực tế trong thư mục [`data/`](../../data/):
+
+| STT | Tập Dữ Liệu | File CSV Nguồn | Tổng Số Dòng (Rows) | Tần Số (Frequency) | Ý Nghĩa Thực Tế |
+| :---: | :--- | :--- | :---: | :---: | :--- |
+| **1** | **Electricity** | [`data/electricity.csv`](../../data/electricity.csv) | **26,304** | 1 Giờ | Phụ tải điện lực của 321 khách hàng (2012 - 2014). |
+| **2** | **Traffic** | [`data/traffic.csv`](../../data/traffic.csv) | **17,544** | 1 Giờ | Tỷ lệ chiếm dụng làn đường từ 862 trạm cảm biến freeway California. |
+| **3** | **Weather** | [`data/weather.csv`](../../data/weather.csv) | **52,696** | 10 Phút | 21 chỉ số thời tiết khí tượng từ trạm Max Planck (áp suất, nhiệt độ, độ ẩm...). |
+| **4** | **ETTh1** | [`data/ETTh1.csv`](../../data/ETTh1.csv) | **17,420** | 1 Giờ | Nhiệt độ dầu máy biến áp điện lực (Trạm 1 - Theo giờ). |
+| **5** | **ETTh2** | [`data/ETTh2.csv`](../../data/ETTh2.csv) | **17,420** | 1 Giờ | Nhiệt độ dầu máy biến áp điện lực (Trạm 2 - Theo giờ). |
+| **6** | **ETTm1** | [`data/ETTm1.csv`](../../data/ETTm1.csv) | **69,680** | 15 Phút | Nhiệt độ dầu máy biến áp điện lực (Trạm 1 - Độ mịn 15 phút). |
+| **7** | **ETTm2** | [`data/ETTm2.csv`](../../data/ETTm2.csv) | **69,680** | 15 Phút | Nhiệt độ dầu máy biến áp điện lực (Trạm 2 - Độ mịn 15 phút). |
 
 ---
 
-## 2. Bảng Kích Thước Tensor Qua Từng Tầng Mạng (Chạy Thực Tế Trên Batch Thật)
+## 2. Bảng Theo Dõi Kích Thước Tensor Qua Từng Tầng Mạng Trên Batch Thật
 
-Cấu hình thử nghiệm chuẩn theo bài báo TiDE:
-- Batch size: $B = 32$
-- Lookback window: $L = 720$ (30 ngày lịch sử)
-- Forecast horizon: $H = 96$ (4 ngày dự báo)
-- Số biến ngoại sinh trích xuất từ CSV: $r = 7$
-- Số chiều nén Feature Projection: $\tilde{r} = 4$ (`temporalWidth = 4`)
-- Số chiều giải mã Decoder: $p = 4$ (`decoderOutputDim = 4`)
-- Tầng ẩn: $\text{hiddenSize} = 512$
+Với mỗi tập dữ liệu trong số 7 tập trên, khi trích xuất một batch thực tế ($B=32, L=720, H=96, \tilde{r}=4, p=4$):
 
-| Bước Xử Lý | Tên Tensor | Ký Hiệu Toán Học | Kích Thước Tensor Thực Tế | Diễn Giải Chi Tiết |
+| Bước Xử Lý | Tên Tensor | Ký Hiệu Toán Học | Kích Thước Tensor PyTorch | Diễn Giải Chi Tiết |
 | :---: | :--- | :---: | :---: | :--- |
-| **Input 1** | Cắt từ CSV (`OT`) | $y_{1:L}$ | `torch.Size([32, 720])` | 32 mẫu, mỗi mẫu có 720 bước lịch sử thực tế. |
-| **Input 2** | Ngoại sinh từ `date` | $x_{1:L+H}$ | `torch.Size([32, 816, 7])` | $720 + 96 = 816$ bước thời gian, mỗi bước có $r=7$ đặc trưng. |
-| **Ground Truth**| Nhãn thật tương lai | $y_{L+1:L+H}$ | `torch.Size([32, 96])` | 96 bước nhiệt độ thực tế dùng để tính loss. |
-| **RevIN** | Quá khứ chuẩn hóa | $y_{\text{norm}}$ | `torch.Size([32, 720])` | Đưa về phân phối chuẩn $\text{Mean}=0, \text{Std}=1$. |
-| **Feature Proj** | Ngoại sinh sau nén | $\tilde{x}_{1:L+H}$ | `torch.Size([32, 816, 4])` | Chiếu từ $r=7$ chiều xuống $\tilde{r}=4$ chiều tinh gọn. |
+| **Input 1** | Chuỗi quá khứ | $y_{1:L}$ | `torch.Size([32, 720])` | 32 mẫu thực tế cắt từ file CSV, mỗi mẫu dài 720 bước. |
+| **Input 2** | Ngoại sinh động | $x_{1:L+H}$ | `torch.Size([32, 816, 7])` | $720 + 96 = 816$ bước, $r=7$ đặc trưng thời gian chuẩn GluonTS. |
+| **Ground Truth**| Nhãn thật tương lai | $y_{L+1:L+H}$ | `torch.Size([32, 96])` | 96 bước giá trị thật tương lai dùng để tính hàm mất mát (loss). |
+| **RevIN** | Quá khứ chuẩn hóa | $y_{\text{norm}}$ | `torch.Size([32, 720])` | Chuẩn hóa cục bộ về $\text{Mean}=0, \text{Std}=1$. |
+| **Feature Proj**| Ngoại sinh sau nén | $\tilde{x}_{1:L+H}$ | `torch.Size([32, 816, 4])` | Chiếu từ $r=7$ xuống $\tilde{r}=4$ chiều tinh gọn (`temporalWidth=4`). |
 | **Flatten** | Trải phẳng ngoại sinh | $\text{vec}(\tilde{x})$ | `torch.Size([32, 3264])` | $816 \times 4 = 3264$ chiều phẳng. |
 | **Concat** | Đầu vào Encoder | $u_{\text{enc}}$ | `torch.Size([32, 3984])` | $720 (y) + 3264 (\tilde{x}) = 3984$ chiều. |
-| **Dense Enc** | Vector bối cảnh ẩn | $e$ | `torch.Size([32, 512])` | Nén tri thức quá khứ thành vector 512 chiều. |
-| **Dense Dec** | Vector giải mã phẳng | $g$ | `torch.Size([32, 384])` | $H \times p = 96 \times 4 = 384$ chiều phẳng. |
-| **Unflatten** | Ma trận tương lai | $d_{L+1:L+H}$ | `torch.Size([32, 96, 4])` | Tái định hình $g$ thành 96 bước, mỗi bước $p=4$ đặc trưng. |
+| **Dense Enc** | Vector bối cảnh ẩn | $e$ | `torch.Size([32, 512])` | Nén toàn bộ quá khứ thành vector 512 chiều. |
+| **Dense Dec** | Vector giải mã phẳng | $g$ | `torch.Size([32, 384])` | $H \times p = 96 \times 4 = 384$ chiều. |
+| **Unflatten** | Ma trận tương lai | $d_{L+1:L+H}$ | `torch.Size([32, 96, 4])` | Tái cấu trúc $g$ thành 96 bước, mỗi bước $p=4$ đặc trưng. |
 | **FutCov** | Ngoại sinh tương lai | $\tilde{x}_{L+1:L+H}$ | `torch.Size([32, 96, 4])` | Cắt lấy 96 bước cuối của tensor ngoại sinh đã nén. |
 | **Stack** | Đầu vào TempDec | $[d ; \tilde{x}]$ | `torch.Size([32, 96, 8])` | Ghép $d$ ($p=4$) và $\tilde{x}$ ($\tilde{r}=4$) thành $4+4=8$ chiều. |
 | **Temp Dec** | Dự báo phi tuyến | $\hat{y}_{\text{NL}}$ | `torch.Size([32, 96])` | Sinh con số dự báo phi tuyến cho từng bước. |
 | **Linear Skip** | Dự báo tuyến tính | $\hat{y}_{\text{Lin}}$ | `torch.Size([32, 96])` | Ánh xạ tuyến tính trực tiếp từ 720 bước sang 96 bước. |
-| **Hợp nhất** | Dự báo chuẩn hóa | $\hat{y}_{\text{norm}}$ | `torch.Size([32, 96])` | Cộng 2 nhánh: $\hat{y}_{\text{NL}} + \hat{y}_{\text{Lin}}$. |
-| **RevIN Denorm**| Dự báo thực tế cuối | $\hat{y}_{L+1:L+H}$ | `torch.Size([32, 96])` | Nhân lại $\sigma$ và cộng lại $\mu$ $\to$ đơn vị nhiệt độ thực tế! |
+| **Hợp nhất** | Dự báo chuẩn hóa | $\hat{y}_{\text{norm}}$ | `torch.Size([32, 96])` | Cộng 2 luồng: $\hat{y}_{\text{NL}} + \hat{y}_{\text{Lin}}$. |
+| **RevIN Denorm**| Dự báo thực tế cuối | $\hat{y}_{L+1:L+H}$ | `torch.Size([32, 96])` | Nhân lại $\sigma$ và cộng lại $\mu$ $\to$ hoàn nguyên thang đo thực tế! |
 
 ---
 
-## 3. Hướng Dẫn Tự Chạy Script Kiểm Thử Trên Máy Tính Của Bạn
+## 3. Kết Quả Kiểm Thử Tự Động Toàn Diện (Toàn Bộ 7/7 Tập Đều PASSED)
 
-File script hoàn chỉnh kết nối file CSV thực tế và mô hình TiDE nằm tại [`test_tensor_shapes.py`](./test_tensor_shapes.py).
-
-Bạn mở terminal PowerShell và gõ:
+Bạn có thể tự chạy lại script kiểm thử trên cả 7 tập bất cứ lúc nào bằng lệnh:
 
 ```powershell
 python tasks-Hieu/sprint-1/test_tensor_shapes.py
 ```
 
-### Kết quả chạy thực tế:
+### Log ghi nhận kết quả thực tế trên terminal:
 
 ```
-===========================================================================
- KIEM TRA LUONG TENSOR TRICH XUAT TRUC TIEP TU FILE CSV BENCHMARK
-===========================================================================
-[*] File CSV nguon: d:\PTDLKD\Project-Experimental-TiDE\data\ETTh1.csv
-[*] Tong so dong trong file CSV       : 17420
-[*] So luong mau cat duoc (N samples) : 16605
+################################################################################
+ CHUONG TRINH KIEM THU TOAN DIEN TREN TOAN BO 7 TAP BENCHMARK TiDE PAPER
+################################################################################
 
-[*] Kich thuoc du lieu thuc te lay tu file CSV:
-    [01] batch_y (Lookback qua khu L=720)           : torch.Size([32, 720])
-    [02] batch_x (Ngoai sinh dong toan bo L+H=816): torch.Size([32, 816, 7]) (r=7 dac trung thoi gian)
-    [03] batch_target (Ground truth nhan tuong lai) : torch.Size([32, 96])
----------------------------------------------------------------------------
-[04] y_norm (Sau chuan hoa RevIN)              : torch.Size([32, 720])
-[05] x_proj (Sau Feature Projection r->4)      : torch.Size([32, 816, 4])
-[06] x_flat (Ngoai sinh trai phang)            : torch.Size([32, 3264])
-[07] enc_in (Dau vao Encoder)                  : torch.Size([32, 3984]) (Ky vong: 3984)
-[08] Vector boi canh an e (Dense Encoder)      : torch.Size([32, 512])
-[09] Vector giai ma phang g (Dense Decoder)    : torch.Size([32, 384]) (H * p = 384)
-[10] Ma tran tuong lai d (Unflatten)           : torch.Size([32, 96, 4])
-[11] x_future (Ngoai sinh tuong lai)           : torch.Size([32, 96, 4])
-[12] temp_in (Dau vao TempDec)                 : torch.Size([32, 96, 8])
-[13] y_nl (Du bao phi tuyen tu TemporalDecoder): torch.Size([32, 96])
-[14] y_lin (Du bao tuyen tinh LinearSkip)      : torch.Size([32, 96])
-[15] y_hat (Du bao thuc te cuoi cung)          : torch.Size([32, 96])
+[*] DANG KIEM THU DATASET: ELECTRICITY (26,304 rows, 25,489 samples)
+    -> Output du bao: torch.Size([32, 96]) (Hoan hao khop voi Ground Truth)
+    [V] KET QUA: Dataset electricity PASSED 100%!
 
-[*] Loss MSE khoi tao voi du lieu that tu CSV  : 20.2063
+[*] DANG KIEM THU DATASET: TRAFFIC (17,544 rows, 16,729 samples)
+    -> Output du bao: torch.Size([32, 96]) (Hoan hao khop voi Ground Truth)
+    [V] KET QUA: Dataset traffic PASSED 100%!
 
-===========================================================================
- KET LUAN: DU LIEU THAT TU FILE CSV DA DUOC NAP VA XU LY 100% HOAN HAO!
-===========================================================================
+[*] DANG KIEM THU DATASET: WEATHER (52,696 rows, 51,881 samples)
+    -> Output du bao: torch.Size([32, 96]) (Hoan hao khop voi Ground Truth)
+    [V] KET QUA: Dataset weather PASSED 100%!
+
+[*] DANG KIEM THU DATASET: ETTH1 (17,420 rows, 16,605 samples)
+    -> Output du bao: torch.Size([32, 96]) (Hoan hao khop voi Ground Truth)
+    [V] KET QUA: Dataset ETTh1 PASSED 100%!
+
+[*] DANG KIEM THU DATASET: ETTH2 (17,420 rows, 16,605 samples)
+    -> Output du bao: torch.Size([32, 96]) (Hoan hao khop voi Ground Truth)
+    [V] KET QUA: Dataset ETTh2 PASSED 100%!
+
+[*] DANG KIEM THU DATASET: ETTM1 (69,680 rows, 68,865 samples)
+    -> Output du bao: torch.Size([32, 96]) (Hoan hao khop voi Ground Truth)
+    [V] KET QUA: Dataset ETTm1 PASSED 100%!
+
+[*] DANG KIEM THU DATASET: ETTM2 (69,680 rows, 68,865 samples)
+    -> Output du bao: torch.Size([32, 96]) (Hoan hao khop voi Ground Truth)
+    [V] KET QUA: Dataset ETTm2 PASSED 100%!
+
+################################################################################
+ CHUC MUNG! TOAN BO 7/7 TAP DATASET BENCHMARK DA DUOC XAC THUC THANH CONG!
+################################################################################
 ```
