@@ -24,7 +24,22 @@ Dưới đây là hình ảnh kiến trúc chính thức trích xuất trực ti
 
 Trước khi đi sâu vào từng giai đoạn xử lý, nhóm tác giả Google Research khẳng định một nguyên lý cốt lõi: **TiDE hoàn toàn không sử dụng cơ chế Attention phức tạp hay mạng hồi quy tuần tự (RNN/LSTM), mà xây dựng toàn bộ mô hình dựa trên các khối Residual Block (Khối Thặng Dư) đa tầng xếp chồng**.
 
-Quan sát khung hình chữ nhật nét đứt màu xanh ở góc phải của Hình 1:
+### 2.1. Sơ đồ khối Residual Block (Tiếng Việt Chuẩn)
+
+```mermaid
+graph TD
+    In["Đầu vào u"] --> Dense1["Dense (ReLU)"]
+    Dense1 --> Dense2["Dense (Linear)"]
+    Dense2 --> Drop["Dropout"]
+    Drop --> Add((+))
+    In -->|"Skip Connection (Linear)"| Add
+    Add --> LN["Layer Norm"]
+    LN --> Out["Đầu ra v"]
+
+    style In fill:#f9f9f9,stroke:#333,stroke-width:1px
+    style Out fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
+    style Add fill:#fff9c4,stroke:#fbc02d,stroke-width:2px
+```
 
 ```
               ┌─────────────────────────────────┐
@@ -48,32 +63,45 @@ Quan sát khung hình chữ nhật nét đứt màu xanh ở góc phải của H
                         [ Đầu vào u ] ────────────────────────────────┘
 ```
 
-### Phân tích chi tiết các thành phần bên trong khối Residual Block:
+### 2.2. Phân tích chi tiết 3 thành phần bên trong khối Residual Block
 
-**1. Tuyến biến đổi phi tuyến chính (Main Nonlinear Branch):**
-- **Tầng Dense (ReLU):** Chiếu tuyến tính từ không gian vector đầu vào $u \in \mathbb{R}^{d_{\text{in}}}$ lên không gian ẩn nội bộ $h \in \mathbb{R}^{d_{\text{hidden}}}$, sau đó kích hoạt phi tuyến qua hàm ReLU:
-  
-$$\text{ReLU}(z) = \max(0, z)$$
+**Thành phần 1: Tuyến biến đổi phi tuyến chính (Main Nonlinear Branch):**
+
+Tầng **Dense (ReLU)** chiếu tuyến tính từ không gian vector đầu vào $u \in \mathbb{R}^{d_{\text{in}}}$ lên không gian ẩn nội bộ $h \in \mathbb{R}^{d_{\text{hidden}}}$, sau đó kích hoạt phi tuyến qua hàm ReLU:
+
+$$
+\text{ReLU}(z) = \max(0, z)
+$$
 
 Thao tác này cho phép mô hình bẻ cong không gian, học được các quy luật phi tuyến tính phức tạp tiềm ẩn giữa các chuỗi dữ liệu.
-- **Tầng Dense (Linear):** Ánh xạ tuyến tính từ không gian ẩn $d_{\text{hidden}}$ sang số chiều đầu ra mong muốn $d_{\text{out}}$. Tầng này đóng vai trò tổng hợp các đặc trưng đã được kích hoạt.
-- **Tầng Dropout:** Ngắt ngẫu nhiên một tỷ lệ kết nối (ví dụ $p_{\text{drop}} = 0.3 - 0.5$) trong quá trình huấn luyện nhằm triệt tiêu sự phụ thuộc đồng thích nghi (*co-adaptation*) giữa các nơ-ron, giúp mô hình có tính khái quát hóa cực cao và không bị học vẹt (*overfitting*).
 
-**2. Nhánh tắt bảo tồn tín hiệu (Residual Skip Connection):**
-- Ánh xạ trực tiếp từ vector đầu vào $u$ tới điểm cộng thặng dư. Nếu số chiều $d_{\text{in}} \ne d_{\text{out}}$, một ma trận chiếu tuyến tính $W_{\text{proj}}$ sẽ được áp dụng:
+Tiếp theo, tầng **Dense (Linear)** ánh xạ tuyến tính từ không gian ẩn $d_{\text{hidden}}$ sang số chiều đầu ra mong muốn $d_{\text{out}}$. Tầng này đóng vai trò tổng hợp các đặc trưng đã được kích hoạt.
 
-$$u_{\text{skip}} = W_{\text{proj}} u$$
+Cuối cùng, tầng **Dropout** ngắt ngẫu nhiên một tỷ lệ kết nối (ví dụ $p_{\text{drop}} = 0.3 - 0.5$) trong quá trình huấn luyện nhằm triệt tiêu sự phụ thuộc đồng thích nghi (*co-adaptation*) giữa các nơ-ron, giúp mô hình có tính khái quát hóa cực cao và chống hiện tượng học vẹt (*overfitting*).
 
-- Cơ chế Skip Connection đóng vai trò then chốt: tạo ra một "đường cao tốc" cho gradient lan truyền ngược mà không bị suy giảm theo cấp số nhân (*Vanishing Gradient*), cho phép huấn luyện các mạng MLP sâu từ 2 đến 4 tầng một cách ổn định tuyệt đối.
+**Thành phần 2: Nhánh tắt bảo tồn tín hiệu (Residual Skip Connection):**
 
-**3. Phép cộng thặng dư và Chuẩn hóa tầng (Addition & Layer Norm):**
-- **Nút tròn `(+)`:** Thực hiện cộng trực tiếp vector kết quả của nhánh phi tuyến với vector của nhánh skip:
+Ánh xạ trực tiếp từ vector đầu vào $u$ tới điểm cộng thặng dư. Nếu số chiều $d_{\text{in}} \ne d_{\text{out}}$, một ma trận chiếu tuyến tính $W_{\text{proj}}$ sẽ được áp dụng:
 
-$$v = \text{Dropout}\left(\text{Dense}_{\text{Linear}}(\text{ReLU}(\text{Dense}_{\text{ReLU}}(u)))\right) + u_{\text{skip}}$$
+$$
+u_{\text{skip}} = W_{\text{proj}} u
+$$
 
-- **Lớp Layer Normalization (Layer Norm):** Chuẩn hóa giá trị trung bình về $0$ và phương sai về $1$ trên toàn bộ chiều đặc trưng của từng mẫu:
+Cơ chế Skip Connection đóng vai trò then chốt: tạo ra một "đường cao tốc" cho gradient lan truyền ngược mà không bị suy giảm theo cấp số nhân (*Vanishing Gradient*), cho phép huấn luyện các mạng MLP sâu từ 2 đến 4 tầng một cách ổn định tuyệt đối.
 
-$$\text{LayerNorm}(v) = \frac{v - \mathbb{E}[v]}{\sqrt{\text{Var}[v] + \epsilon}} \odot \gamma + \beta$$
+**Thành phần 3: Phép cộng thặng dư và Chuẩn hóa tầng (Addition & Layer Norm):**
+
+Tại nút tròn `(+)`, mô hình thực hiện cộng trực tiếp vector kết quả của nhánh phi tuyến với vector của nhánh skip:
+
+$$
+v = \text{Dropout}\left(\text{Dense}_{\text{Linear}}(\text{ReLU}(\text{Dense}_{\text{ReLU}}(u)))\right) + u_{\text{skip}}
+$$
+
+Sau đó, lớp **Layer Normalization (Layer Norm)** chuẩn hóa giá trị trung bình về $0$ và phương sai về $1$ trên toàn bộ chiều đặc trưng của từng mẫu:
+
+$$
+\text{LayerNorm}(v) = \frac{v - \mathbb{E}[v]}{\sqrt{\text{Var}[v] + \epsilon}} \odot \gamma + \beta
+$$
 
 Kỹ thuật này giữ cho phân phối tín hiệu đầu ra của mỗi khối luôn nằm trong miền giá trị tối ưu, không bị trôi dạt phân phối nội tại (*Internal Covariate Shift*).
 
@@ -108,15 +136,21 @@ Trong chuỗi thời gian thực tế, dữ liệu thường xuyên gặp hiện
 
 **Bước 1: Tính toán kỳ vọng và độ lệch chuẩn của từng chuỗi:**
 
-$$\mu^{(i)} = \frac{1}{L} \sum_{t=1}^L y_t^{(i)}$$
+$$
+\mu^{(i)} = \frac{1}{L} \sum_{t=1}^L y_t^{(i)}
+$$
 
-$$\sigma^{(i)} = \sqrt{\frac{1}{L} \sum_{t=1}^L \left( y_t^{(i)} - \mu^{(i)} \right)^2 + \epsilon}$$
+$$
+\sigma^{(i)} = \sqrt{\frac{1}{L} \sum_{t=1}^L \left( y_t^{(i)} - \mu^{(i)} \right)^2 + \epsilon}
+$$
 
 *(Trong đó $\epsilon = 10^{-5}$ là hằng số cực nhỏ nhằm ngăn chặn lỗi chia cho 0).*
 
 **Bước 2: Chuẩn hóa chuỗi thời gian về phân phối chuẩn:**
 
-$$y_{\text{norm}, t}^{(i)} = \frac{y_t^{(i)} - \mu^{(i)}}{\sigma^{(i)}} \quad \forall t \in \{1, 2, \dots, L\}$$
+$$
+y_{\text{norm}, t}^{(i)} = \frac{y_t^{(i)} - \mu^{(i)}}{\sigma^{(i)}} \quad \forall t \in \{1, 2, \dots, L\}
+$$
 
 **Ý nghĩa kỹ thuật:** Phép chuẩn hóa này được thực hiện độc lập trên từng chuỗi con (per-instance), giúp đưa mọi chuỗi về mức trung bình bằng 0 và độ biến thiên bằng 1. Hai giá trị thống kê $(\mu^{(i)}, \sigma^{(i)})$ được tách riêng và đưa vào bộ nhớ tạm để tái sử dụng ở Giai đoạn 8.
 
@@ -142,7 +176,9 @@ Tại mỗi bước thời gian $t$, dữ liệu ngoại sinh có $r = 7$ đặc
 
 Do đó, TiDE áp dụng một khối Residual Block nhỏ (gọi là **Feature Projection**) để nén độc lập các đặc trưng tại từng bước thời gian:
 
-$$\tilde{x}_t^{(i)} = \text{ResidualBlock}_{\text{proj}}\left(x_t^{(i)}\right) \in \mathbb{R}^{\tilde{r}} \quad \forall t \in \{1, 2, \dots, L+H\}$$
+$$
+\tilde{x}_t^{(i)} = \text{ResidualBlock}_{\text{proj}}\left(x_t^{(i)}\right) \in \mathbb{R}^{\tilde{r}} \quad \forall t \in \{1, 2, \dots, L+H\}
+$$
 
 **Đặc điểm kiến trúc:**
 * Số chiều được nén từ $r = 7$ xuống $\tilde{r} = 4$ (`temporalWidth = 4`).
@@ -173,7 +209,9 @@ Gồm 3 thành phần thông tin độc lập đã được xử lý sơ bộ:
 
 Ma trận ngoại sinh 2D kích thước $(L+H) \times \tilde{r}$ được duỗi thẳng thành một vector 1D:
 
-$$\text{vec}\left(\tilde{x}_{1:L+H}^{(i)}\right) = \left[ \tilde{x}_{1, 1}^{(i)}, \dots, \tilde{x}_{1, \tilde{r}}^{(i)}, \dots, \tilde{x}_{L+H, 1}^{(i)}, \dots, \tilde{x}_{L+H, \tilde{r}}^{(i)} \right]^T \in \mathbb{R}^{(L+H)\tilde{r}}$$
+$$
+\text{vec}\left(\tilde{x}_{1:L+H}^{(i)}\right) = \left[ \tilde{x}_{1, 1}^{(i)}, \dots, \tilde{x}_{1, \tilde{r}}^{(i)}, \dots, \tilde{x}_{L+H, 1}^{(i)}, \dots, \tilde{x}_{L+H, \tilde{r}}^{(i)} \right]^T \in \mathbb{R}^{(L+H)\tilde{r}}
+$$
 
 Độ dài của vector phẳng: `(720 + 96) * 4 = 816 * 4 = 3,264` phần tử.
 
@@ -181,7 +219,9 @@ $$\text{vec}\left(\tilde{x}_{1:L+H}^{(i)}\right) = \left[ \tilde{x}_{1, 1}^{(i)}
 
 Ghép nối liên tiếp chuỗi lịch sử, vector ngoại sinh phẳng và vector thuộc tính tĩnh thành một siêu vector duy nhất:
 
-$$u_{\text{enc}}^{(i)} = \begin{bmatrix} y_{\text{norm}, 1:L}^{(i)} \\ \text{vec}\left(\tilde{x}_{1:L+H}^{(i)}\right) \\ a^{(i)} \end{bmatrix} \in \mathbb{R}^{L + (L+H)\tilde{r} + p_{\text{static}}}$$
+$$
+u_{\text{enc}}^{(i)} = \begin{bmatrix} y_{\text{norm}, 1:L}^{(i)} \\ \text{vec}\left(\tilde{x}_{1:L+H}^{(i)}\right) \\ a^{(i)} \end{bmatrix} \in \mathbb{R}^{L + (L+H)\tilde{r} + p_{\text{static}}}
+$$
 
 Tổng số chiều đầu vào: `720 + 3,264 + 0 = 3,984` chiều.
 
@@ -205,18 +245,22 @@ Tổng số chiều đầu vào: `720 + 3,264 + 0 = 3,984` chiều.
 
 Siêu vector $u_{\text{enc}}^{(i)}$ được đẩy qua bộ mã hóa **Dense Encoder** gồm $n_e$ khối Residual Block xếp chồng liên tiếp (`numEncoderLayers = 2` trên Electricity):
 
-$$e_1^{(i)} = \text{ResidualBlock}_{\text{enc}, 1}\left(u_{\text{enc}}^{(i)}\right)$$
+$$
+e_1^{(i)} = \text{ResidualBlock}_{\text{enc}, 1}\left(u_{\text{enc}}^{(i)}\right)
+$$
 
-$$e^{(i)} = \text{ResidualBlock}_{\text{enc}, n_e}\left(e_{n_e-1}^{(i)}\right) \in \mathbb{R}^{\text{hiddenSize}}$$
+$$
+e^{(i)} = \text{ResidualBlock}_{\text{enc}, n_e}\left(e_{n_e-1}^{(i)}\right) \in \mathbb{R}^{d_{\text{hidden}}}
+$$
 
 **Bản chất xử lý:**
-* Mỗi khối Residual Block chiếu thông tin qua không gian ẩn `hiddenSize = 1024`.
+* Mỗi khối Residual Block chiếu thông tin qua không gian ẩn `hidden_size = 1024`.
 * Nhờ các phép nhân ma trận dày đặc kết hợp phi tuyến ReLU, Encoder tổng hợp toàn bộ thông tin lịch sử $L$ bước, các xu hướng tương lai $H$ bước của biến ngoại sinh, và thuộc tính tĩnh $a^{(i)}$ thành một vector biểu diễn tri thức toàn cục duy nhất $e^{(i)}$ (*Context Embedding*).
 * Mọi sự tương quan đa biến và phụ thuộc xa (*Long-term dependencies*) đều được nén trọn vẹn vào vector $e^{(i)}$ này.
 
 #### 📤 3. Output (Đầu ra)
 
-* Vector bối cảnh ẩn toàn cục: $e^{(i)} \in \mathbb{R}^{\text{hiddenSize}}$  
+* Vector bối cảnh ẩn toàn cục: $e^{(i)} \in \mathbb{R}^{d_{\text{hidden}}}$  
   Kích thước tensor: `(B, hidden_size) = (32, 1024)`
 
 ---
@@ -225,7 +269,7 @@ $$e^{(i)} = \text{ResidualBlock}_{\text{enc}, n_e}\left(e_{n_e-1}^{(i)}\right) \
 
 #### 📥 1. Input (Đầu vào)
 
-* Vector bối cảnh ẩn toàn cục: $e^{(i)} \in \mathbb{R}^{\text{hiddenSize}}$  
+* Vector bối cảnh ẩn toàn cục: $e^{(i)} \in \mathbb{R}^{d_{\text{hidden}}}$  
   Kích thước tensor: `(B, 1024)`
 
 #### ⚙️ 2. Công thức xử lý
@@ -236,7 +280,9 @@ Giai đoạn này đảm nhận nhiệm vụ chuyển đổi từ biểu diễn 
 
 Vector $e^{(i)}$ được giải mã qua chuỗi $n_d$ khối Residual Block (`numDecoderLayers = 2`):
 
-$$g^{(i)} = \text{DenseDecoder}\left(e^{(i)}\right) \in \mathbb{R}^{H \cdot p}$$
+$$
+g^{(i)} = \text{DenseDecoder}\left(e^{(i)}\right) \in \mathbb{R}^{H \cdot p}
+$$
 
 Trong đó, khối cuối cùng có số chiều đầu ra được thiết lập chính xác bằng tích $H \cdot p = 96 \times 8 = 768$.
 
@@ -244,7 +290,9 @@ Trong đó, khối cuối cùng có số chiều đầu ra được thiết lậ
 
 Vector phẳng $g^{(i)}$ được bẻ thành ma trận 2D gồm đúng $H = 96$ hàng, mỗi hàng là một vector đặc trưng bối cảnh tương lai $d_t^{(i)}$ có độ dài $p = 8$:
 
-$$D^{(i)} = \text{Reshape}\left(g^{(i)}, (H, p)\right) = \begin{bmatrix} d_{L+1}^{(i)} \\ d_{L+2}^{(i)} \\ \vdots \\ d_{L+H}^{(i)} \end{bmatrix} \in \mathbb{R}^{H \times p}$$
+$$
+D^{(i)} = \text{Reshape}\left(g^{(i)}, (H, p)\right) = \begin{bmatrix} d_{L+1}^{(i)} \\ d_{L+2}^{(i)} \\ \vdots \\ d_{L+H}^{(i)} \end{bmatrix} \in \mathbb{R}^{H \times p}
+$$
 
 **Ý nghĩa:** Mỗi vector $d_t^{(i)} \in \mathbb{R}^p$ đại diện cho trạng thái nội tại được mô hình dự đoán riêng cho mốc thời gian tương lai thứ $t$.
 
@@ -271,7 +319,9 @@ Tại mỗi bước thời gian tương lai $t \in \{L+1, L+2, \dots, L+H\}$, m�
 
 Ghép nối vector bối cảnh với vector ngoại sinh tương lai:
 
-$$\text{Input}_{\text{temp}, t}^{(i)} = \begin{bmatrix} d_t^{(i)} \\ \tilde{x}_t^{(i)} \end{bmatrix} \in \mathbb{R}^{p + \tilde{r}}$$
+$$
+\text{Input}_{\text{temp}, t}^{(i)} = \begin{bmatrix} d_t^{(i)} \\ \tilde{x}_t^{(i)} \end{bmatrix} \in \mathbb{R}^{p + \tilde{r}}
+$$
 
 Kích thước vector ghép tại mỗi bước: `p + r_tilde = 8 + 4 = 12` chiều.
 
@@ -279,11 +329,15 @@ Kích thước vector ghép tại mỗi bước: `p + r_tilde = 8 + 4 = 12` chi�
 
 Áp dụng một khối Residual Block độc lập ánh xạ từ $(p + \tilde{r}) = 12$ chiều về đúng $1$ giá trị vô hướng:
 
-$$\hat{y}_{\text{NL}, t}^{(i)} = \text{TemporalDecoder}\left( \begin{bmatrix} d_t^{(i)} \\ \tilde{x}_t^{(i)} \end{bmatrix} \right) \in \mathbb{R} \quad \forall t \in \{L+1, \dots, L+H\}$$
+$$
+\hat{y}_{\text{NL}, t}^{(i)} = \text{TemporalDecoder}\left( \begin{bmatrix} d_t^{(i)} \\ \tilde{x}_t^{(i)} \end{bmatrix} \right) \in \mathbb{R} \quad \forall t \in \{L+1, \dots, L+H\}
+$$
 
 Tập hợp kết quả của toàn bộ $H$ bước tạo thành vector dự báo phi tuyến:
 
-$$\hat{y}_{\text{NL}}^{(i)} = \left[ \hat{y}_{\text{NL}, L+1}^{(i)}, \hat{y}_{\text{NL}, L+2}^{(i)}, \dots, \hat{y}_{\text{NL}, L+H}^{(i)} \right]^T \in \mathbb{R}^H$$
+$$
+\hat{y}_{\text{NL}}^{(i)} = \left[ \hat{y}_{\text{NL}, L+1}^{(i)}, \hat{y}_{\text{NL}, L+2}^{(i)}, \dots, \hat{y}_{\text{NL}, L+H}^{(i)} \right]^T \in \mathbb{R}^H
+$$
 
 **Tại sao cơ chế này vượt trội?**  
 Nếu ngày mai là ngày lễ hoặc một đợt rét đột xuất, thông tin đó xuất hiện trực tiếp trong $\tilde{x}_{L+1}^{(i)}$. Việc đưa trực tiếp vào Temporal Decoder giúp mô hình điều chỉnh ngay lập tức giá trị dự báo mà không bị tiêu hao hay làm mờ qua các tầng biểu diễn trừu tượng.
@@ -306,7 +360,9 @@ Nếu ngày mai là ngày lễ hoặc một đợt rét đột xuất, thông ti
 
 Song song với toàn bộ hệ thống mạng nơ-ron sâu phức tạp ở các giai đoạn 2 đến 6, TiDE thiết lập một đường truyền tắt tuyến tính trực tiếp (lấy cảm hứng từ mô hình DLinear):
 
-$$\hat{y}_{\text{Lin}}^{(i)} = W_{\text{skip}} \cdot y_{\text{norm}, 1:L}^{(i)} + b_{\text{skip}} \in \mathbb{R}^H$$
+$$
+\hat{y}_{\text{Lin}}^{(i)} = W_{\text{skip}} \cdot y_{\text{norm}, 1:L}^{(i)} + b_{\text{skip}} \in \mathbb{R}^H
+$$
 
 Trong đó:
 * $W_{\text{skip}} \in \mathbb{R}^{H \times L}$ là ma trận trọng số kích thước $(96, 720)$.
@@ -339,7 +395,9 @@ Gồm 3 thành phần sẵn sàng cho bước hoàn thiện:
 
 Cộng từng phần tử giữa dự báo phi tuyến và dự báo tuyến tính:
 
-$$\hat{y}_{\text{norm}}^{(i)} = \hat{y}_{\text{NL}}^{(i)} + \hat{y}_{\text{Lin}}^{(i)} \in \mathbb{R}^H$$
+$$
+\hat{y}_{\text{norm}}^{(i)} = \hat{y}_{\text{NL}}^{(i)} + \hat{y}_{\text{Lin}}^{(i)} \in \mathbb{R}^H
+$$
 
 Kết quả $\hat{y}_{\text{norm}}^{(i)}$ chính là giá trị dự báo tối ưu trong miền dữ liệu chuẩn hóa (phân phối chuẩn).
 
@@ -347,11 +405,15 @@ Kết quả $\hat{y}_{\text{norm}}^{(i)}$ chính là giá trị dự báo tối 
 
 Sử dụng lại độ lệch chuẩn $\sigma^{(i)}$ và giá trị trung bình $\mu^{(i)}$ đã trích xuất từ Giai đoạn 1 để đưa dữ liệu trở về đơn vị vật lý ban đầu:
 
-$$\hat{y}_{L+1:L+H}^{(i)} = \hat{y}_{\text{norm}}^{(i)} \odot \sigma^{(i)} + \mu^{(i)}$$
+$$
+\hat{y}_{L+1:L+H}^{(i)} = \hat{y}_{\text{norm}}^{(i)} \odot \sigma^{(i)} + \mu^{(i)}
+$$
 
 Cụ thể tại từng bước thời gian tương lai $t \in \{L+1, \dots, L+H\}$:
 
-$$\hat{y}_t^{(i)} = \hat{y}_{\text{norm}, t}^{(i)} \cdot \sigma^{(i)} + \mu^{(i)}$$
+$$
+\hat{y}_t^{(i)} = \hat{y}_{\text{norm}, t}^{(i)} \cdot \sigma^{(i)} + \mu^{(i)}
+$$
 
 #### 📤 3. Output (Đầu ra)
 
@@ -384,7 +446,7 @@ $$\hat{y}_t^{(i)} = \hat{y}_{\text{norm}, t}^{(i)} \cdot \sigma^{(i)} + \mu^{(i)
 | **$x_{1:L+H}^{(i)}$** | **Dynamic Covariates** (Biến ngoại sinh động) | Các biến biến thiên theo thời gian đã biết cho cả quá khứ lẫn tương lai. | $\mathbb{R}^{(L+H) \times r}$ |
 | **$a^{(i)}$** | **Attributes** (Thuộc tính tĩnh) | Các biến cố định của chuỗi (mã cửa hàng, trạm cảm biến). | $\mathbb{R}^{p_{\text{static}}}$ |
 | **$\tilde{x}_{1:L+H}^{(i)}$** | **Projected Covariates** (Ngoại sinh đã nén) | Đầu ra sau khi nén qua khối Feature Projection (`temporalWidth = 4`). | $\mathbb{R}^{(L+H) \times \tilde{r}}$ |
-| **$e^{(i)}$** | **Context Embedding** (Vector bối cảnh ẩn) | Đầu ra của Dense Encoder, chứa đựng tri thức toàn cục của chuỗi. | $\mathbb{R}^{\text{hiddenSize}}$ |
+| **$e^{(i)}$** | **Context Embedding** (Vector bối cảnh ẩn) | Đầu ra của Dense Encoder, chứa đựng tri thức toàn cục của chuỗi. | $\mathbb{R}^{d_{\text{hidden}}}$ |
 | **$g^{(i)}$** | **Decoded Vector** (Vector giải mã phẳng) | Đầu ra của Dense Decoder trước khi Unflatten. | $\mathbb{R}^{H \cdot p}$ |
 | **$d_{L+1:L+H}^{(i)}$** | **Decoded Feature Matrix** (Đặc trưng bối cảnh tương lai) | Ma trận $H$ hàng sau khi Unflatten vector $g^{(i)}$. | $\mathbb{R}^{H \times p}$ |
 | **$\tilde{x}_{L+1:L+H}^{(i)}$** | **Future Covariates** (Ngoại sinh tương lai) | $H$ bước tương lai của biến ngoại sinh đưa thẳng vào Temporal Decoder. | $\mathbb{R}^{H \times \tilde{r}}$ |
