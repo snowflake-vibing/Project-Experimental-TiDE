@@ -14,7 +14,7 @@
 | Chỉ số theo dõi | Trạng thái hiện tại | Tỷ lệ hoàn thành |
 | :--- | :---: | :---: |
 | **Tài liệu Antigravity soạn thảo** | 5/5 tài liệu hoàn tất | **100%** ✅ |
-| **Nội dung Hiệu đã tự kiểm chứng** | 1/5 hạng mục đã duyệt | **20%** 🔄 |
+| **Nội dung Hiệu đã tự kiểm chứng** | 2/5 hạng mục đã duyệt | **40%** 🔄 |
 | **Mục tiêu thời gian (Deadline)** | 21h00 – 24/10/2026 | *Đúng tiến độ* ⏱️ |
 
 ---
@@ -24,7 +24,7 @@
 | STT | Hạng Mục Công Việc | Tài Liệu Tương Ứng | Trạng Thái Soạn Thảo | Trạng Thái Hiệu Tự Check | Ghi Chú & Nội Dung Trọng Tâm |
 | :---: | :--- | :--- | :---: | :---: | :--- |
 | **01** | **Sơ đồ Kiến trúc TiDE & Ký hiệu Toán học** | [`01_architecture_diagram.md`](./01_architecture_diagram.md) | ✅ Hoàn thành | ✅ **ĐÃ TỰ CHECK** | Khớp 100% với Figure 1 (Trang 5 PDF), tiếng Việt có dấu, đầy đủ các biến $y, x, a, \tilde{x}, e, g, d, \hat{y}$ và 5 thao tác. |
-| **02** | **Giải phẫu Luồng Forward Pass (Paper vs Code)** | [`02_forward_pass_walkthrough.md`](./02_forward_pass_walkthrough.md) | ✅ Hoàn thành | ⏳ **CHƯA CHECK** | Bảng đối chiếu 11 bước, phân tích sâu từng tầng toán học Section 4 và code PyTorch class `TiDEForwardPass`. |
+| **02** | **Giải phẫu Luồng Forward Pass (Paper vs Code)** | [`02_forward_pass_walkthrough.md`](./02_forward_pass_walkthrough.md) | ✅ Hoàn thành | ✅ **ĐÃ TỰ CHECK** | Bảng đối chiếu 11 bước, phân tích sâu từng tầng toán học Section 4 và code PyTorch class `TiDEForwardPass`. |
 | **03** | **Theo dõi Kích thước Tensor & Script Kiểm thử** | [`03_tensor_shapes_and_testing.md`](./03_tensor_shapes_and_testing.md)<br>[`test_tensor_shapes.py`](./test_tensor_shapes.py) | ✅ Hoàn thành | ⏳ **CHƯA CHECK** | Bảng shape chi tiết từng nút mạng; script Python chạy thành công trên terminal, kiểm chứng không lệch chiều. |
 | **04** | **Cấu hình Siêu tham số & Kết quả 2 Dataset** | [`04_hyperparameters_and_benchmarks.md`](./04_hyperparameters_and_benchmarks.md) | ✅ Hoàn thành | ⏳ **CHƯA CHECK** | 2 tập `Electricity` & `Traffic`; bảng siêu tham số từ Table 8, bảng kết quả MSE/MAE từ Table 2 của bài báo. |
 | **05** | **Biên bản Tự kiểm chứng & Câu hỏi Phản biện** | [`05_self_verification.md`](./05_self_verification.md) | ✅ Hoàn thành | ⏳ **CHƯA CHECK** | Ghi nhận bằng chứng đối chiếu thực tế từng trang PDF và câu trả lời bộ 3 câu hỏi phản biện hóc búa nhất. |
@@ -47,12 +47,12 @@
 
 ---
 
-### 2.2. Phần 2: Giải Phẫu Luồng Forward Pass (⏳ CHƯA CHECK)
+### 2.2. Phần 2: Giải Phẫu Luồng Forward Pass (✅ ĐÃ HOÀN THÀNH)
 
-- [ ] Đọc file [`02_forward_pass_walkthrough.md`](./02_forward_pass_walkthrough.md) và đối chiếu với Mục 4 của bài báo (Trang 4 - 6).
-- [ ] Kiểm tra xem 11 bước xử lý có ánh xạ đúng từ công thức toán sang code PyTorch không:
+- [x] Đọc file [`02_forward_pass_walkthrough.md`](./02_forward_pass_walkthrough.md) và đối chiếu với Mục 4 của bài báo (Trang 4 - 6).
+- [x] Kiểm tra xem 11 bước xử lý có ánh xạ đúng từ công thức toán sang code PyTorch không:
   - Chuẩn hóa RevIN $\to$ Feature Projection $\to$ Flatten $\to$ Concatenate $\to$ Dense Encoder $\to$ Dense Decoder $\to$ Unflatten $\to$ Temporal Decoder $\to$ Global Linear Skip $\to$ Residual Addition $\to$ RevIN Denormalize.
-- [ ] Tự giải thích được bản chất kỹ thuật:
+- [x] Tự giải thích được bản chất kỹ thuật:
   - *Tại sao phải nén biến ngoại sinh trước khi đưa vào Encoder?*
   - *Tại sao phải trải phẳng (Flatten) trước Encoder và tái tạo ma trận (Unflatten) sau Decoder?*
   - *Tại sao nhánh Global Linear Skip lại giúp mô hình không bị suy thoái gradient?*
@@ -96,7 +96,7 @@
 Để chính thức đóng Sprint 1 và chuyển giao kết quả, toàn bộ các tiêu chí sau phải đạt trạng thái `[x]`:
 
 - [x] **DoD 1**: Đã có sơ đồ kiến trúc hoàn chỉnh tiếng Việt có dấu, khớp 100% với Figure 1 của paper (Đã nghiệm thu Phần 1).
-- [ ] **DoD 2**: Hiệu đã tự đọc hiểu và duyệt qua file Forward Pass Walkthrough (Phần 2).
+- [x] **DoD 2**: Hiệu đã tự đọc hiểu và duyệt qua file Forward Pass Walkthrough (Phần 2).
 - [ ] **DoD 3**: Hiệu đã trực tiếp chạy lệnh kiểm thử Tensor shape trên terminal máy tính thật và kết quả pass 100% (Phần 3).
 - [ ] **DoD 4**: Hiệu đã tự đối chiếu bảng số liệu thực nghiệm Table 2 & Table 8 trong PDF gốc (Phần 4).
 - [ ] **DoD 5**: Hiệu đã tự trả lời tự tin, mạch lạc 3 câu hỏi phản biện cốt lõi mà không cần nhìn tài liệu (Phần 5).
