@@ -37,6 +37,7 @@ Mỗi thuật ngữ trong từ điển đều tuân thủ nghiêm ngặt **Quy c
 | **07** | [`residual_block.md`](./residual_block.md) | **Bức tranh chú mèo trên tấm kính trong suốt** | Khối nơ-ron phần dư dày đặc, truyền thẳng dữ liệu gốc qua skip connection và chỉ học phần chênh lệch (residual). |
 | **08** | [`revin.md`](./revin.md) | **Đổi tiền khi đi du lịch nước ngoài** | Chuẩn hóa thực thể đảo nghịch 2 chiều (Reversible Instance Normalization), trị căn bệnh trôi dạt phân phối (Non-stationarity). |
 | **09** | [`temporal_decoder.md`](./temporal_decoder.md) | **Người đưa thư hỏa tốc tiệm pizza** | Bộ giải mã theo thời gian kết hợp ma trận dự báo và làn đường cao tốc (Covariate Highway) phản ứng tức thì với tương lai. |
+| **10** | [`tensor.md`](./tensor.md) | **Khối Rubik & chiếc tủ đồ chơi nhiều ngăn** | Mảng dữ liệu đa chiều ($0\text{D} \to n\text{D}$), đơn vị chứa dữ liệu nền tảng được biến đổi qua các tầng trong TiDE. |
 
 ---
 

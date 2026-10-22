@@ -109,16 +109,23 @@ Giả sử bạn thiết kế một mô hình TiDE cực kỳ đồ sộ với 3
 - Tầng 3: $\hat{y} = W_3 \cdot h_2 + b_3$
 
 **Nếu KHÔNG chèn hàm kích hoạt phi tuyến như ReLU ở giữa các tầng:**
+
 $$
-\begin{aligned}
-\hat{y} &= W_3 \cdot \left( W_2 \cdot (W_1 \cdot x + b_1) + b_2 \right) + b_3 \\
-&= (W_3 \cdot W_2 \cdot W_1) \cdot x + (W_3 \cdot W_2 \cdot b_1 + W_3 \cdot b_2 + b_3) \\
-&= \mathbf{W_{\text{tổng}} \cdot x + b_{\text{tổng}}}
-\end{aligned}
+\hat{y} = W_3 \cdot \Big( W_2 \cdot (W_1 \cdot x + b_1) + b_2 \Big) + b_3
 $$
 
+$$
+\hat{y} = (W_3 \cdot W_2 \cdot W_1) \cdot x + (W_3 \cdot W_2 \cdot b_1 + W_3 \cdot b_2 + b_3)
+$$
+
+$$
+\hat{y} = W_{\text{total}} \cdot x + b_{\text{total}}
+$$
+
+> *(Trong đó: $W_{\text{total}} = W_3 \cdot W_2 \cdot W_1$ là một ma trận trọng số gộp duy nhất, $b_{\text{total}}$ là hệ số bù gộp).*
+
 > ⚠️ **Hậu quả kinh hoàng**:  
-> Tích của 3 ma trận $W_3 \cdot W_2 \cdot W_1$ chỉ là **MỘT MA TRẬN DUY NHẤT** $W_{\text{tổng}}$!  
+> Tích của 3 ma trận $W_3 \cdot W_2 \cdot W_1$ chỉ là **MỘT MA TRẬN DUY NHẤT** $W_{\text{total}}$!  
 > Dù bạn có xếp chồng 100 tầng nơ-ron sâu, đầu tư hàng triệu tham số và chạy trên cụm GPU nghìn đô, toàn bộ mạng sâu của bạn **bị suy biến (collapse) thành đúng một mô hình Hồi quy Tuyến tính (Linear Regression) đơn giản của thế kỷ 19**! Mô hình hoàn toàn không có khả năng học các mối quan hệ phi tuyến.
 
 ```mermaid
@@ -212,6 +219,6 @@ flowchart TD
 1. **ReLU là gì?**  
    Là hàm kích hoạt $\max(0, x)$, hoạt động như một chiếc van một chiều: Chặn toàn bộ số âm về $0$ và cho số dương đi qua nguyên vẹn.
 2. **Nếu không dùng ReLU thì chuyện gì sẽ xảy ra?**  
-   Toàn bộ mạng sâu dù có 100 tầng cũng sẽ **sụp đổ về mặt toán học thành đúng 1 tầng hồi quy tuyến tính đơn giản** ($W_3 W_2 W_1 = W_{\text{tổng}}$). Mô hình chỉ vẽ được một đường thẳng tắp, hoàn toàn bất lực trước tính chu kỳ nhấp nhô và các bước nhảy vọt của dữ liệu thực tế!
+   Toàn bộ mạng sâu dù có 100 tầng cũng sẽ **sụp đổ về mặt toán học thành đúng 1 tầng hồi quy tuyến tính đơn giản** ($W_3 W_2 W_1 = W_{\text{total}}$). Mô hình chỉ vẽ được một đường thẳng tắp, hoàn toàn bất lực trước tính chu kỳ nhấp nhô và các bước nhảy vọt của dữ liệu thực tế!
 3. **Tại sao TiDE chọn ReLU mà không dùng Sigmoid?**  
    Vì ReLU có đạo hàm bằng $1$ khi $x > 0$ giúp dòng gradient truyền ngược nguyên vẹn không bao giờ bị triệt tiêu (*Vanishing Gradient*), đồng thời tính toán siêu tốc trên GPU do không phải tính hàm mũ $e^x$.

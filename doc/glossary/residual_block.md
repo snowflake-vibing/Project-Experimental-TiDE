@@ -16,7 +16,7 @@ Hãy tưởng tượng bạn đang đạp xe lên một con dốc cao:
 - **Nếu đi xe đạp trợ lực điện (Cách của Residual Block):**
   - **Động cơ điện (Nhánh tắt - Skip Connection):** Luôn tự động đẩy bạn đi một vận tốc cơ bản cố định $u$ mà bạn không tốn chút sức nào!
   - **Chân bạn (Nhánh học phần dư - Residual $F(u)$):** Chỉ cần đạp thêm một chút xíu $\Delta$ để tăng tốc vượt qua đoạn gập ghềnh.
-  - **Tổng vận tốc:** $\text{Vận tốc} = \text{Động cơ tự đẩy } (u) + \text{Sức bạn đạp thêm } (F(u))$.
+  - **Tổng vận tốc:** $v = u + F(u)$ (trong đó $u$ là trợ lực tự động từ động cơ điện, $F(u)$ là sức đạp thêm của chân).
 
 ```mermaid
 flowchart LR
@@ -118,7 +118,7 @@ Tại sao các mạng nơ-ron trước năm 2015 cứ hễ xếp sâu quá 10 t�
 Khi huấn luyện mạng nơ-ron bằng giải thuật Lan truyền ngược (Backpropagation), máy tính dùng quy tắc dây chuyền (Chain Rule) để tính đạo hàm từ đầu ra ngược về đầu vào:
 
 $$
-\frac{\partial \text{Loss}}{\partial \text{Đầu vào}} = \frac{\partial \text{Loss}}{\partial z_n} \cdot \frac{\partial z_n}{\partial z_{n-1}} \cdot \frac{\partial z_{n-1}}{\partial z_{n-2}} \dots \frac{\partial z_1}{\partial \text{Đầu vào}}
+\frac{\partial \mathcal{L}}{\partial u} = \frac{\partial \mathcal{L}}{\partial z_n} \cdot \frac{\partial z_n}{\partial z_{n-1}} \cdot \frac{\partial z_{n-1}}{\partial z_{n-2}} \dots \frac{\partial z_1}{\partial u}
 $$
 
 Nếu mỗi tầng mạng có đạo hàm chỉ là $0.5$, qua 10 tầng liên tiếp:  
