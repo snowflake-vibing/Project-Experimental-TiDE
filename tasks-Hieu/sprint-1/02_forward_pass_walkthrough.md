@@ -49,18 +49,18 @@ Toàn bộ quy trình lan truyền xuôi `forward(y, x, a)` được chia thành
 
 | Bước | Tên Thao Tác | Vị Trí Trong Paper | Công Thức Toán Học Chính Thức | Dòng Code PyTorch Thực Thi | Tensor Shape Biến Đổi |
 |:---:|:---|:---|:---|:---|:---:|
-| **0** | **RevIN Norm** | Bảng 8 & Phụ lục B.1 | $y_{\text{norm}} = (y - \mu) / \sigma$ | `y_norm = (y - mean) / std` | $(B, L) \to (B, L)$ |
-| **1** | **Feature Proj** | Section 4.1, Công thức (3) | $\tilde{x}_t = \text{Proj}(x_t) \in \mathbb{R}^{\tilde{r}}$ | `x_proj = self.feature_projection(x)` | $(B, L+H, r) \to (B, L+H, \tilde{r})$ |
-| **2** | **Flatten** | Section 4.1 & Hình 1 | $\text{vec}(\tilde{x}) \in \mathbb{R}^{(L+H)\tilde{r}}$ | `x_flat = x_proj.flatten(start_dim=1)` | $(B, L+H, \tilde{r}) \to (B, (L+H)\tilde{r})$ |
-| **3** | **Concat** | Section 4.1, Công thức (4) | $u_{\text{enc}} = [ y_{\text{norm}} ; \text{vec}(\tilde{x}) ; a ]$ | `enc_in = torch.cat([y_norm, x_flat, a], dim=-1)` | Ghép thành $(B, d_{\text{enc}})$ |
-| **4** | **Dense Enc** | Section 4.1, Công thức (4) | $e = \text{Encoder}(u_{\text{enc}})$ | `e = self.encoder(enc_in)` | $(B, d_{\text{enc}}) \to (B, d_{\text{hidden}})$ |
-| **5** | **Dense Dec** | Section 4.2 (Trang 6) | $g = \text{Decoder}(e) \in \mathbb{R}^{H \cdot p}$ | `g = self.decoder(e)` | $(B, d_{\text{hidden}}) \to (B, H \cdot p)$ |
-| **6** | **Unflatten** | Section 4.2, Phép Reshape | $D = \text{Reshape}(g) \in \mathbb{R}^{H \times p}$ | `d = g.view(B, H, p)` | $(B, H \cdot p) \to (B, H, p)$ |
-| **7** | **Future Stack**| Section 4.2 & Hình 1 | $[ d_t ; \tilde{x}_{L+t} ]$ tại mỗi bước $t$ | `temp_in = torch.cat([d, x_future], dim=-1)` | Ghép thành $(B, H, p + \tilde{r})$ |
-| **8** | **Temp Dec** | Section 4.2 (Trang 6) | $\hat{y}_{\text{NL}, t} = \text{TempDec}([ d_t ; \tilde{x}_{L+t} ])$ | `y_nl = self.temporal_decoder(temp_in).squeeze(-1)` | $(B, H, p + \tilde{r}) \to (B, H)$ |
-| **9** | **Linear Skip**| Section 4.2, Đoạn cuối trang 6| $\hat{y}_{\text{Lin}} = W_{\text{skip}} y_{\text{norm}} + b_{\text{skip}}$ | `y_lin = self.linear_skip(y_norm)` | $(B, L) \to (B, H)$ |
-| **10**| **Residual Add**| Section 4.2 & Nút (+) | $\hat{y}_{\text{norm}} = \hat{y}_{\text{NL}} + \hat{y}_{\text{Lin}}$ | `y_hat_norm = y_nl + y_lin` | $(B, H) + (B, H) \to (B, H)$ |
-| **11**| **RevIN Denorm**| Bảng 8 & Phụ lục B.1 | $\hat{y} = \hat{y}_{\text{norm}} \cdot \sigma + \mu$ | `y_hat = y_hat_norm * std + mean` | $(B, H) \to (B, H)$ |
+| **0** | **RevIN Norm** | Bảng 8 & Phụ lục B.1 | $`y_{\text{norm}} = (y - \mu) / \sigma`$ | `y_norm = (y - mean) / std` | $`(B, L) \to (B, L)`$ |
+| **1** | **Feature Proj** | Section 4.1, Công thức (3) | $`\tilde{x}_t = \text{Proj}(x_t) \in \mathbb{R}^{\tilde{r}}`$ | `x_proj = self.feature_projection(x)` | $`(B, L+H, r) \to (B, L+H, \tilde{r})`$ |
+| **2** | **Flatten** | Section 4.1 & Hình 1 | $`\text{vec}(\tilde{x}) \in \mathbb{R}^{(L+H)\tilde{r}}`$ | `x_flat = x_proj.flatten(start_dim=1)` | $`(B, L+H, \tilde{r}) \to (B, (L+H)\tilde{r})`$ |
+| **3** | **Concat** | Section 4.1, Công thức (4) | $`u_{\text{enc}} = [ y_{\text{norm}} ; \text{vec}(\tilde{x}) ; a ]`$ | `enc_in = torch.cat([y_norm, x_flat, a], dim=-1)` | Ghép thành $`(B, d_{\text{enc}})`$ |
+| **4** | **Dense Enc** | Section 4.1, Công thức (4) | $`e = \text{Encoder}(u_{\text{enc}})`$ | `e = self.encoder(enc_in)` | $`(B, d_{\text{enc}}) \to (B, d_{\text{hidden}})`$ |
+| **5** | **Dense Dec** | Section 4.2 (Trang 6) | $`g = \text{Decoder}(e) \in \mathbb{R}^{H \cdot p}`$ | `g = self.decoder(e)` | $`(B, d_{\text{hidden}}) \to (B, H \cdot p)`$ |
+| **6** | **Unflatten** | Section 4.2, Phép Reshape | $`D = \text{Reshape}(g) \in \mathbb{R}^{H \times p}`$ | `d = g.view(B, H, p)` | $`(B, H \cdot p) \to (B, H, p)`$ |
+| **7** | **Future Stack**| Section 4.2 & Hình 1 | $`[ d_t ; \tilde{x}_{L+t} ] \text{ tại mỗi } t`$ | `temp_in = torch.cat([d, x_future], dim=-1)` | Ghép thành $`(B, H, p + \tilde{r})`$ |
+| **8** | **Temp Dec** | Section 4.2 (Trang 6) | $`\hat{y}_{\text{NL}, t} = \text{TempDec}([ d_t ; \tilde{x}_{L+t} ])`$ | `y_nl = self.temporal_decoder(temp_in).squeeze(-1)` | $`(B, H, p + \tilde{r}) \to (B, H)`$ |
+| **9** | **Linear Skip**| Section 4.2, Đoạn cuối trang 6| $`\hat{y}_{\text{Lin}} = W_{\text{skip}} y_{\text{norm}} + b_{\text{skip}}`$ | `y_lin = self.linear_skip(y_norm)` | $`(B, L) \to (B, H)`$ |
+| **10**| **Residual Add**| Section 4.2 & Nút (+) | $`\hat{y}_{\text{norm}} = \hat{y}_{\text{NL}} + \hat{y}_{\text{Lin}}`$ | `y_hat_norm = y_nl + y_lin` | $`(B, H) + (B, H) \to (B, H)`$ |
+| **11**| **RevIN Denorm**| Bảng 8 & Phụ lục B.1 | $`\hat{y} = \hat{y}_{\text{norm}} \cdot \sigma + \mu`$ | `y_hat = y_hat_norm * std + mean` | $`(B, H) \to (B, H)`$ |
 
 ---
 
