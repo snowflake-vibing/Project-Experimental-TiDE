@@ -18,6 +18,10 @@ Trong kỹ thuật phần mềm và Học sâu (Deep Learning):
 
 ## 1. Sơ Đồ Kiến Trúc Gốc Của TiDE (Figure 1 từ Google Research)
 
+> 📄 **Vị trí cụ thể trong bài báo gốc:**  
+> **Trang 5, Figure 1 (chính giữa trang)**  
+> *Nguyên văn chú thích bài báo:* *"Figure 1: The architecture of TiDE. Lookback $y_{1:L}$, dynamic covariates $x_{1:L+H}$ and static attributes $a$ are mapped to predictions $\hat{y}_{L+1:L+H}$. The model consists of Feature Projection, Encoder, Decoder, Temporal Decoder, and Linear Skip components built using Residual Blocks (right)."*
+
 Dưới đây là hình ảnh kiến trúc chính thức trích xuất trực tiếp từ **Trang 5 (Figure 1)** của bài báo khoa học gốc:
 
 <p align="center">
@@ -91,7 +95,9 @@ Toàn bộ mô hình TiDE được cấu thành từ **7 mô-đun tĩnh độc l
 
 ### 🧩 Mô-Đun 1: Khối Nơ-ron Thặng Dư Cơ Sở (Residual Block - Khung Bên Phải Hình 1)
 
-Nhóm tác giả khẳng định: **Khối Residual Block là viên gạch cơ sở duy nhất** được dùng để xây dựng nên toàn bộ các thành phần phức tạp của TiDE (Feature Projection, Encoder, Decoder, Temporal Decoder).
+> 📄 **Vị trí cụ thể trong bài báo gốc:**  
+> **Trang 5, Cột trái, Mục 4.1 "Residual Block", Đoạn 2 & Hình 1 (Khung bên phải)**  
+> *Nguyên văn bài báo:* *"The core building block of TiDE is a Residual Block consisting of a Dense layer with ReLU activation, followed by a second Dense layer with Linear activation, Dropout, a Skip Connection, and Layer Normalization."*
 
 ```mermaid
 graph TD
@@ -120,14 +126,19 @@ graph TD
    * Nếu $d_{\text{in}} = d_{\text{out}}$: Đường dẫn tắt danh tính trực tiếp (`nn.Identity()`), không tốn bất kỳ tham số nào.
 3. **Phép Cộng Thặng Dư & Chuẩn Hóa Tầng (Addition & Layer Norm):**
    * Nút cộng tròn `(+)` thực hiện phép cộng dồn vector: $z = F(u) + \text{Skip}(u)$.
-   * Lớp **Layer Normalization** có 2 tham số học được là scale $\gamma \in \mathbb{R}^{d_{\text{out}}}$ và shift $\beta \in \mathbb{R}^{d_{\text{out}}}$:
-     $$
-     v = \text{LayerNorm}(z) = \frac{z - \mathbb{E}[z]}{\sqrt{\text{Var}[z] + \epsilon}} \odot \gamma + \beta
-     $$
+   * Lớp **Layer Normalization** có 2 tham số học được là scale $\gamma \in \mathbb{R}^{d_{\text{out}}}$ và shift $\beta \in \mathbb{R}^{d_{\text{out}}}$.
+
+$$
+v = \text{LayerNorm}(z) = \frac{z - \mathbb{E}[z]}{\sqrt{\text{Var}[z] + \epsilon}} \odot \gamma + \beta
+$$
 
 ---
 
 ### 🧩 Mô-Đun 2: Khối Chiếu Giảm Chiều Ngoại Sinh (Feature Projection Module)
+
+> 📄 **Vị trí cụ thể trong bài báo gốc:**  
+> **Trang 5, Cột phải, Mục 4.1 "Feature Projection", Đoạn 1, Công thức (3)**  
+> *Nguyên văn bài báo:* *"Specifically, dynamic covariates $x_t \in \mathbb{R}^r$ at each time-step $t$ are projected to a lower-dimensional feature space $\tilde{x}_t \in \mathbb{R}^{\tilde{r}}$ using a Residual Block: $\tilde{x}_t = \text{ResidualBlock}(x_t)$."*
 
 * **Vị trí trong kiến trúc:** Đứng độc lập ở cổng tiếp nhận biến ngoại sinh động $x_{1:L+H}$.
 * **Cấu tạo phần cứng:** Đúng **$1$ khối Residual Block cơ sở** với tham số cấu hình:
@@ -143,6 +154,10 @@ graph TD
 
 ### 🧩 Mô-Đun 3: Khối Mã Hóa Dày Đặc (Dense Encoder Module)
 
+> 📄 **Vị trí cụ thể trong bài báo gốc:**  
+> **Trang 5, Cột phải, Mục 4.1 "Dense Encoder", Đoạn 2-3, Công thức (4)**  
+> *Nguyên văn bài báo:* *"The flattened projected covariates, along with the lookback series $y_{1:L}$ and static attributes $a$, are concatenated and fed into an encoder consisting of $n_e$ stacked Residual Blocks: $e = \text{Encoder}(u_{\text{enc}}) \in \mathbb{R}^{d_{\text{hidden}}}$."*
+
 * **Vị trí trong kiến trúc:** Trung tâm xử lý thông tin lịch sử và ngoại sinh toàn cục.
 * **Cấu tạo phần cứng:** Gồm chuỗi **$n_e$ khối Residual Blocks xếp chồng liên tiếp** (`numEncoderLayers`, thường bằng $1$ hoặc $2$):
   * **Khối Encoder 1 (Cổng vào):** 
@@ -156,6 +171,10 @@ graph TD
 ---
 
 ### 🧩 Mô-Đun 4: Khối Giải Mã Dày Đặc (Dense Decoder Module)
+
+> 📄 **Vị trí cụ thể trong bài báo gốc:**  
+> **Trang 6, Cột trái, Mục 4.2 "Decoder", Đoạn 1-2**  
+> *Nguyên văn bài báo:* *"The encoder output $e$ is mapped through a decoder consisting of $n_d$ stacked Residual Blocks into a vector of size $H \cdot p$, which is then reshaped into matrix $D \in \mathbb{R}^{p \times H}$ (or $H \times p$)."*
 
 * **Vị trí trong kiến trúc:** Nối tiếp ngay sau Dense Encoder.
 * **Cấu tạo phần cứng:** Gồm chuỗi **$n_d$ khối Residual Blocks xếp chồng liên tiếp** (`numDecoderLayers`, thường bằng $1$ hoặc $2$):
@@ -171,6 +190,10 @@ graph TD
 
 ### 🧩 Mô-Đun 5: Khối Giải Mã Theo Thời Gian (Temporal Decoder Module)
 
+> 📄 **Vị trí cụ thể trong bài báo gốc:**  
+> **Trang 6, Cột trái, Mục 4.2 "Temporal Decoder", Đoạn 3, Công thức (5)**  
+> *Nguyên văn bài báo:* *"At each forecast step $t \in \{1, \dots, H\}$, the decoded representation $d_t$ is concatenated with future covariates $\tilde{x}_{L+t}$ and passed through a Residual Block to produce a scalar output $\hat{y}_{\text{NL}, t} = \text{TemporalDecoder}([d_t ; \tilde{x}_{L+t}])$."*
+
 * **Vị trí trong kiến trúc:** Nằm ở giai đoạn tổng hợp cuối cùng trước khi xuất kết quả phi tuyến.
 * **Cấu tạo phần cứng:** Gồm **$1$ khối Residual Block** kết hợp với **$1$ tầng chiếu tuyến tính (Projection Layer)**:
   * **Khối Residual Block con:**
@@ -184,6 +207,10 @@ graph TD
 
 ### 🧩 Mô-Đun 6: Nhánh Tắt Tuyến Tính Toàn Cục (Global Linear Skip Connection Module)
 
+> 📄 **Vị trí cụ thể trong bài báo gốc:**  
+> **Trang 6, Cột phải, Mục 4.2 "Linear Skip", Đoạn 1, Dòng 1-8**  
+> *Nguyên văn bài báo:* *"Similar to DLinear, we also include a direct linear projection from the lookback horizon $y_{1:L}$ to the forecast horizon $\hat{y}_{\text{Lin}} \in \mathbb{R}^H$: $\hat{y}_{\text{Lin}} = W_{\text{skip}} y_{1:L} + b_{\text{skip}}$."*
+
 * **Vị trí trong kiến trúc:** Đi song song, bắc cầu trực tiếp từ đầu vào chuỗi lịch sử $y_{1:L}$ sang đầu ra tương lai $\hat{y}_{L+1:L+H}$.
 * **Cấu tạo phần cứng:** Đúng **$1$ tầng tuyến tính đơn lẻ (`nn.Linear`)**:
   * Ma trận trọng số: $W_{\text{skip}} \in \mathbb{R}^{H \times L}$ (ví dụ kích thước $96 \times 720$).
@@ -195,6 +222,10 @@ graph TD
 
 ### 🧩 Mô-Đun 7: Khối Chuẩn Hóa Thực Thể Khả Nghịch (RevIN Module)
 
+> 📄 **Vị trí cụ thể trong bài báo gốc:**  
+> **Trang 15 - 16, Phụ lục B.1 "Reversible Instance Normalization" & Bảng 8 (Table 8)**  
+> *Nguyên văn bài báo:* *"We apply reversible instance normalization (RevIN) as proposed by Kim et al. (2021) to address distribution shift in time series. Normalization is performed per-instance, and the instance mean and standard deviation are stored to denormalize the model predictions."*
+
 * **Vị trí trong kiến trúc:** Đặt tại 2 cửa ngõ: Cổng vào (chuẩn hóa chuỗi lịch sử $y$) và Cổng ra (giải chuẩn hóa kết quả dự báo $\hat{y}$).
 * **Cấu tạo phần cứng:**
   * Tham số học được (Affine parameters - tùy chọn): Scale $\gamma_{\text{revin}} \in \mathbb{R}^1$ và Bias $\beta_{\text{revin}} \in \mathbb{R}^1$.
@@ -204,7 +235,10 @@ graph TD
 
 ## 3. Bảng Tổng Hợp Tham Số & Khai Báo Trong `__init__()` (PyTorch Specification)
 
-Dưới đây là bảng đặc tả cấu trúc phần cứng của toàn bộ mô hình TiDE khi được khởi tạo trong bộ nhớ GPU, tính toán trên bộ siêu tham số tiêu chuẩn của bộ dữ liệu **Electricity** ($L=720, H=96, r=7, \tilde{r}=4, p=8, d_{\text{hidden}}=1024, n_e=2, n_d=2$):
+> 📄 **Vị trí cụ thể trong bài báo gốc:**  
+> **Trang 18, Phụ lục B.3, Bảng 10 (Table 10: Hyperparameter configurations for TiDE across benchmarks)**  
+> *Cấu hình tham chiếu dưới đây dựa trên bộ siêu tham số tốt nhất của tập dữ liệu Electricity:*  
+> $L=720, H=96, r=7, \tilde{r}=4, p=8, d_{\text{hidden}}=1024, n_e=2, n_d=2, p_{\text{drop}}=0.3$.
 
 | Tên Mô-Đun / Lớp | Kiểu Lớp PyTorch | Kích Thước Trọng Số ($W$) | Kích Thước Bias ($b$) | Số Lượng Tham Số (Trainable Params) | Vai Trò Kiến Trúc |
 |:---|:---|:---:|:---:|:---:|:---|
@@ -222,20 +256,23 @@ Dưới đây là bảng đặc tả cấu trúc phần cứng của toàn bộ 
 
 ## 4. Bảng Tra Cứu Toàn Bộ Ký Hiệu Xuất Hiện Trong Hình 1 (Figure 1)
 
-| Ký Hiệu Trong Hình | Tên Linh Kiện / Khối | Định Nghĩa Kiến Trúc | Số Chiều / Kích Thước Toán Học |
-|:--- |:--- |:--- |:---:|
-| **$y_{1:L}$** | **Lookback Series** | Cổng tiếp nhận chuỗi lịch sử mục tiêu $L$ bước quá khứ. | $\mathbb{R}^L$ |
-| **$x_{1:L+H}$** | **Dynamic Covariates** | Cổng tiếp nhận ma trận ngoại sinh biến thiên theo thời gian. | $\mathbb{R}^{(L+H) \times r}$ |
-| **$a$** | **Static Attributes** | Cổng tiếp nhận vector thuộc tính tĩnh không đổi theo thời gian. | $\mathbb{R}^{p_{\text{static}}}$ |
-| **$\tilde{x}_{1:L+H}$** | **Projected Covariates** | Ngõ ra của khối Feature Projection sau khi nén đặc trưng. | $\mathbb{R}^{(L+H) \times \tilde{r}}$ |
-| **$e$** | **Context Embedding** | Ngõ ra của khối Dense Encoder, biểu diễn trừu tượng toàn cục của chuỗi. | $\mathbb{R}^{d_{\text{hidden}}}$ |
-| **$g$** | **Decoded Flat Vector** | Ngõ ra của khối Dense Decoder trước khi bẻ thành ma trận. | $\mathbb{R}^{H \cdot p}$ |
-| **$d_{L+1:L+H}$** | **Decoded Matrix $D$** | Ma trận gồm $H$ hàng, mỗi hàng là một vector bối cảnh tương lai $d_t$. | $\mathbb{R}^{H \times p}$ |
-| **$\tilde{x}_{L+1:L+H}$** | **Future Covariates** | Nhánh ngoại sinh tương lai đưa thẳng vào cổng Temporal Decoder. | $\mathbb{R}^{H \times \tilde{r}}$ |
-| **$\hat{y}_{\text{NL}}$** | **Nonlinear Prediction** | Đầu ra dự báo của nhánh phi tuyến (từ Temporal Decoder). | $\mathbb{R}^H$ |
-| **$\hat{y}_{\text{Lin}}$** | **Linear Prediction** | Đầu ra dự báo của nhánh tuyến tính (từ Global Linear Skip). | $\mathbb{R}^H$ |
-| **$\hat{y}_{L+1:L+H}$** | **Final Prediction** | Kết quả dự báo tương lai cuối cùng xuất ra khỏi mô hình. | $\mathbb{R}^H$ |
-| **$n_e, n_d$** | **Layer Counts** | Số lượng khối Residual Block xếp chồng trong Encoder và Decoder. | $1$ hoặc $2$ |
+> 📄 **Vị trí cụ thể trong bài báo gốc:**  
+> **Trang 4 - 5, Mục 3 "Problem Setting" & Mục 4 "Architecture"**
+
+| Ký Hiệu Trong Hình | Vị Trí Trong Paper | Tên Linh Kiện / Khối | Định Nghĩa Kiến Trúc | Số Chiều / Kích Thước Toán Học |
+|:--- |:---|:--- |:--- |:---:|
+| **$y_{1:L}$** | Section 3, Trang 4, Dòng 8 | **Lookback Series** | Cổng tiếp nhận chuỗi lịch sử mục tiêu $L$ bước quá khứ. | $\mathbb{R}^L$ |
+| **$x_{1:L+H}$** | Section 3, Trang 4, Dòng 12 | **Dynamic Covariates** | Cổng tiếp nhận ma trận ngoại sinh biến thiên theo thời gian. | $\mathbb{R}^{(L+H) \times r}$ |
+| **$a$** | Section 3, Trang 4, Dòng 15 | **Static Attributes** | Cổng tiếp nhận vector thuộc tính tĩnh không đổi theo thời gian. | $\mathbb{R}^{p_{\text{static}}}$ |
+| **$\tilde{x}_{1:L+H}$** | Section 4.1, Trang 5, Eq (3) | **Projected Covariates** | Ngõ ra của khối Feature Projection sau khi nén đặc trưng. | $\mathbb{R}^{(L+H) \times \tilde{r}}$ |
+| **$e$** | Section 4.1, Trang 5, Eq (4) | **Context Embedding** | Ngõ ra của khối Dense Encoder, biểu diễn trừu tượng toàn cục của chuỗi. | $\mathbb{R}^{d_{\text{hidden}}}$ |
+| **$g$** | Section 4.2, Trang 6, Dòng 3 | **Decoded Flat Vector** | Ngõ ra của khối Dense Decoder trước khi bẻ thành ma trận. | $\mathbb{R}^{H \cdot p}$ |
+| **$d_{L+1:L+H}$** | Section 4.2, Trang 6, Dòng 8 | **Decoded Matrix $D$** | Ma trận gồm $H$ hàng, mỗi hàng là một vector bối cảnh tương lai $d_t$. | $\mathbb{R}^{H \times p}$ |
+| **$\tilde{x}_{L+1:L+H}$** | Section 4.2, Trang 6, Dòng 15 | **Future Covariates** | Nhánh ngoại sinh tương lai đưa thẳng vào cổng Temporal Decoder. | $\mathbb{R}^{H \times \tilde{r}}$ |
+| **$\hat{y}_{\text{NL}}$** | Section 4.2, Trang 6, Eq (5) | **Nonlinear Prediction** | Đầu ra dự báo của nhánh phi tuyến (từ Temporal Decoder). | $\mathbb{R}^H$ |
+| **$\hat{y}_{\text{Lin}}$** | Section 4.2, Trang 6, Cột phải | **Linear Prediction** | Đầu ra dự báo của nhánh tuyến tính (từ Global Linear Skip). | $\mathbb{R}^H$ |
+| **$\hat{y}_{L+1:L+H}$** | Section 4.2, Trang 6, Dòng 10 | **Final Prediction** | Kết quả dự báo tương lai cuối cùng xuất ra khỏi mô hình. | $\mathbb{R}^H$ |
+| **$n_e, n_d$** | Section 4.1 & 4.2, Trang 5-6 | **Layer Counts** | Số lượng khối Residual Block xếp chồng trong Encoder và Decoder. | $1$ hoặc $2$ |
 
 ---
 
