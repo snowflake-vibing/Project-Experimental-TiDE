@@ -19,8 +19,11 @@ Trong khi **[Phần 1 (01_architecture_diagram.md)](./01_architecture_diagram.md
 
 ## 1. Thiết Lập Dữ Liệu Đầu Vào Thực Nghiệm (Runtime Input Tensors)
 
-> 📄 **Vị trí cụ thể trong bài báo gốc:**  
-> **Trang 4, Mục 3 "Problem Setting" (Thiết lập biến $y, x, a$) & Trang 18, Phụ lục B.3, Bảng 10 (Cấu hình Electricity)**
+> 📄 **Vị trí & Cơ sở đối chiếu bài báo gốc:**  
+> * **Tọa độ bài báo gốc:** Trang 4, Mục 3 "Problem Setting" (Đoạn 1-2); Phụ lục B.3, Trang 18, Bảng 10 (Cấu hình chuẩn trên benchmark Electricity).  
+> * **Nguyên văn bài báo:** "Let $y_{1:L}^{(i)}$ denote the lookback horizon of series $i$... $x_{1:L+H}^{(i)}$ denote dynamic covariates... and $a^{(i)}$ denote static attributes. We seek to predict $\hat{y}_{L+1:L+H}^{(i)}$."  
+> * **Nội dung gốc bài báo:** Định nghĩa bài toán dự báo chuỗi thời gian với 3 nguồn dữ liệu: chuỗi lịch sử quá khứ $y$, ma trận ngoại sinh biến thiên theo thời gian $x$ và vector thuộc tính tĩnh $a$.  
+> * **Phần giải thích thêm & thiết lập mô phỏng:** Chọn cụ thể kích thước batch $B=32$ cùng các tham số thực nghiệm thực tế ($L=720, H=96, r=7, \tilde{r}=4, p=8, d_{\text{hidden}}=1024$) để minh họa số liệu sống trong bộ nhớ RAM qua sơ đồ luồng.
 
 Để theo dõi dòng chảy dữ liệu một cách trực quan và chính xác nhất, ta sử dụng cấu hình chuẩn của bài báo gốc trên tập dữ liệu benchmark lớn **Electricity**:
 * Kích thước batch (**$B$**): `32` mẫu chuỗi thời gian.
@@ -48,8 +51,11 @@ flowchart LR
 
 ## 2. Bảng Đối Chiếu Song Song 11 Bước Nguyên Tử (Paper Math vs PyTorch Code)
 
-> 📄 **Vị trí cụ thể trong bài báo gốc:**  
-> **Trang 5 - 6, Toàn bộ Section 4 "Architecture" & Trang 15, Phụ lục B.1 "RevIN"**
+> 📄 **Vị trí & Cơ sở đối chiếu bài báo gốc:**  
+> * **Tọa độ bài báo gốc:** Trang 5 - 6, Toàn bộ Mục 4 "Architecture" (Section 4.1 & 4.2) & Trang 15, Phụ lục B.1 "RevIN".  
+> * **Nguyên văn bài báo:** Toàn bộ chuỗi công thức từ Công thức (3), (4), (5) đến các mô tả dòng chảy dữ liệu qua từng khối chức năng.  
+> * **Nội dung gốc bài báo:** Trình bày lý thuyết tổng quát về cách các thành phần nơ-ron kết nối với nhau để biến đổi chuỗi đầu vào thành dự báo đầu ra.  
+> * **Phần giải thích thêm & toán học hóa:** Phân rã dòng chảy thành 11 thao tác nguyên tử tuần tự độc lập, gắn mã PyTorch tương ứng 1-1 và theo dõi biến đổi kích thước tensor sống trong bộ nhớ RAM.
 
 Toàn bộ quy trình lan truyền xuôi `forward(y, x, a)` được chia thành **11 thao tác nguyên tử tuần tự theo thời gian**. Bảng dưới đây ánh xạ 1-1 từng công thức toán học trong bài báo sang từng dòng code PyTorch thực thi (toàn bộ công thức được chuẩn hóa bằng cú pháp backtick-math của GitHub để hiển thị hoàn hảo):
 
@@ -76,8 +82,11 @@ Toàn bộ quy trình lan truyền xuôi `forward(y, x, a)` được chia thành
 
 ### Bước 0: Chuẩn Hóa Cục Bộ RevIN (Reversible Instance Normalization)
 
-> 📄 **Vị trí cụ thể trong bài báo gốc:**  
-> **Trang 15 - 16, Phụ lục B.1 "Reversible Instance Normalization" & Bảng 8 (Table 8)**
+> 📄 **Vị trí & Cơ sở đối chiếu bài báo gốc:**  
+> * **Tọa độ bài báo gốc:** Trang 15 - 16, Phụ lục B.1 "Reversible Instance Normalization" & Bảng 8 (Table 8).  
+> * **Nguyên văn bài báo:** "We apply reversible instance normalization (RevIN) as proposed by Kim et al. (2021) to address distribution shift in time series. Normalization is performed per-instance, and the instance mean and standard deviation are stored to denormalize the model predictions."  
+> * **Nội dung gốc bài báo:** Giới thiệu cơ chế chuẩn hóa từng chuỗi cá thể để triệt tiêu hiện tượng trôi dạt phân phối, lưu trữ giá trị $\mu$ và $\sigma$ để hoàn nguyên ở khâu cuối.  
+> * **Phần giải thích thêm & ánh xạ code:** Khai triển công thức giải tích tính $\mu, \sigma$ dọc trục thời gian $L$, ánh xạ sang dòng lệnh PyTorch `y.mean(dim=1, keepdim=True)` và `y.std()`, bổ sung hằng số an toàn $\epsilon = 10^{-5}$ chống lỗi chia cho 0.
 
 #### 📐 1. Bản chất toán học:
 Tính kỳ vọng $\mu$ và độ lệch chuẩn $\sigma$ trên từng chuỗi con độc lập, sau đó chuẩn hóa:
@@ -100,8 +109,11 @@ Biến đổi phân phối của batch chuỗi lịch sử về kỳ vọng $0$ 
 
 ### Bước 1: Chiếu Giảm Chiều Ngoại Sinh Động (Feature Projection)
 
-> 📄 **Vị trí cụ thể trong bài báo gốc:**  
-> **Trang 5, Cột phải, Mục 4.1 "Feature Projection", Đoạn 1, Công thức (3)**
+> 📄 **Vị trí & Cơ sở đối chiếu bài báo gốc:**  
+> * **Tọa độ bài báo gốc:** Trang 5, Cột phải, Mục 4.1 "Feature Projection", Đoạn 1, Công thức (3).  
+> * **Nguyên văn bài báo:** "Specifically, dynamic covariates $x_t \in \mathbb{R}^r$ at each time-step $t$ are projected to a lower-dimensional feature space $\tilde{x}_t \in \mathbb{R}^{\tilde{r}}$ using a Residual Block: $\tilde{x}_t = \text{ResidualBlock}(x_t)$."  
+> * **Nội dung gốc bài báo:** Định nghĩa việc dùng 1 Residual Block nén vector ngoại sinh $r$ chiều về $\tilde{r}$ chiều tại từng bước thời gian.  
+> * **Phần giải thích thêm & ánh xạ code:** Làm rõ cách áp dụng cùng 1 khối nơ-ron lên toàn bộ tensor 3D qua dòng lệnh `self.feature_projection(x)`, nén tensor từ $(32, 816, 7)$ về $(32, 816, 4)$ mà không làm xáo trộn trục thời gian.
 
 #### 📐 1. Bản chất toán học:
 Áp dụng khối chiếu tuyến tính từng đoạn qua hàm:
@@ -122,8 +134,11 @@ Cùng một khối nơ-ron quét qua toàn bộ $816$ lát cắt thời gian, n�
 
 ### Bước 2 & 3: Trải Phẳng (Flatten) & Ghép Nối Siêu Vector Đầu Vào Encoder
 
-> 📄 **Vị trí cụ thể trong bài báo gốc:**  
-> **Trang 5, Cột phải, Mục 4.1 "Dense Encoder", Dòng 8-15 & Công thức (4)**
+> 📄 **Vị trí & Cơ sở đối chiếu bài báo gốc:**  
+> * **Tọa độ bài báo gốc:** Trang 5, Cột phải, Mục 4.1 "Dense Encoder", Dòng 8-15 & Công thức (4).  
+> * **Nguyên văn bài báo:** "The flattened projected covariates, along with the lookback series $y_{1:L}$ and static attributes $a$, are concatenated and fed into an encoder... $u_{\text{enc}} = [y_{1:L} ; \text{vec}(\tilde{x}_{1:L+H}) ; a]$."  
+> * **Nội dung gốc bài báo:** Ghép 3 thành phần $y_{1:L}$, vector ngoại sinh trải phẳng $\text{vec}(\tilde{x}_{1:L+H})$ và thuộc tính tĩnh $a$ thành siêu vector đầu vào $u_{\text{enc}}$.  
+> * **Phần giải thích thêm & ánh xạ code:** Phân tích thứ tự ghép trục đặc trưng cuối (`dim=-1`), tính toán kích thước cụ thể $d_{\text{enc}} = 720 + 3264 + 0 = 3,984$, và ánh xạ sang hai câu lệnh PyTorch `flatten(start_dim=1)` và `torch.cat()`.
 
 #### 📐 1. Bản chất toán học:
 Duỗi phẳng ma trận ngoại sinh $2\text{D}$ thành vector $1\text{D}$ rồi ghép nối:
@@ -145,8 +160,11 @@ Biến đổi cấu trúc không gian - thời gian thành một vector 1D phẳ
 
 ### Bước 4: Mã Hóa Dày Đặc (Dense Encoder)
 
-> 📄 **Vị trí cụ thể trong bài báo gốc:**  
-> **Trang 5, Cột phải, Mục 4.1 "Dense Encoder", Công thức (4) & Đoạn 3**
+> 📄 **Vị trí & Cơ sở đối chiếu bài báo gốc:**  
+> * **Tọa độ bài báo gốc:** Trang 5, Cột phải, Mục 4.1 "Dense Encoder", Công thức (4) & Đoạn 3; Trang 18, Bảng 10.  
+> * **Nguyên văn bài báo:** "$e = \text{Encoder}(u_{\text{enc}}) \in \mathbb{R}^{d_{\text{hidden}}}$, where the encoder consists of $n_e$ stacked Residual Blocks."  
+> * **Nội dung gốc bài báo:** Nén siêu vector $u_{\text{enc}}$ thành vector biểu diễn bối cảnh $e \in \mathbb{R}^{d_{\text{hidden}}}$ thông qua $n_e$ khối Residual Block xếp chồng.  
+> * **Phần giải thích thêm & ánh xạ code:** Phân tích biến đổi kích thước trong RAM từ $(32, 3984) \to (32, 1024)$, ánh xạ sang `e = self.encoder(enc_in)`, lý giải cách mạng MLP toàn cục nắm bắt tương tác chéo giữa mọi bước thời gian quá khứ và tương lai.
 
 #### 📐 1. Bản chất toán học:
 Lan truyền siêu vector qua $n_e$ khối Residual Block để tạo vector tiềm ẩn toàn cục:
@@ -167,8 +185,11 @@ Nén $3,984$ chiều thông tin hỗn hợp thành $1,024$ chiều biểu diễn
 
 ### Bước 5: Giải Mã Dày Đặc (Dense Decoder)
 
-> 📄 **Vị trí cụ thể trong bài báo gốc:**  
-> **Trang 6, Cột trái, Mục 4.2 "Decoder", Đoạn 1, Dòng 1-6**
+> 📄 **Vị trí & Cơ sở đối chiếu bài báo gốc:**  
+> * **Tọa độ bài báo gốc:** Trang 6, Cột trái, Mục 4.2 "Decoder", Đoạn 1, Dòng 1-6; Trang 18, Bảng 10.  
+> * **Nguyên văn bài báo:** "The encoder output $e$ is mapped through a decoder consisting of $n_d$ stacked Residual Blocks into a vector of size $H \cdot p$."  
+> * **Nội dung gốc bài báo:** Giải nén từ vector bối cảnh $e$ thành vector phẳng có độ dài $H \cdot p$ thông qua $n_d$ khối Residual Block.  
+> * **Phần giải thích thêm & ánh xạ code:** Làm rõ biến đổi kích thước trong RAM từ $(32, 1024) \to (32, 768)$, ánh xạ sang câu lệnh `g = self.decoder(e)`, giải thích tại sao tầng này phải bung ra đúng $H \cdot p$ giá trị trước khi tái lập trục thời gian.
 
 #### 📐 1. Bản chất toán học:
 Giải mã từ vector tiềm ẩn sang vector dự báo phẳng:
@@ -189,8 +210,11 @@ Vector $g$ có độ dài $H \cdot p = 96 \times 8 = 768$, mang toàn bộ bối
 
 ### Bước 6: Tái Cấu Trúc (Unflatten / Reshape) Thành Ma Trận Bối Cảnh
 
-> 📄 **Vị trí cụ thể trong bài báo gốc:**  
-> **Trang 6, Cột trái, Mục 4.2 "Decoder", Đoạn 2, Dòng 7-14**
+> 📄 **Vị trí & Cơ sở đối chiếu bài báo gốc:**  
+> * **Tọa độ bài báo gốc:** Trang 6, Cột trái, Mục 4.2 "Decoder", Đoạn 2, Dòng 7-14.  
+> * **Nguyên văn bài báo:** "The decoded representation of size $H \cdot p$ is reshaped into a matrix $D \in \mathbb{R}^{p \times H}$ (or $H \times p$), where each vector $d_t \in \mathbb{R}^p$ corresponds to forecast time-step $t$."  
+> * **Nội dung gốc bài báo:** Bẻ định dạng vector phẳng $g$ thành ma trận bối cảnh $D$ gồm $H$ hàng, mỗi hàng là một vector $d_t$ đại diện cho một bước tương lai.  
+> * **Phần giải thích thêm & ánh xạ code:** Ánh xạ sang câu lệnh PyTorch `d = g.view(B, self.H, self.p)` để biến đổi kích thước `(32, 768) -> (32, 96, 8)` mà không làm thay đổi hoặc sao chép lại bộ nhớ liên tục (contiguous memory).
 
 #### 📐 1. Bản chất toán học:
 Bẻ vector phẳng $g$ thành ma trận $2\text{D}$ gồm $H$ hàng:
@@ -211,8 +235,11 @@ Khôi phục lại trục thời gian tương lai: mỗi bước $t \in [1, 96]$
 
 ### Bước 7 & 8: Làn Đường Cao Tốc (Covariate Highway) & Giải Mã Thời Gian (Temporal Decoder)
 
-> 📄 **Vị trí cụ thể trong bài báo gốc:**  
-> **Trang 6, Cột trái, Mục 4.2 "Temporal Decoder", Đoạn 3 & Công thức (5)**
+> 📄 **Vị trí & Cơ sở đối chiếu bài báo gốc:**  
+> * **Tọa độ bài báo gốc:** Trang 6, Cột trái, Mục 4.2 "Temporal Decoder", Đoạn 3 & Công thức (5).  
+> * **Nguyên văn bài báo:** "At each forecast step $t \in \{1, \dots, H\}$, the decoded representation $d_t$ is concatenated with future covariates $\tilde{x}_{L+t}$ and passed through a Residual Block to produce a scalar output: $\hat{y}_{\text{NL}, t} = \text{TemporalDecoder}([d_t ; \tilde{x}_{L+t}])$."  
+> * **Nội dung gốc bài báo:** Ghép lát cắt bối cảnh $d_t$ với ngoại sinh tương lai $\tilde{x}_{L+t}$ tại mỗi bước $t$ qua Temporal Decoder để sinh ra dự báo phi tuyến vô hướng $\hat{y}_{\text{NL}, t}$.  
+> * **Phần giải thích thêm & ánh xạ code:** Tách biệt 3 thao tác PyTorch trong RAM: cắt tensor tương lai `x_proj[:, self.L:, :]`, ghép trục đặc trưng `torch.cat([d, x_future], dim=-1)` thành `(32, 96, 12)`, và khử chiều vô hướng bằng `.squeeze(-1)` để xuất ra tensor `(32, 96)`.
 
 #### 📐 1. Bản chất toán học:
 Trích xuất ngoại sinh tương lai và kết hợp với bối cảnh giải mã tại từng bước:
@@ -235,8 +262,11 @@ Cơ chế đường cao tốc đưa trực tiếp đặc trưng tương lai vào
 
 ### Bước 9: Nhánh Tắt Tuyến Tính Toàn Cục (Global Linear Skip)
 
-> 📄 **Vị trí cụ thể trong bài báo gốc:**  
-> **Trang 6, Cột phải, Mục 4.2 "Linear Skip", Đoạn 1, Dòng 1-8**
+> 📄 **Vị trí & Cơ sở đối chiếu bài báo gốc:**  
+> * **Tọa độ bài báo gốc:** Trang 6, Cột phải, Mục 4.2 "Linear Skip", Đoạn 1, Dòng 1-8.  
+> * **Nguyên văn bài báo:** "Similar to DLinear, we also include a direct linear projection from the lookback horizon $y_{1:L}$ to the forecast horizon $\hat{y}_{\text{Lin}} \in \mathbb{R}^H$: $\hat{y}_{\text{Lin}} = W_{\text{skip}} y_{1:L} + b_{\text{skip}}$."  
+> * **Nội dung gốc bài báo:** Chiếu tuyến tính trực tiếp chuỗi lịch sử sang chuỗi dự báo tương lai thông qua ma trận trọng số $W_{\text{skip}}$.  
+> * **Phần giải thích thêm & ánh xạ code:** Ánh xạ sang lệnh PyTorch `y_lin = self.linear_skip(y_norm)`, nhấn mạnh đầu vào là tensor đã chuẩn hóa $y_{\text{norm}}$ để đảm bảo độ dốc ổn định khi cộng thặng dư.
 
 #### 📐 1. Bản chất toán học:
 Ánh xạ tuyến tính trực tiếp từ quá khứ sang tương lai:
@@ -257,8 +287,11 @@ Học xu hướng tăng giảm tự hồi quy tuyến tính cơ bản, tương t
 
 ### Bước 10 & 11: Hợp Nhất Thặng Dư & Hoàn Nguyên Thang Đo Thực RevIN
 
-> 📄 **Vị trí cụ thể trong bài báo gốc:**  
-> **Trang 6, Cột phải, Dòng 9-11 (Hợp nhất `+`) & Trang 15, Phụ lục B.1 (RevIN Denorm)**
+> 📄 **Vị trí & Cơ sở đối chiếu bài báo gốc:**  
+> * **Tọa độ bài báo gốc:** Trang 6, Cột phải, Dòng 9-11 & Trang 15, Phụ lục B.1 "RevIN".  
+> * **Nguyên văn bài báo:** "The final prediction is the sum of the linear and non-linear predictions: $\hat{y} = \hat{y}_{\text{Lin}} + \hat{y}_{\text{NL}}$... The model predictions are then denormalized using the stored mean and variance."  
+> * **Nội dung gốc bài báo:** Hợp nhất kết quả dự báo phi tuyến và tuyến tính bằng phép cộng thặng dư, sau đó hoàn nguyên giá trị vật lý bằng mean và variance đã lưu ở bước đầu.  
+> * **Phần giải thích thêm & ánh xạ code:** Ánh xạ sang hai phép toán tensor nguyên tử `y_hat_norm = y_nl + y_lin` và `y_hat = y_hat_norm * std + mean`, khôi phục trọn vẹn thang đo vật lý gốc của chuỗi mục tiêu.
 
 #### 📐 1. Bản chất toán học:
 Cộng dồn dự báo tuyến tính + phi tuyến, sau đó giải chuẩn hóa:
@@ -280,8 +313,10 @@ Hoàn nguyên kết quả dự báo từ miền phân phối chuẩn về đúng
 
 ## 4. Bảng Nhật Ký Biến Đổi Tensor Shapes Động (Runtime Tensor Log)
 
-> 📄 **Vị trí cụ thể trong bài báo gốc:**  
-> **Trang 18, Phụ lục B.3, Bảng 10 (Siêu tham số thực nghiệm benchmark Electricity: $B=32, L=720, H=96, r=7, \tilde{r}=4, p=8$)**
+> 📄 **Vị trí & Cơ sở đối chiếu bài báo gốc:**  
+> * **Tọa độ bài báo gốc:** Trang 18, Phụ lục B.3, Bảng 10 (Table 10: Siêu tham số thực nghiệm benchmark Electricity).  
+> * **Nội dung gốc bài báo:** Cung cấp các thông số cấu hình kiến trúc thực nghiệm: $L=720, H=96, r=7, \tilde{r}=4, p=8, d_{\text{hidden}}=1024$.  
+> * **Phần giải thích thêm & theo dõi bộ nhớ:** Bổ sung kích thước batch giả định $B=32$, lập bảng theo dõi chi tiết hình dạng (shape), kiểu dữ liệu (dtype) và trạng thái sống của từng tensor trong RAM/GPU qua 11 bước chạy hàm `forward()`.
 
 Bảng ma trận dưới đây theo dõi trạng thái sống của từng biến Tensor trong bộ nhớ RAM/GPU qua từng dòng code của hàm `forward()`:
 
