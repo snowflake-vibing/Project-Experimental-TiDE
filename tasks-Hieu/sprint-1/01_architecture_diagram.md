@@ -43,26 +43,26 @@ flowchart TD
     end
 
     subgraph MoDunTienXuLy ["2. Tiền Xử Lý & Nén Chiều Ngoại Sinh"]
-        RevIN_In["Mô-đun Chuẩn Hóa Khả Nghịch RevIN (Phần Chuẩn Hóa Vào)"]
-        FP["Khối Chiếu Đặc Trưng (Feature Projection Module)\nResidualBlock(r -> r_tilde)"]
+        RevIN_In["Mô-đun Chuẩn Hóa Khả Nghịch RevIN<br/>(Cổng Chuẩn Hóa Vào)"]
+        FP["Khối Chiếu Đặc Trưng (Feature Projection)<br/>ResidualBlock (nén r sang r_tilde)"]
     end
 
     subgraph MoDunCotLoi ["3. Khối Mã Hóa & Giải Mã Toàn Cục"]
-        Enc["Khối Mã Hóa Dày Đặc (Dense Encoder Module)\nGồm n_e Khối Residual Blocks Xếp Chồng"]
-        Dec["Khối Giải Mã Dày Đặc (Dense Decoder Module)\nGồm n_d Khối Residual Blocks Xếp Chồng"]
+        Enc["Khối Mã Hóa Dày Đặc (Dense Encoder)<br/>Gồm n_e Khối Residual Blocks"]
+        Dec["Khối Giải Mã Dày Đặc (Dense Decoder)<br/>Gồm n_d Khối Residual Blocks"]
     end
 
     subgraph MoDunGiaiMaThoiGian ["4. Làn Đường Cao Tốc & Giải Mã Thời Gian"]
-        TempDec["Khối Giải Mã Thời Gian (Temporal Decoder Module)\nResidualBlock(p + r_tilde -> hidden) + Linear(hidden -> 1)"]
+        TempDec["Khối Giải Mã Thời Gian (Temporal Decoder)<br/>ResidualBlock kết hợp Linear ra 1 giá trị"]
     end
 
     subgraph MoDunTuyenTinhSongSong ["5. Nhánh Tắt Tuyến Tính Toàn Cục"]
-        LinSkip["Khối Tuyến Tính Toàn Cục (Global Linear Skip Module)\nTầng Linear Độc Lập W_skip: L -> H"]
+        LinSkip["Khối Tuyến Tính Toàn Cục (Global Linear Skip)<br/>Tầng Linear Độc Lập W_skip: L sang H"]
     end
 
     subgraph MoDunHopNhat ["6. Khối Hợp Nhất & Hoàn Nguyên"]
-        Add["Phép Cộng Thặng Dư Residual (+)"]
-        RevIN_Out["Mô-đun Chuẩn Hóa Khả Nghịch RevIN (Phần Giải Chuẩn Hóa Ra)"]
+        Add(("Phép Cộng Thặng Dư (+)<br/>y_NL + y_Lin"))
+        RevIN_Out["Mô-đun Chuẩn Hóa Khả Nghịch RevIN<br/>(Cổng Giải Chuẩn Hóa Ra)"]
         YHat["Dự Báo Tương Lai Hoàn Chỉnh: y_hat(L+1:L+H)"]
     end
 
@@ -101,13 +101,13 @@ Toàn bộ mô hình TiDE được cấu thành từ **7 mô-đun tĩnh độc l
 
 ```mermaid
 graph TD
-    In["Đầu vào u (Kích thước d_in)"] --> Dense1["Dense 1: Linear(d_in -> d_hidden) + ReLU"]
-    Dense1 --> Dense2["Dense 2: Linear(d_hidden -> d_out)"]
-    Dense2 --> Drop["Dropout (Xác suất p_drop)"]
-    Drop --> Add((+))
+    In["Đầu vào u (Kích thước d_in)"] --> Dense1["Tầng Dense 1: Linear(d_in sang d_hidden) + ReLU"]
+    Dense1 --> Dense2["Tầng Dense 2: Linear(d_hidden sang d_out)"]
+    Dense2 --> Drop["Tầng Dropout (Xác suất p_drop)"]
+    Drop --> Add(("Phép Cộng (+)"))
     
-    In -->|"Skip Connection: Linear(d_in -> d_out)"| Add
-    Add --> LN["Layer Normalization"]
+    In -->|"Nhánh tắt: Chiếu d_in sang d_out"| Add
+    Add --> LN["Tầng Layer Normalization"]
     LN --> Out["Đầu ra v (Kích thước d_out)"]
 
     style In fill:#f9f9f9,stroke:#333,stroke-width:1px
@@ -121,12 +121,23 @@ graph TD
    * **Hàm Kích Hoạt Phi Tuyến ReLU:** Áp dụng phép cắt $\max(0, z)$ tạo tính phi tuyến và tính thưa thớt (sparsity) cho biểu diễn đặc trưng.
    * **Tầng Tuyến Tính 2 (Dense 2):** Ma trận trọng số $W_2 \in \mathbb{R}^{d_{\text{out}} \times d_{\text{hidden}}}$, vector bias $b_2 \in \mathbb{R}^{d_{\text{out}}}$. Ánh xạ từ không gian ẩn sang số chiều đầu ra mong muốn $d_{\text{out}}$.
    * **Tầng Dropout:** Ngắt ngẫu nhiên các kết nối với tỷ lệ $p_{\text{drop}} \in [0.1, 0.5]$ trong quá trình huấn luyện nhằm triệt tiêu hiện tượng nơ-ron đồng phụ thuộc (*co-adaptation*).
+
+$$
+F(u) = \text{Dropout}\Big( W_2 \cdot \text{ReLU}(W_1 \cdot u + b_1) + b_2 \Big)
+$$
+
 2. **Nhánh Tắt Bảo Tồn Tín Hiệu (Residual Skip Connection):**
-   * Nếu $d_{\text{in}} \ne d_{\text{out}}$: Một ma trận chiếu tuyến tính $W_{\text{skip}} \in \mathbb{R}^{d_{\text{out}} \times d_{\text{in}}}$ (và bias $b_{\text{skip}}$) để đồng bộ số chiều.
-   * Nếu $d_{\text{in}} = d_{\text{out}}$: Đường dẫn tắt danh tính trực tiếp (`nn.Identity()`), không tốn bất kỳ tham số nào.
+   * Nếu $d_{\text{in}} \ne d_{\text{out}}$: Một ma trận chiếu tuyến tính $W_{\text{skip}} \in \mathbb{R}^{d_{\text{out}} \times d_{\text{in}}}$ (và bias $b_{\text{skip}}$) để đồng bộ số chiều: $\text{Skip}(u) = W_{\text{skip}} u + b_{\text{skip}}$.
+   * Nếu $d_{\text{in}} = d_{\text{out}}$: Đường dẫn tắt danh tính trực tiếp (`nn.Identity()`), không tốn bất kỳ tham số nào: $\text{Skip}(u) = u$.
+
 3. **Phép Cộng Thặng Dư & Chuẩn Hóa Tầng (Addition & Layer Norm):**
-   * Nút cộng tròn `(+)` thực hiện phép cộng dồn vector: $z = F(u) + \text{Skip}(u)$.
-   * Lớp **Layer Normalization** có 2 tham số học được là scale $\gamma \in \mathbb{R}^{d_{\text{out}}}$ và shift $\beta \in \mathbb{R}^{d_{\text{out}}}$.
+   * Nút cộng tròn `(+)` thực hiện phép cộng dồn vector:
+
+$$
+z = F(u) + \text{Skip}(u)
+$$
+
+   * Lớp **Layer Normalization** có 2 tham số học được là scale $\gamma \in \mathbb{R}^{d_{\text{out}}}$ và shift $\beta \in \mathbb{R}^{d_{\text{out}}}$:
 
 $$
 v = \text{LayerNorm}(z) = \frac{z - \mathbb{E}[z]}{\sqrt{\text{Var}[z] + \epsilon}} \odot \gamma + \beta
@@ -242,12 +253,12 @@ $$
 
 | Tên Mô-Đun / Lớp | Kiểu Lớp PyTorch | Kích Thước Trọng Số ($W$) | Kích Thước Bias ($b$) | Số Lượng Tham Số (Trainable Params) | Vai Trò Kiến Trúc |
 |:---|:---|:---:|:---:|:---:|:---|
-| **`feature_projection`** | `ResidualBlock` | Dense 1: $(1024, 7)$<br>Dense 2: $(4, 1024)$<br>Skip: $(4, 7)$ | $b_1: (1024)$<br>$b_2: (4)$<br>$b_{\text{skip}}: (4)$ | $\approx 12,324$ | Nén số chiều ngoại sinh $r=7 \to \tilde{r}=4$ độc lập từng bước thời gian. |
-| **`encoder.block_0`** | `ResidualBlock` | Dense 1: $(1024, 3984)$<br>Dense 2: $(1024, 1024)$<br>Skip: $(1024, 3984)$ | $b_1: (1024)$<br>$b_2: (1024)$<br>$b_{\text{skip}}: (1024)$ | $\approx 9,216,000$ | Nhận siêu vector $3,984$ chiều, chiếu vào không gian ẩn $1024$. |
-| **`encoder.block_1`** | `ResidualBlock` | Dense 1: $(1024, 1024)$<br>Dense 2: $(1024, 1024)$<br>Skip: Identity | $b_1: (1024)$<br>$b_2: (1024)$<br>Không có bias | $\approx 2,099,200$ | Trích xuất tương tác phi tuyến sâu giữa các thành phần bối cảnh. |
-| **`decoder.block_0`** | `ResidualBlock` | Dense 1: $(1024, 1024)$<br>Dense 2: $(1024, 1024)$<br>Skip: Identity | $b_1: (1024)$<br>$b_2: (1024)$<br>Không có bias | $\approx 2,099,200$ | Tái cấu trúc thông tin tiềm ẩn của chuỗi. |
-| **`decoder.block_1`** | `ResidualBlock` | Dense 1: $(1024, 1024)$<br>Dense 2: $(768, 1024)$<br>Skip: $(768, 1024)$ | $b_1: (1024)$<br>$b_2: (768)$<br>$b_{\text{skip}}: (768)$ | $\approx 2,624,000$ | Ánh xạ về không gian bối cảnh tương lai $H \cdot p = 96 \times 8 = 768$. |
-| **`temporal_decoder`** | `ResidualBlock` + `Linear` | ResBlock: $(1024, 12) \dots$<br>Output Linear: $(1, 1024)$ | $b_{\text{res}} \dots$<br>$b_{\text{out}}: (1)$ | $\approx 100,000$ | Ghép bối cảnh $p$ với ngoại sinh tương lai $\tilde{x}$, dự báo phi tuyến $\hat{y}_{\text{NL}}$. |
+| **`feature_projection`** | `ResidualBlock` | Dense 1: $(1024, 7)$<br/>Dense 2: $(4, 1024)$<br/>Skip: $(4, 7)$ | $b_1: (1024)$<br/>$b_2: (4)$<br/>$b_{\text{skip}}: (4)$ | $\approx 12,324$ | Nén số chiều ngoại sinh $r=7 \to \tilde{r}=4$ độc lập từng bước thời gian. |
+| **`encoder.block_0`** | `ResidualBlock` | Dense 1: $(1024, 3984)$<br/>Dense 2: $(1024, 1024)$<br/>Skip: $(1024, 3984)$ | $b_1: (1024)$<br/>$b_2: (1024)$<br/>$b_{\text{skip}}: (1024)$ | $\approx 9,216,000$ | Nhận siêu vector $3,984$ chiều, chiếu vào không gian ẩn $1024$. |
+| **`encoder.block_1`** | `ResidualBlock` | Dense 1: $(1024, 1024)$<br/>Dense 2: $(1024, 1024)$<br/>Skip: Identity | $b_1: (1024)$<br/>$b_2: (1024)$<br/>Không có bias | $\approx 2,099,200$ | Trích xuất tương tác phi tuyến sâu giữa các thành phần bối cảnh. |
+| **`decoder.block_0`** | `ResidualBlock` | Dense 1: $(1024, 1024)$<br/>Dense 2: $(1024, 1024)$<br/>Skip: Identity | $b_1: (1024)$<br/>$b_2: (1024)$<br/>Không có bias | $\approx 2,099,200$ | Tái cấu trúc thông tin tiềm ẩn của chuỗi. |
+| **`decoder.block_1`** | `ResidualBlock` | Dense 1: $(1024, 1024)$<br/>Dense 2: $(768, 1024)$<br/>Skip: $(768, 1024)$ | $b_1: (1024)$<br/>$b_2: (768)$<br/>$b_{\text{skip}}: (768)$ | $\approx 2,624,000$ | Ánh xạ về không gian bối cảnh tương lai $H \cdot p = 96 \times 8 = 768$. |
+| **`temporal_decoder`** | `ResidualBlock` + `Linear` | ResBlock: $(1024, 12) \dots$<br/>Output Linear: $(1, 1024)$ | $b_{\text{res}} \dots$<br/>$b_{\text{out}}: (1)$ | $\approx 100,000$ | Ghép bối cảnh $p$ với ngoại sinh tương lai $\tilde{x}$, dự báo phi tuyến $\hat{y}_{\text{NL}}$. |
 | **`linear_skip`** | `nn.Linear` | $(96, 720)$ | $(96)$ | $96 \times 720 + 96 = \mathbf{69,216}$ | Nhánh tắt tuyến tính trực tiếp từ $L$ bước quá khứ sang $H$ bước tương lai. |
 | **`revin`** | `RevIN` | $\gamma: (1)$ | $\beta: (1)$ | $2$ (hoặc $0$ nếu cố định) | Chuẩn hóa cục bộ và giải chuẩn hóa chống trôi phân phối. |
 | **TỔNG CỘNG** | **Toàn Bộ TiDE** | — | — | $\mathbf{\approx 16.2\text{ Triệu Tham Số}}$ | Toàn bộ mô hình chạy thuần MLP siêu tốc $O(L + H)$. |
@@ -259,20 +270,20 @@ $$
 > 📄 **Vị trí cụ thể trong bài báo gốc:**  
 > **Trang 4 - 5, Mục 3 "Problem Setting" & Mục 4 "Architecture"**
 
-| Ký Hiệu Trong Hình | Vị Trí Trong Paper | Tên Linh Kiện / Khối | Định Nghĩa Kiến Trúc | Số Chiều / Kích Thước Toán Học |
+| Ký Hiệu Trong Hình | Vị Trí Trong Paper Gốc | Tên Linh Kiện / Khối | Định Nghĩa Kiến Trúc | Số Chiều / Kích Thước Toán Học |
 |:--- |:---|:--- |:--- |:---:|
-| **$y_{1:L}$** | Section 3, Trang 4, Dòng 8 | **Lookback Series** | Cổng tiếp nhận chuỗi lịch sử mục tiêu $L$ bước quá khứ. | $\mathbb{R}^L$ |
-| **$x_{1:L+H}$** | Section 3, Trang 4, Dòng 12 | **Dynamic Covariates** | Cổng tiếp nhận ma trận ngoại sinh biến thiên theo thời gian. | $\mathbb{R}^{(L+H) \times r}$ |
-| **$a$** | Section 3, Trang 4, Dòng 15 | **Static Attributes** | Cổng tiếp nhận vector thuộc tính tĩnh không đổi theo thời gian. | $\mathbb{R}^{p_{\text{static}}}$ |
-| **$\tilde{x}_{1:L+H}$** | Section 4.1, Trang 5, Eq (3) | **Projected Covariates** | Ngõ ra của khối Feature Projection sau khi nén đặc trưng. | $\mathbb{R}^{(L+H) \times \tilde{r}}$ |
-| **$e$** | Section 4.1, Trang 5, Eq (4) | **Context Embedding** | Ngõ ra của khối Dense Encoder, biểu diễn trừu tượng toàn cục của chuỗi. | $\mathbb{R}^{d_{\text{hidden}}}$ |
-| **$g$** | Section 4.2, Trang 6, Dòng 3 | **Decoded Flat Vector** | Ngõ ra của khối Dense Decoder trước khi bẻ thành ma trận. | $\mathbb{R}^{H \cdot p}$ |
-| **$d_{L+1:L+H}$** | Section 4.2, Trang 6, Dòng 8 | **Decoded Matrix $D$** | Ma trận gồm $H$ hàng, mỗi hàng là một vector bối cảnh tương lai $d_t$. | $\mathbb{R}^{H \times p}$ |
-| **$\tilde{x}_{L+1:L+H}$** | Section 4.2, Trang 6, Dòng 15 | **Future Covariates** | Nhánh ngoại sinh tương lai đưa thẳng vào cổng Temporal Decoder. | $\mathbb{R}^{H \times \tilde{r}}$ |
-| **$\hat{y}_{\text{NL}}$** | Section 4.2, Trang 6, Eq (5) | **Nonlinear Prediction** | Đầu ra dự báo của nhánh phi tuyến (từ Temporal Decoder). | $\mathbb{R}^H$ |
-| **$\hat{y}_{\text{Lin}}$** | Section 4.2, Trang 6, Cột phải | **Linear Prediction** | Đầu ra dự báo của nhánh tuyến tính (từ Global Linear Skip). | $\mathbb{R}^H$ |
-| **$\hat{y}_{L+1:L+H}$** | Section 4.2, Trang 6, Dòng 10 | **Final Prediction** | Kết quả dự báo tương lai cuối cùng xuất ra khỏi mô hình. | $\mathbb{R}^H$ |
-| **$n_e, n_d$** | Section 4.1 & 4.2, Trang 5-6 | **Layer Counts** | Số lượng khối Residual Block xếp chồng trong Encoder và Decoder. | $1$ hoặc $2$ |
+| $`y_{1:L}`$ | Section 3, Trang 4, Dòng 8 | **Lookback Series** | Cổng tiếp nhận chuỗi lịch sử mục tiêu $L$ bước quá khứ. | $\mathbb{R}^L$ |
+| $`x_{1:L+H}`$ | Section 3, Trang 4, Dòng 12 | **Dynamic Covariates** | Cổng tiếp nhận ma trận ngoại sinh biến thiên theo thời gian. | $\mathbb{R}^{(L+H) \times r}$ |
+| $`a`$ | Section 3, Trang 4, Dòng 15 | **Static Attributes** | Cổng tiếp nhận vector thuộc tính tĩnh không đổi theo thời gian. | $\mathbb{R}^{p_{\text{static}}}$ |
+| $`\tilde{x}_{1:L+H}`$ | Section 4.1, Trang 5, Công thức (3) | **Projected Covariates** | Ngõ ra của khối Feature Projection sau khi nén đặc trưng. | $\mathbb{R}^{(L+H) \times \tilde{r}}$ |
+| $`e`$ | Section 4.1, Trang 5, Công thức (4) | **Context Embedding** | Ngõ ra của khối Dense Encoder, biểu diễn trừu tượng toàn cục của chuỗi. | $\mathbb{R}^{d_{\text{hidden}}}$ |
+| $`g`$ | Section 4.2, Trang 6, Dòng 3 | **Decoded Flat Vector** | Ngõ ra của khối Dense Decoder trước khi bẻ thành ma trận. | $\mathbb{R}^{H \cdot p}$ |
+| $`d_{L+1:L+H}`$ | Section 4.2, Trang 6, Dòng 8 | **Decoded Matrix $D$** | Ma trận gồm $H$ hàng, mỗi hàng là một vector bối cảnh tương lai $d_t$. | $\mathbb{R}^{H \times p}$ |
+| $`\tilde{x}_{L+1:L+H}`$ | Section 4.2, Trang 6, Dòng 15 | **Future Covariates** | Nhánh ngoại sinh tương lai đưa thẳng vào cổng Temporal Decoder. | $\mathbb{R}^{H \times \tilde{r}}$ |
+| $`\hat{y}_{\text{NL}}`$ | Section 4.2, Trang 6, Công thức (5) | **Nonlinear Prediction** | Đầu ra dự báo của nhánh phi tuyến (từ Temporal Decoder). | $\mathbb{R}^{H}$ |
+| $`\hat{y}_{\text{Lin}}`$ | Section 4.2, Trang 6, Cột phải | **Linear Prediction** | Đầu ra dự báo của nhánh tuyến tính (từ Global Linear Skip). | $\mathbb{R}^H$ |
+| $`\hat{y}_{L+1:L+H}`$ | Section 4.2, Trang 6, Dòng 10 | **Final Prediction** | Kết quả dự báo tương lai cuối cùng xuất ra khỏi mô hình. | $\mathbb{R}^H$ |
+| $`n_e, n_d`$ | Section 4.1 & 4.2, Trang 5-6 | **Layer Counts** | Số lượng khối Residual Block xếp chồng trong Encoder và Decoder. | $1$ hoặc $2$ |
 
 ---
 
