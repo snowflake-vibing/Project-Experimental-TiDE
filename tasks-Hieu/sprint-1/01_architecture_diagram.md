@@ -20,7 +20,7 @@ Trong kỹ thuật phần mềm và Học sâu (Deep Learning):
 
 > 📄 **Vị trí cụ thể trong bài báo gốc:**  
 > **Trang 5, Figure 1 (chính giữa trang)**  
-> *Nguyên văn chú thích bài báo:* *"Figure 1: The architecture of TiDE. Lookback $y_{1:L}$, dynamic covariates $x_{1:L+H}$ and static attributes $a$ are mapped to predictions $\hat{y}_{L+1:L+H}$. The model consists of Feature Projection, Encoder, Decoder, Temporal Decoder, and Linear Skip components built using Residual Blocks (right)."*
+> **Nguyên văn chú thích bài báo:** "Figure 1: The architecture of TiDE. Lookback $y_{1:L}$, dynamic covariates $x_{1:L+H}$ and static attributes $a$ are mapped to predictions $\hat{y}_{L+1:L+H}$. The model consists of Feature Projection, Encoder, Decoder, Temporal Decoder, and Linear Skip components built using Residual Blocks (right)."
 
 Dưới đây là hình ảnh kiến trúc chính thức trích xuất trực tiếp từ **Trang 5 (Figure 1)** của bài báo khoa học gốc:
 
@@ -97,7 +97,7 @@ Toàn bộ mô hình TiDE được cấu thành từ **7 mô-đun tĩnh độc l
 
 > 📄 **Vị trí cụ thể trong bài báo gốc:**  
 > **Trang 5, Cột trái, Mục 4.1 "Residual Block", Đoạn 2 & Hình 1 (Khung bên phải)**  
-> *Nguyên văn bài báo:* *"The core building block of TiDE is a Residual Block consisting of a Dense layer with ReLU activation, followed by a second Dense layer with Linear activation, Dropout, a Skip Connection, and Layer Normalization."*
+> **Nguyên văn bài báo:** "The core building block of TiDE is a Residual Block consisting of a Dense layer with ReLU activation, followed by a second Dense layer with Linear activation, Dropout, a Skip Connection, and Layer Normalization."
 
 ```mermaid
 graph TD
@@ -131,13 +131,13 @@ $$
    * Nếu $d_{\text{in}} = d_{\text{out}}$: Đường dẫn tắt danh tính trực tiếp (`nn.Identity()`), không tốn bất kỳ tham số nào: $\text{Skip}(u) = u$.
 
 3. **Phép Cộng Thặng Dư & Chuẩn Hóa Tầng (Addition & Layer Norm):**
-   * Nút cộng tròn `(+)` thực hiện phép cộng dồn vector:
+   * **Nút cộng tròn `(+)`**: Thực hiện phép cộng dồn vector thặng dư:
 
 $$
 z = F(u) + \text{Skip}(u)
 $$
 
-   * Lớp **Layer Normalization** có 2 tham số học được là scale $\gamma \in \mathbb{R}^{d_{\text{out}}}$ và shift $\beta \in \mathbb{R}^{d_{\text{out}}}$:
+   * **Lớp Layer Normalization**: Có 2 tham số học được là scale $\gamma \in \mathbb{R}^{d_{\text{out}}}$ và shift $\beta \in \mathbb{R}^{d_{\text{out}}}$. Áp dụng chuẩn hóa tầng:
 
 $$
 v = \text{LayerNorm}(z) = \frac{z - \mathbb{E}[z]}{\sqrt{\text{Var}[z] + \epsilon}} \odot \gamma + \beta
@@ -149,7 +149,7 @@ $$
 
 > 📄 **Vị trí cụ thể trong bài báo gốc:**  
 > **Trang 5, Cột phải, Mục 4.1 "Feature Projection", Đoạn 1, Công thức (3)**  
-> *Nguyên văn bài báo:* *"Specifically, dynamic covariates $x_t \in \mathbb{R}^r$ at each time-step $t$ are projected to a lower-dimensional feature space $\tilde{x}_t \in \mathbb{R}^{\tilde{r}}$ using a Residual Block: $\tilde{x}_t = \text{ResidualBlock}(x_t)$."*
+> **Nguyên văn bài báo:** "Specifically, dynamic covariates $x_t \in \mathbb{R}^r$ at each time-step $t$ are projected to a lower-dimensional feature space $\tilde{x}_t \in \mathbb{R}^{\tilde{r}}$ using a Residual Block: $\tilde{x}_t = \text{ResidualBlock}(x_t)$."
 
 * **Vị trí trong kiến trúc:** Đứng độc lập ở cổng tiếp nhận biến ngoại sinh động $x_{1:L+H}$.
 * **Cấu tạo phần cứng:** Đúng **$1$ khối Residual Block cơ sở** với tham số cấu hình:
@@ -167,7 +167,7 @@ $$
 
 > 📄 **Vị trí cụ thể trong bài báo gốc:**  
 > **Trang 5, Cột phải, Mục 4.1 "Dense Encoder", Đoạn 2-3, Công thức (4)**  
-> *Nguyên văn bài báo:* *"The flattened projected covariates, along with the lookback series $y_{1:L}$ and static attributes $a$, are concatenated and fed into an encoder consisting of $n_e$ stacked Residual Blocks: $e = \text{Encoder}(u_{\text{enc}}) \in \mathbb{R}^{d_{\text{hidden}}}$."*
+> **Nguyên văn bài báo:** "The flattened projected covariates, along with the lookback series $y_{1:L}$ and static attributes $a$, are concatenated and fed into an encoder consisting of $n_e$ stacked Residual Blocks: $e = \text{Encoder}(u_{\text{enc}}) \in \mathbb{R}^{d_{\text{hidden}}}$."
 
 * **Vị trí trong kiến trúc:** Trung tâm xử lý thông tin lịch sử và ngoại sinh toàn cục.
 * **Cấu tạo phần cứng:** Gồm chuỗi **$n_e$ khối Residual Blocks xếp chồng liên tiếp** (`numEncoderLayers`, thường bằng $1$ hoặc $2$):
@@ -185,7 +185,7 @@ $$
 
 > 📄 **Vị trí cụ thể trong bài báo gốc:**  
 > **Trang 6, Cột trái, Mục 4.2 "Decoder", Đoạn 1-2**  
-> *Nguyên văn bài báo:* *"The encoder output $e$ is mapped through a decoder consisting of $n_d$ stacked Residual Blocks into a vector of size $H \cdot p$, which is then reshaped into matrix $D \in \mathbb{R}^{p \times H}$ (or $H \times p$)."*
+> **Nguyên văn bài báo:** "The encoder output $e$ is mapped through a decoder consisting of $n_d$ stacked Residual Blocks into a vector of size $H \cdot p$, which is then reshaped into matrix $D \in \mathbb{R}^{p \times H}$ (or $H \times p$)."
 
 * **Vị trí trong kiến trúc:** Nối tiếp ngay sau Dense Encoder.
 * **Cấu tạo phần cứng:** Gồm chuỗi **$n_d$ khối Residual Blocks xếp chồng liên tiếp** (`numDecoderLayers`, thường bằng $1$ hoặc $2$):
@@ -203,7 +203,7 @@ $$
 
 > 📄 **Vị trí cụ thể trong bài báo gốc:**  
 > **Trang 6, Cột trái, Mục 4.2 "Temporal Decoder", Đoạn 3, Công thức (5)**  
-> *Nguyên văn bài báo:* *"At each forecast step $t \in \{1, \dots, H\}$, the decoded representation $d_t$ is concatenated with future covariates $\tilde{x}_{L+t}$ and passed through a Residual Block to produce a scalar output $\hat{y}_{\text{NL}, t} = \text{TemporalDecoder}([d_t ; \tilde{x}_{L+t}])$."*
+> **Nguyên văn bài báo:** "At each forecast step $t \in \{1, \dots, H\}$, the decoded representation $d_t$ is concatenated with future covariates $\tilde{x}_{L+t}$ and passed through a Residual Block to produce a scalar output $\hat{y}_{\text{NL}, t} = \text{TemporalDecoder}([d_t ; \tilde{x}_{L+t}])$."
 
 * **Vị trí trong kiến trúc:** Nằm ở giai đoạn tổng hợp cuối cùng trước khi xuất kết quả phi tuyến.
 * **Cấu tạo phần cứng:** Gồm **$1$ khối Residual Block** kết hợp với **$1$ tầng chiếu tuyến tính (Projection Layer)**:
@@ -220,7 +220,7 @@ $$
 
 > 📄 **Vị trí cụ thể trong bài báo gốc:**  
 > **Trang 6, Cột phải, Mục 4.2 "Linear Skip", Đoạn 1, Dòng 1-8**  
-> *Nguyên văn bài báo:* *"Similar to DLinear, we also include a direct linear projection from the lookback horizon $y_{1:L}$ to the forecast horizon $\hat{y}_{\text{Lin}} \in \mathbb{R}^H$: $\hat{y}_{\text{Lin}} = W_{\text{skip}} y_{1:L} + b_{\text{skip}}$."*
+> **Nguyên văn bài báo:** "Similar to DLinear, we also include a direct linear projection from the lookback horizon $y_{1:L}$ to the forecast horizon $\hat{y}_{\text{Lin}} \in \mathbb{R}^H$: $\hat{y}_{\text{Lin}} = W_{\text{skip}} y_{1:L} + b_{\text{skip}}$."
 
 * **Vị trí trong kiến trúc:** Đi song song, bắc cầu trực tiếp từ đầu vào chuỗi lịch sử $y_{1:L}$ sang đầu ra tương lai $\hat{y}_{L+1:L+H}$.
 * **Cấu tạo phần cứng:** Đúng **$1$ tầng tuyến tính đơn lẻ (`nn.Linear`)**:
@@ -235,7 +235,7 @@ $$
 
 > 📄 **Vị trí cụ thể trong bài báo gốc:**  
 > **Trang 15 - 16, Phụ lục B.1 "Reversible Instance Normalization" & Bảng 8 (Table 8)**  
-> *Nguyên văn bài báo:* *"We apply reversible instance normalization (RevIN) as proposed by Kim et al. (2021) to address distribution shift in time series. Normalization is performed per-instance, and the instance mean and standard deviation are stored to denormalize the model predictions."*
+> **Nguyên văn bài báo:** "We apply reversible instance normalization (RevIN) as proposed by Kim et al. (2021) to address distribution shift in time series. Normalization is performed per-instance, and the instance mean and standard deviation are stored to denormalize the model predictions."
 
 * **Vị trí trong kiến trúc:** Đặt tại 2 cửa ngõ: Cổng vào (chuẩn hóa chuỗi lịch sử $y$) và Cổng ra (giải chuẩn hóa kết quả dự báo $\hat{y}$).
 * **Cấu tạo phần cứng:**
