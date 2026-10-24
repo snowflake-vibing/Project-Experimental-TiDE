@@ -79,17 +79,22 @@ Toàn bộ quy trình lan truyền xuôi `forward(y, x, a)` được chia thành
 > 📄 **Vị trí cụ thể trong bài báo gốc:**  
 > **Trang 15 - 16, Phụ lục B.1 "Reversible Instance Normalization" & Bảng 8 (Table 8)**
 
-* **Toán học:** Tính kỳ vọng $\mu$ và độ lệch chuẩn $\sigma$ trên từng chuỗi con độc lập, sau đó chuẩn hóa:
-  $$
-  \mu = \frac{1}{L} \sum_{t=1}^L y_t, \quad \sigma = \sqrt{\frac{1}{L} \sum_{t=1}^L (y_t - \mu)^2 + \epsilon}, \quad y_{\text{norm}} = \frac{y - \mu}{\sigma}
-  $$
-* **PyTorch Code:**
-  ```python
-  mean = y.mean(dim=1, keepdim=True)        # Kích thước: (32, 1)
-  std = y.std(dim=1, keepdim=True) + 1e-5   # Kích thước: (32, 1)
-  y_norm = (y - mean) / std                # Kích thước: (32, 720)
-  ```
-* **Bản chất động:** Biến đổi phân phối của batch chuỗi lịch sử về kỳ vọng $0$ và phương sai $1$. Cặp giá trị $(\mu, \sigma)$ được lưu vào RAM để hoàn nguyên ở Bước 11.
+#### 📐 1. Bản chất toán học:
+Tính kỳ vọng $\mu$ và độ lệch chuẩn $\sigma$ trên từng chuỗi con độc lập, sau đó chuẩn hóa:
+
+$$
+\mu = \frac{1}{L} \sum_{t=1}^L y_t, \quad \sigma = \sqrt{\frac{1}{L} \sum_{t=1}^L (y_t - \mu)^2 + \epsilon}, \quad y_{\text{norm}} = \frac{y - \mu}{\sigma}
+$$
+
+#### 💻 2. Mã nguồn PyTorch thực thi:
+```python
+mean = y.mean(dim=1, keepdim=True)        # Kích thước: (32, 1)
+std = y.std(dim=1, keepdim=True) + 1e-5   # Kích thước: (32, 1)
+y_norm = (y - mean) / std                # Kích thước: (32, 720)
+```
+
+#### ⚡ 3. Bản chất động trong RAM:
+Biến đổi phân phối của batch chuỗi lịch sử về kỳ vọng $0$ và phương sai $1$. Cặp giá trị $(\mu, \sigma)$ được lưu vào RAM để hoàn nguyên ở Bước 11.
 
 ---
 
@@ -98,15 +103,20 @@ Toàn bộ quy trình lan truyền xuôi `forward(y, x, a)` được chia thành
 > 📄 **Vị trí cụ thể trong bài báo gốc:**  
 > **Trang 5, Cột phải, Mục 4.1 "Feature Projection", Đoạn 1, Công thức (3)**
 
-* **Toán học:** Áp dụng khối chiếu tuyến tính từng đoạn qua hàm:
-  $$
-  \tilde{x}_t = \text{FeatureProjection}(x_t) \in \mathbb{R}^{\tilde{r}} \quad \forall t \in \{1, \dots, L+H\}
-  $$
-* **PyTorch Code:**
-  ```python
-  x_proj = self.feature_projection(x)      # (32, 816, 7) -> (32, 816, 4)
-  ```
-* **Bản chất động:** Cùng một khối nơ-ron quét qua toàn bộ $816$ lát cắt thời gian, nén vector $7$ chiều về $4$ chiều giàu thông tin nhất.
+#### 📐 1. Bản chất toán học:
+Áp dụng khối chiếu tuyến tính từng đoạn qua hàm:
+
+$$
+\tilde{x}_t = \text{FeatureProjection}(x_t) \in \mathbb{R}^{\tilde{r}} \quad \forall t \in \{1, \dots, L+H\}
+$$
+
+#### 💻 2. Mã nguồn PyTorch thực thi:
+```python
+x_proj = self.feature_projection(x)      # (32, 816, 7) -> (32, 816, 4)
+```
+
+#### ⚡ 3. Bản chất động trong RAM:
+Cùng một khối nơ-ron quét qua toàn bộ $816$ lát cắt thời gian, nén vector $7$ chiều về $4$ chiều giàu thông tin nhất.
 
 ---
 
@@ -115,16 +125,21 @@ Toàn bộ quy trình lan truyền xuôi `forward(y, x, a)` được chia thành
 > 📄 **Vị trí cụ thể trong bài báo gốc:**  
 > **Trang 5, Cột phải, Mục 4.1 "Dense Encoder", Dòng 8-15 & Công thức (4)**
 
-* **Toán học:** Duỗi phẳng ma trận ngoại sinh $2\text{D}$ thành vector $1\text{D}$ rồi ghép nối:
-  $$
-  u_{\text{enc}} = \begin{bmatrix} y_{\text{norm}, 1:L} \\ \text{vec}(\tilde{x}_{1:L+H}) \\ a \end{bmatrix} \in \mathbb{R}^{L + (L+H)\tilde{r} + p_{\text{static}}}
-  $$
-* **PyTorch Code:**
-  ```python
-  x_flat = x_proj.flatten(start_dim=1)            # (32, 816, 4) -> (32, 3264)
-  enc_in = torch.cat([y_norm, x_flat, a], dim=-1) # (32, 720 + 3264 + 0) = (32, 3984)
-  ```
-* **Bản chất động:** Biến đổi cấu trúc không gian - thời gian thành một vector 1D phẳng duy nhất, sẵn sàng đưa vào mạng Perceptron đa tầng (MLP).
+#### 📐 1. Bản chất toán học:
+Duỗi phẳng ma trận ngoại sinh $2\text{D}$ thành vector $1\text{D}$ rồi ghép nối:
+
+$$
+u_{\text{enc}} = \begin{bmatrix} y_{\text{norm}, 1:L} \\ \text{vec}(\tilde{x}_{1:L+H}) \\ a \end{bmatrix} \in \mathbb{R}^{L + (L+H)\tilde{r} + p_{\text{static}}}
+$$
+
+#### 💻 2. Mã nguồn PyTorch thực thi:
+```python
+x_flat = x_proj.flatten(start_dim=1)            # (32, 816, 4) -> (32, 3264)
+enc_in = torch.cat([y_norm, x_flat, a], dim=-1) # (32, 720 + 3264 + 0) = (32, 3984)
+```
+
+#### ⚡ 3. Bản chất động trong RAM:
+Biến đổi cấu trúc không gian - thời gian thành một vector 1D phẳng duy nhất, sẵn sàng đưa vào mạng Perceptron đa tầng (MLP).
 
 ---
 
@@ -133,15 +148,20 @@ Toàn bộ quy trình lan truyền xuôi `forward(y, x, a)` được chia thành
 > 📄 **Vị trí cụ thể trong bài báo gốc:**  
 > **Trang 5, Cột phải, Mục 4.1 "Dense Encoder", Công thức (4) & Đoạn 3**
 
-* **Toán học:** Lan truyền siêu vector qua $n_e$ khối Residual Block để tạo vector tiềm ẩn toàn cục:
-  $$
-  e = \text{DenseEncoder}(u_{\text{enc}}) \in \mathbb{R}^{d_{\text{hidden}}}
-  $$
-* **PyTorch Code:**
-  ```python
-  e = self.encoder(enc_in)                         # (32, 3984) -> (32, 1024)
-  ```
-* **Bản chất động:** Nén $3,984$ chiều thông tin hỗn hợp thành $1,024$ chiều biểu diễn đặc trưng trừu tượng (*Context Embedding*).
+#### 📐 1. Bản chất toán học:
+Lan truyền siêu vector qua $n_e$ khối Residual Block để tạo vector tiềm ẩn toàn cục:
+
+$$
+e = \text{DenseEncoder}(u_{\text{enc}}) \in \mathbb{R}^{d_{\text{hidden}}}
+$$
+
+#### 💻 2. Mã nguồn PyTorch thực thi:
+```python
+e = self.encoder(enc_in)                         # (32, 3984) -> (32, 1024)
+```
+
+#### ⚡ 3. Bản chất động trong RAM:
+Nén $3,984$ chiều thông tin hỗn hợp thành $1,024$ chiều biểu diễn đặc trưng trừu tượng (*Context Embedding*).
 
 ---
 
@@ -150,15 +170,20 @@ Toàn bộ quy trình lan truyền xuôi `forward(y, x, a)` được chia thành
 > 📄 **Vị trí cụ thể trong bài báo gốc:**  
 > **Trang 6, Cột trái, Mục 4.2 "Decoder", Đoạn 1, Dòng 1-6**
 
-* **Toán học:** Giải mã từ vector tiềm ẩn sang vector dự báo phẳng:
-  $$
-  g = \text{DenseDecoder}(e) \in \mathbb{R}^{H \cdot p}
-  $$
-* **PyTorch Code:**
-  ```python
-  g = self.decoder(e)                              # (32, 1024) -> (32, 768)
-  ```
-* **Bản chất động:** Vector $g$ có độ dài $H \cdot p = 96 \times 8 = 768$, mang toàn bộ bối cảnh dự báo cho $96$ bước tương lai.
+#### 📐 1. Bản chất toán học:
+Giải mã từ vector tiềm ẩn sang vector dự báo phẳng:
+
+$$
+g = \text{DenseDecoder}(e) \in \mathbb{R}^{H \cdot p}
+$$
+
+#### 💻 2. Mã nguồn PyTorch thực thi:
+```python
+g = self.decoder(e)                              # (32, 1024) -> (32, 768)
+```
+
+#### ⚡ 3. Bản chất động trong RAM:
+Vector $g$ có độ dài $H \cdot p = 96 \times 8 = 768$, mang toàn bộ bối cảnh dự báo cho $96$ bước tương lai.
 
 ---
 
@@ -167,15 +192,20 @@ Toàn bộ quy trình lan truyền xuôi `forward(y, x, a)` được chia thành
 > 📄 **Vị trí cụ thể trong bài báo gốc:**  
 > **Trang 6, Cột trái, Mục 4.2 "Decoder", Đoạn 2, Dòng 7-14**
 
-* **Toán học:** Bẻ vector phẳng $g$ thành ma trận $2\text{D}$ gồm $H$ hàng:
-  $$
-  D = \text{Reshape}(g, (H, p)) = \begin{bmatrix} d_1 \\ d_2 \\ \vdots \\ d_H \end{bmatrix} \in \mathbb{R}^{H \times p}
-  $$
-* **PyTorch Code:**
-  ```python
-  d = g.view(B, self.H, self.p)                   # (32, 768) -> (32, 96, 8)
-  ```
-* **Bản chất động:** Khôi phục lại trục thời gian tương lai: mỗi bước $t \in [1, 96]$ nhận riêng một vector bối cảnh $d_t$ dài $8$ chiều.
+#### 📐 1. Bản chất toán học:
+Bẻ vector phẳng $g$ thành ma trận $2\text{D}$ gồm $H$ hàng:
+
+$$
+D = \text{Reshape}(g, (H, p)) = \begin{bmatrix} d_1 \\ d_2 \\ \vdots \\ d_H \end{bmatrix} \in \mathbb{R}^{H \times p}
+$$
+
+#### 💻 2. Mã nguồn PyTorch thực thi:
+```python
+d = g.view(B, self.H, self.p)                   # (32, 768) -> (32, 96, 8)
+```
+
+#### ⚡ 3. Bản chất động trong RAM:
+Khôi phục lại trục thời gian tương lai: mỗi bước $t \in [1, 96]$ nhận riêng một vector bối cảnh $d_t$ dài $8$ chiều.
 
 ---
 
@@ -184,17 +214,22 @@ Toàn bộ quy trình lan truyền xuôi `forward(y, x, a)` được chia thành
 > 📄 **Vị trí cụ thể trong bài báo gốc:**  
 > **Trang 6, Cột trái, Mục 4.2 "Temporal Decoder", Đoạn 3 & Công thức (5)**
 
-* **Toán học:** Trích xuất ngoại sinh tương lai và kết hợp với bối cảnh giải mã tại từng bước:
-  $$
-  \hat{y}_{\text{NL}, t} = \text{TemporalDecoder}\left( \begin{bmatrix} d_t \\ \tilde{x}_{L+t} \end{bmatrix} \right) \in \mathbb{R} \quad \forall t \in \{1, \dots, H\}
-  $$
-* **PyTorch Code:**
-  ```python
-  x_future = x_proj[:, self.L:, :]                 # Cắt 96 bước tương lai: (32, 96, 4)
-  temp_in = torch.cat([d, x_future], dim=-1)       # Ghép bối cảnh: (32, 96, 12)
-  y_nl = self.temporal_decoder(temp_in).squeeze(-1)# Dự báo phi tuyến: (32, 96)
-  ```
-* **Bản chất động:** Cơ chế đường cao tốc đưa trực tiếp đặc trưng tương lai vào ngõ ra, giúp mô hình phản ứng tức thời với các biến cố ngoại sinh đã biết trước.
+#### 📐 1. Bản chất toán học:
+Trích xuất ngoại sinh tương lai và kết hợp với bối cảnh giải mã tại từng bước:
+
+$$
+\hat{y}_{\text{NL}, t} = \text{TemporalDecoder}\left( \begin{bmatrix} d_t \\ \tilde{x}_{L+t} \end{bmatrix} \right) \in \mathbb{R} \quad \forall t \in \{1, \dots, H\}
+$$
+
+#### 💻 2. Mã nguồn PyTorch thực thi:
+```python
+x_future = x_proj[:, self.L:, :]                 # Cắt 96 bước tương lai: (32, 96, 4)
+temp_in = torch.cat([d, x_future], dim=-1)       # Ghép bối cảnh: (32, 96, 12)
+y_nl = self.temporal_decoder(temp_in).squeeze(-1)# Dự báo phi tuyến: (32, 96)
+```
+
+#### ⚡ 3. Bản chất động trong RAM:
+Cơ chế đường cao tốc đưa trực tiếp đặc trưng tương lai vào ngõ ra, giúp mô hình phản ứng tức thời với các biến cố ngoại sinh đã biết trước.
 
 ---
 
@@ -203,15 +238,20 @@ Toàn bộ quy trình lan truyền xuôi `forward(y, x, a)` được chia thành
 > 📄 **Vị trí cụ thể trong bài báo gốc:**  
 > **Trang 6, Cột phải, Mục 4.2 "Linear Skip", Đoạn 1, Dòng 1-8**
 
-* **Toán học:** Ánh xạ tuyến tính trực tiếp từ quá khứ sang tương lai:
-  $$
-  \hat{y}_{\text{Lin}} = W_{\text{skip}} \cdot y_{\text{norm}} + b_{\text{skip}} \in \mathbb{R}^H
-  $$
-* **PyTorch Code:**
-  ```python
-  y_lin = self.linear_skip(y_norm)                 # (32, 720) -> (32, 96)
-  ```
-* **Bản chất động:** Học xu hướng tăng giảm tự hồi quy tuyến tính cơ bản, tương tự như mô hình DLinear.
+#### 📐 1. Bản chất toán học:
+Ánh xạ tuyến tính trực tiếp từ quá khứ sang tương lai:
+
+$$
+\hat{y}_{\text{Lin}} = W_{\text{skip}} \cdot y_{\text{norm}} + b_{\text{skip}} \in \mathbb{R}^H
+$$
+
+#### 💻 2. Mã nguồn PyTorch thực thi:
+```python
+y_lin = self.linear_skip(y_norm)                 # (32, 720) -> (32, 96)
+```
+
+#### ⚡ 3. Bản chất động trong RAM:
+Học xu hướng tăng giảm tự hồi quy tuyến tính cơ bản, tương tự như mô hình DLinear.
 
 ---
 
@@ -220,16 +260,21 @@ Toàn bộ quy trình lan truyền xuôi `forward(y, x, a)` được chia thành
 > 📄 **Vị trí cụ thể trong bài báo gốc:**  
 > **Trang 6, Cột phải, Dòng 9-11 (Hợp nhất `+`) & Trang 15, Phụ lục B.1 (RevIN Denorm)**
 
-* **Toán học:** Cộng dồn dự báo tuyến tính + phi tuyến, sau đó giải chuẩn hóa:
-  $$
-  \hat{y}_{\text{norm}} = \hat{y}_{\text{NL}} + \hat{y}_{\text{Lin}}, \quad \hat{y}_{L+1:L+H} = \hat{y}_{\text{norm}} \odot \sigma + \mu
-  $$
-* **PyTorch Code:**
-  ```python
-  y_hat_norm = y_nl + y_lin                        # (32, 96) + (32, 96) = (32, 96)
-  y_hat = y_hat_norm * std + mean                  # Nhân lại std, cộng lại mean: (32, 96)
-  ```
-* **Bản chất động:** Hoàn nguyên kết quả dự báo từ miền phân phối chuẩn về đúng đơn vị vật lý ban đầu (Megawatt, lượng xe/giờ...).
+#### 📐 1. Bản chất toán học:
+Cộng dồn dự báo tuyến tính + phi tuyến, sau đó giải chuẩn hóa:
+
+$$
+\hat{y}_{\text{norm}} = \hat{y}_{\text{NL}} + \hat{y}_{\text{Lin}}, \quad \hat{y}_{L+1:L+H} = \hat{y}_{\text{norm}} \odot \sigma + \mu
+$$
+
+#### 💻 2. Mã nguồn PyTorch thực thi:
+```python
+y_hat_norm = y_nl + y_lin                        # (32, 96) + (32, 96) = (32, 96)
+y_hat = y_hat_norm * std + mean                  # Nhân lại std, cộng lại mean: (32, 96)
+```
+
+#### ⚡ 3. Bản chất động trong RAM:
+Hoàn nguyên kết quả dự báo từ miền phân phối chuẩn về đúng đơn vị vật lý ban đầu (Megawatt, lượng xe/giờ...).
 
 ---
 
