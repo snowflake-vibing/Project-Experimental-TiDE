@@ -2,6 +2,7 @@
 
 > [!NOTE]
 > **Điều hướng tài liệu**: [🏠 Tổng Quan Tài Liệu](../00_tong_quan_tai_lieu.md) • [📖 Chương 4: Kiến Trúc TiDE](../04_model_architecture.md) • [📚 Glossary: Residual Block](../glossary/residual_block.md) • [🔍 Danh Mục Chuyên Đề](./README.md)  
+> 📄 **Vị trí cụ thể trong bài báo gốc**: Trang 5, Cột trái, Mục 4.1 "Residual Block", Đoạn 2 & Hình 1 (Khung bên phải); Phụ lục B.3, Trang 18, Bảng 10  
 > **Mục tiêu**: Bóc tách chi tiết từng thành phần toán học, cơ chế vận hành nội tại và ý nghĩa hình học của **Residual Block** — đơn vị xử lý nền tảng xuất hiện xuyên suốt kiến trúc TiDE (Feature Projection, Dense Encoder, Dense Decoder, Temporal Decoder).
 
 ---
@@ -47,14 +48,14 @@ $$
 
 | Bước | Thành phần | Ký hiệu | Kích thước Tensor đầu ra | Vai trò chính |
 | :---: | :--- | :---: | :---: | :--- |
-| **0** | Vector đầu vào | $u$ | `[Batch, d_in]` | Dữ liệu đặc trưng đưa vào khối |
-| **1** | Tuyến tính 1 | $z_1 = W_1 u + b_1$ | `[Batch, d_hidden]` | Chiếu mở rộng không gian đặc trưng ẩn |
-| **2** | Kích hoạt phi tuyến | $a_1 = \max(0, z_1)$ | `[Batch, d_hidden]` | Bẻ gãy tính tuyến tính, tạo tính thưa |
-| **3** | Tuyến tính 2 | $z_2 = W_2 a_1 + b_2$ | `[Batch, d_out]` | Thu gọn về kích thước đầu ra mong muốn |
-| **4** | Dropout | $\tilde{z}_2 = \text{Dropout}(z_2)$ | `[Batch, d_out]` | Điều hòa, chống đồng thích nghi nơ-ron |
-| **5** | Nhánh tắt Skip | $u_{\text{skip}} = W_{\text{skip}} u$ | `[Batch, d_out]` | Bảo tồn thông tin gốc, chống suy thoái |
-| **6** | Phép cộng phần dư | $v_{\text{raw}} = \tilde{z}_2 + u_{\text{skip}}$ | `[Batch, d_out]` | Hợp nhất biểu diễn phi tuyến và tín hiệu gốc |
-| **7** | Chuẩn hóa lớp | $v = \text{LayerNorm}(v_{\text{raw}})$ | `[Batch, d_out]` | Ổn định phân phối dữ liệu đầu ra |
+| **0** | Vector đầu vào | $`u`$ | `[Batch, d_in]` | Dữ liệu đặc trưng đưa vào khối |
+| **1** | Tuyến tính 1 | $`z_1 = W_1 u + b_1`$ | `[Batch, d_hidden]` | Chiếu mở rộng không gian đặc trưng ẩn |
+| **2** | Kích hoạt phi tuyến | $`a_1 = \max(0, z_1)`$ | `[Batch, d_hidden]` | Bẻ gãy tính tuyến tính, tạo tính thưa |
+| **3** | Tuyến tính 2 | $`z_2 = W_2 a_1 + b_2`$ | `[Batch, d_out]` | Thu gọn về kích thước đầu ra mong muốn |
+| **4** | Dropout | $`\tilde{z}_2 = \text{Dropout}(z_2)`$ | `[Batch, d_out]` | Điều hòa, chống đồng thích nghi nơ-ron |
+| **5** | Nhánh tắt Skip | $`u_{\text{skip}} = W_{\text{skip}} u`$ | `[Batch, d_out]` | Bảo tồn thông tin gốc, chống suy thoái |
+| **6** | Phép cộng phần dư | $`v_{\text{raw}} = \tilde{z}_2 + u_{\text{skip}}`$ | `[Batch, d_out]` | Hợp nhất biểu diễn phi tuyến và tín hiệu gốc |
+| **7** | Chuẩn hóa lớp | $`v = \text{LayerNorm}(v_{\text{raw}})`$ | `[Batch, d_out]` | Ổn định phân phối dữ liệu đầu ra |
 
 ---
 
@@ -194,9 +195,11 @@ $$
 ## 5. Tầng Dropout: Tác Dụng Và Bản Chất
 
 Tầng **Dropout** đặt ngay sau tầng tuyến tính thứ hai:
-- Trong quá trình huấn luyện (**Training**), mỗi nơ-ron có xác suất $p$ (`dropoutLevel`) bị ngẫu nhiên gán giá trị bằng 0 tại mỗi mini-batch.
-- Chuẩn triển khai hiện đại (như trong PyTorch) sử dụng **Inverted Dropout**:
-  
+* Trong quá trình huấn luyện (**Training**), mỗi nơ-ron có xác suất $p$ (`dropoutLevel`) bị ngẫu nhiên gán giá trị bằng 0 tại mỗi mini-batch.
+* Chuẩn triển khai hiện đại (như trong PyTorch) sử dụng **Inverted Dropout**.
+
+Công thức toán học của Inverted Dropout:
+
 $$
 \tilde{z}_{2} = \frac{1}{1 - p} \cdot (m \odot z_2), \quad m_i \sim \text{Bernoulli}(1 - p)
 $$
@@ -220,8 +223,8 @@ $$
 u_{\text{skip}} = W_{\text{skip}} u
 $$
 
-- **Khi $d_{\text{in}} = d_{\text{out}}$**: Ma trận $W_{\text{skip}}$ chính là ma trận đơn vị $I$ (truyền thẳng nguyên vẹn $u$ mà không cần tham số học).
-- **Khi $d_{\text{in}} \neq d_{\text{out}}$**: $W_{\text{skip}} \in \mathbb{R}^{d_{\text{out}} \times d_{\text{in}}}$ là một ma trận chiếu tuyến tính để khớp số chiều.
+* **Khi $d_{\text{in}} = d_{\text{out}}$**: Ma trận $W_{\text{skip}}$ chính là ma trận đơn vị $I$ (truyền thẳng nguyên vẹn $u$ mà không cần tham số học).
+* **Khi $d_{\text{in}} \neq d_{\text{out}}$**: $W_{\text{skip}} \in \mathbb{R}^{d_{\text{out}} \times d_{\text{in}}}$ là một ma trận chiếu tuyến tính để khớp số chiều.
 
 Hai nhánh được cộng lại với nhau trước khi chuẩn hóa:
 
@@ -231,23 +234,23 @@ $$
 
 ### Tầm quan trọng cốt lõi của Skip Connection
 
-1. **Giải quyết triệt để Triệt tiêu Gradient (Vanishing Gradient)**:  
-   Khi tính đạo hàm lan truyền ngược (Backpropagation), gradient truyền qua phép cộng được tách thành hai nhánh độc lập:
+#### 1. Giải quyết triệt để Triệt tiêu Gradient (Vanishing Gradient)
+Khi tính đạo hàm lan truyền ngược (Backpropagation), gradient truyền qua phép cộng được tách thành hai nhánh độc lập:
 
 $$
 \frac{\partial v_{\text{raw}}}{\partial u} = \frac{\partial \text{MLP}(u)}{\partial u} + W_{\text{skip}}
 $$
 
-   Số hạng $W_{\text{skip}}$ (hoặc ma trận đơn vị $I$) đảm bảo đạo hàm luôn có một "đường cao tốc" chảy thẳng ngược về các tầng trước mà không bao giờ bị nhân dồn suy giảm về 0. Điều này cho phép kiến trúc TiDE có thể xếp chồng nhiều khối Residual Block sâu mà việc huấn luyện vẫn diễn ra ổn định.
+Số hạng $W_{\text{skip}}$ (hoặc ma trận đơn vị $I$) đảm bảo đạo hàm luôn có một "đường cao tốc" chảy thẳng ngược về các tầng trước mà không bao giờ bị nhân dồn suy giảm về 0. Điều này cho phép kiến trúc TiDE có thể xếp chồng nhiều khối Residual Block sâu mà việc huấn luyện vẫn diễn ra ổn định.
 
-2. **Học phép đồng nhất (Identity Mapping)**:  
-   Nếu một khối biến đổi phi tuyến không đem lại lợi ích trong việc dự báo, mạng chỉ cần học cách ép các trọng số $W_1, W_2$ về 0. Khi đó:
+#### 2. Học phép đồng nhất (Identity Mapping)
+Nếu một khối biến đổi phi tuyến không đem lại lợi ích trong việc dự báo, mạng chỉ cần học cách ép các trọng số $W_1, W_2$ về 0. Khi đó:
 
 $$
 v_{\text{raw}} = 0 + u_{\text{skip}} = u_{\text{skip}}
 $$
 
-   Khối nơ-ron tự động suy biến thành một phép truyền dẫn dữ liệu nguyên vẹn mà không làm méo mó hay giảm chất lượng biểu diễn ban đầu.
+Khối nơ-ron tự động suy biến thành một phép truyền dẫn dữ liệu nguyên vẹn mà không làm méo mó hay giảm chất lượng biểu diễn ban đầu.
 
 ---
 
@@ -260,16 +263,16 @@ v = \text{LayerNorm}(v_{\text{raw}}) = \frac{v_{\text{raw}} - \mu}{\sqrt{\sigma^
 $$
 
 Trong đó:
-- $\mu = \frac{1}{d_{\text{out}}} \sum_{k=1}^{d_{\text{out}}} v_{\text{raw}, k}$ (Giá trị trung bình của chính mẫu đó tính trên $d_{\text{out}}$ chiều đặc trưng).
-- $\sigma^2 = \frac{1}{d_{\text{out}}} \sum_{k=1}^{d_{\text{out}}} (v_{\text{raw}, k} - \mu)^2$ (Phương sai của mẫu đó).
-- $\gamma, \beta \in \mathbb{R}^{d_{\text{out}}}$ là các tham số co giãn và tịnh tiến học được (learnable scale & shift parameters).
-- $\epsilon$ là hằng số cực nhỏ (ví dụ $10^{-5}$) nhằm triệt tiêu lỗi chia cho 0.
+* $\mu = \frac{1}{d_{\text{out}}} \sum_{k=1}^{d_{\text{out}}} v_{\text{raw}, k}$ (Giá trị trung bình của chính mẫu đó tính trên $d_{\text{out}}$ chiều đặc trưng).
+* $\sigma^2 = \frac{1}{d_{\text{out}}} \sum_{k=1}^{d_{\text{out}}} (v_{\text{raw}, k} - \mu)^2$ (Phương sai của mẫu đó).
+* $\gamma, \beta \in \mathbb{R}^{d_{\text{out}}}$ là các tham số co giãn và tịnh tiến học được (learnable scale & shift parameters).
+* $\epsilon$ là hằng số cực nhỏ (ví dụ $10^{-5}$) nhằm triệt tiêu lỗi chia cho 0.
 
 ### Bảng so sánh: Layer Normalization vs. Batch Normalization
 
 | Tiêu chí | Batch Normalization (BatchNorm) | Layer Normalization (LayerNorm) | Lý do TiDE lựa chọn LayerNorm |
 | :--- | :--- | :--- | :--- |
-| **Trục chuẩn hóa** | Theo chiều Batch (trục dọc $N$) | Theo chiều Feature (trục ngang $d$) | Chuẩn hóa độc lập cho từng chuỗi/mẫu |
+| **Trục chuẩn hóa** | Theo chiều Batch (trục dọc $`N`$) | Theo chiều Feature (trục ngang $`d`$) | Chuẩn hóa độc lập cho từng chuỗi/mẫu |
 | **Phụ thuộc Batch Size** | Phụ thuộc nặng nề; kém ổn định khi batch size nhỏ | Hoàn toàn độc lập với kích thước Batch | Ổn định ở mọi kích thước batch và khi suy luận từng mẫu đơn lẻ |
 | **Tính phù hợp với Chuỗi Thời Gian** | Dễ gây rò rỉ thông tin hoặc trôi phân phối | Bảo toàn trọn vẹn đặc thù phân phối cục bộ của mẫu | Rất thích hợp với dữ liệu chuỗi có tính phi tĩnh (non-stationary) |
 | **Trạng thái suy luận (Inference)** | Cần lưu giữ biến thống kê tích lũy (`running_mean`, `running_var`) | Tính toán trực tiếp tức thì từ vector đầu vào | Loại bỏ rủi ro lệch phân phối giữa tập train và tập test |
@@ -376,9 +379,9 @@ if __name__ == "__main__":
 
 | Đặc điểm | Cơ chế trong Residual Block | Lợi ích đối với mô hình TiDE |
 | :--- | :--- | :--- |
-| **Tính phi tuyến** | $W_2 \cdot \text{ReLU}(W_1 u + b_1) + b_2$ | Mô hình hóa mối quan hệ tương tác phức tạp giữa các chuỗi thời gian |
-| **Tính ổn định dòng đạo hàm** | $u_{\text{skip}} = W_{\text{skip}} u$ | Đảm bảo gradient không bị suy hao khi xếp chồng nhiều tầng sâu ($n_e, n_d$) |
-| **Khả năng kiểm soát quá khớp** | Inverted Dropout ($p$) | Buộc các nơ-ron học đặc trưng độc lập, đóng vai trò như mạng ensemble ngầm |
+| **Tính phi tuyến** | $`W_2 \cdot \text{ReLU}(W_1 u + b_1) + b_2`$ | Mô hình hóa mối quan hệ tương tác phức tạp giữa các chuỗi thời gian |
+| **Tính ổn định dòng đạo hàm** | $`u_{\text{skip}} = W_{\text{skip}} u`$ | Đảm bảo gradient không bị suy hao khi xếp chồng nhiều tầng sâu ($`n_e, n_d`$) |
+| **Khả năng kiểm soát quá khớp** | Inverted Dropout ($`p`$) | Buộc các nơ-ron học đặc trưng độc lập, đóng vai trò như mạng ensemble ngầm |
 | **Độ độc lập phân phối** | Layer Normalization | Giữ thang đo biên độ tín hiệu ổn định, không phụ thuộc vào batch size |
 
 > [!TIP]
