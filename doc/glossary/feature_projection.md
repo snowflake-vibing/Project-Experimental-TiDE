@@ -109,6 +109,42 @@ $$
 - Điểm mấu chốt: **Trọng số của Residual Block này được chia sẻ chung cho tất cả các bước thời gian $t$**.
 - Nhờ đó, mô hình học được một bộ quy tắc nén đặc trưng nhất quán, bảo toàn thông tin quan trọng nhất của các biến ngoại sinh mà chi phí tham số gần như bằng 0.
 
+### 5.1. Cơ Chế Đại Số Tuyến Tính: Làm Sao Từ $r$ Chiều Xuống $r'$ Chiều Được?
+
+Nhiều người thắc mắc: *"Làm thế nào một mạng nơ-ron có thể ép một vector từ $r$ biến thô (ví dụ $r=7$) xuống còn $r'$ biến nén ($r'=4$) mà vẫn giữ được thông tin?"*
+
+Bên trong khối `ResidualBlock` nhận $d_{\text{in}} = r$ và xuất ra $d_{\text{out}} = r'$, cơ chế nén diễn ra đồng thời trên cả hai nhánh:
+
+1. **Nhánh Biến Đổi Phi Tuyến (MLP Branch):**
+   * **Tầng Linear 1 ($r \to d_{\text{hidden}}$):** Nhân với ma trận trọng số $W_1 \in \mathbb{R}^{d_{\text{hidden}} \times r}$ ($1024 \times 7$) và cộng bias $b_1$, sau đó qua hàm kích hoạt $\text{ReLU}$. Bước này phóng đại các đặc trưng thô lên không gian đa chiều để chúng tương tác tự do với nhau.
+   * **Tầng Linear 2 ($d_{\text{hidden}} \to r'$):** Nhân với ma trận $W_2 \in \mathbb{R}^{r' \times d_{\text{hidden}}}$ ($4 \times 1024$) và cộng bias $b_2$. Vì ma trận $W_2$ chỉ có đúng $r'$ hàng, mỗi phần tử đầu ra là một tổ hợp tuyến tính cô đọng từ $1024$ nơ-ron ẩn, ép số chiều về đúng $r'$:
+     $$F(x_t) = \text{Dropout}\Big( W_2 \cdot \text{ReLU}(W_1 x_t + b_1) + b_2 \Big) \in \mathbb{R}^{r'}$$
+
+2. **Nhánh Tắt Tuyến Tính (Skip Connection Branch):**
+   * Vì số chiều đầu vào lệch với đầu ra ($r \ne r'$, ví dụ $7 \ne 4$), nhánh skip không thể dùng phép đồng nhất trực tiếp (`Identity`). Thay vào đó, nó sử dụng một **ma trận chiếu tuyến tính** $W_{\text{skip}} \in \mathbb{R}^{r' \times r}$ (kích thước $4 \times 7$):
+     $$\text{Skip}(x_t) = W_{\text{skip}} \cdot x_t \in \mathbb{R}^{r'}$$
+
+3. **Cộng Thặng Dư & Chuẩn Hóa:**
+   * Cả hai nhánh lúc này đều có kích thước $r' = 4$. Chúng được cộng trực tiếp với nhau và chuẩn hóa qua $\text{LayerNorm}$:
+     $$\tilde{x}_t = \text{LayerNorm}\Big( F(x_t) + W_{\text{skip}} x_t \Big) \in \mathbb{R}^{r'}$$
+
+> 💡 **Bản chất ý nghĩa**:  
+> Các biến ngoại sinh trong thực tế (như giờ trong ngày, nhiệt độ, thứ trong tuần, cờ ngày lễ) thường có **tính tương quan cao và dư thừa thông tin**. Việc chiếu từ $r \to r'$ hoạt động như một thuật toán **PCA phi tuyến (Non-linear PCA / Embedding)**: nó tự động khử nhiễu, chắt lọc các biến có chung quy luật và chỉ giữ lại $r'$ đặc trưng cô đọng, giàu ngữ cảnh nhất.
+
+```python
+# Cài đặt thực tế trong PyTorch:
+# Khởi tạo:
+self.feature_projection = ResidualBlock(
+    in_dim=r,              # Ví dụ: 7 chiều thô
+    hidden_dim=1024,       # Không gian ẩn nội bộ
+    out_dim=temporal_width # r' (ví dụ: 4 chiều nén)
+)
+
+# Thực thi trên toàn bộ tensor 3D:
+# (Batch, L + H, r) -> (Batch, L + H, temporal_width)
+x_proj = self.feature_projection(x) # (32, 816, 7) -> (32, 816, 4)
+```
+
 ---
 
 ## 6. Tổng Kết 30 Giây (The Elevator Pitch)
