@@ -28,6 +28,7 @@ Bộ tài liệu báo cáo của Sprint 1 được phân tách thành **5 file c
 | **03** | 📐 [**`03_tensor_shapes_and_testing.md`**](./03_tensor_shapes_and_testing.md) | **Bảng theo dõi kích thước Tensor (`Shape`) & Script kiểm thử**: Bảng kích thước Tensor từ đầu vào đến đầu ra với batch mẫu ($B=32, L=720, H=96, r=8, \tilde{r}=4, p=4$) và hướng dẫn chạy file kiểm thử độc lập. |
 | **04** | 📊 [**`04_hyperparameters_and_benchmarks.md`**](./04_hyperparameters_and_benchmarks.md) | **Cấu hình siêu tham số & Kết quả đối chuẩn 2 Dataset (`Electricity` & `Traffic`)**: Bảng siêu tham số tối ưu từ Table 8, bảng kết quả đối chuẩn MSE/MAE với PatchTST, DLinear từ Table 1, phân tích ưu thế tính toán $O(L+H)$. |
 | **05** | 🛡️ [**`05_self_verification.md`**](./05_self_verification.md) | **Biên bản tự kiểm chứng của Hiệu (Self-Verification Report)**: Bằng chứng đối chiếu thực tế từng trang PDF, kết quả chạy code terminal thành công, và câu trả lời bộ 3 câu hỏi phản biện hóc búa nhất. |
+| **06** | 🎙️ [**`../presentation/`**](../presentation/README.md) | **Hồ sơ chuyên đề thuyết trình bắt buộc (5 yêu cầu)**: Báo cáo chuyên sâu về `Dense Encoder` (Học quan hệ thời gian không cần Attention/RNN) và `Dense Decoder` (Chuyển đổi biểu diễn ẩn thành vector phân bổ Horizon). |
 
 ---
 

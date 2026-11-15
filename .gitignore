@@ -6,3 +6,5 @@ data/*.csv
 !data/weather.csv
 __pycache__/
 *.pyc
+audio_*/
+*audio_temp*
