@@ -68,6 +68,16 @@ self.temporal_smooth = nn.Conv1d(
 
 ---
 
+## 🔗 Vị Trí Mã Nguồn Tham Chiếu Cho Slide 05 (Nơi Tích Hợp Cải Tiến)
+* **Repo gốc Google Research (`models.py`):**
+  * Điểm thay thế bằng Low-Rank Projection (tầng cuối `self.decoder`): [models.py#L133-L140](https://github.com/google-research/google-research/blob/master/tide/models.py#L133-L140)
+  * Điểm chèn `DepthwiseConv1D` (ngay sau `tf.reshape` tại `call`): [models.py#L207-L210](https://github.com/google-research/google-research/blob/master/tide/models.py#L207-L210)
+* **Code PyTorch mô phỏng trong dự án (`simulate_forward_pass.py`):**
+  * Điểm thay tầng cuối `ResidualBlock(..., out_dim=H * p)`: [simulate_forward_pass.py#L122-L125](../../../simulate_forward_pass.py#L122-L125)
+  * Điểm chèn làm mịn sau phép `D = g.view(-1, self.H, self.p)`: [simulate_forward_pass.py#L217-L218](../../../simulate_forward_pass.py#L217-L218)
+
+---
+
 ## 🎙️ Kịch Bản Lời Nói Thuyết Trình (Speaker Notes)
 
 > *"Để hoàn thiện phần trình bày theo yêu cầu nghiên cứu thực nghiệm, dựa trên hai giới hạn vừa tìm ra ở Slide 4, em xin đề xuất hai giả thuyết cải tiến có thể kiểm chứng ngay bằng code PyTorch.*

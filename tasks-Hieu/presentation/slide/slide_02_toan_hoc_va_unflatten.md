@@ -62,6 +62,16 @@ Cấu hình chuẩn: Batch size $B = 32$, `hidden_size` $= 1024$, $H = 96$, $p =
 
 ---
 
+## 🔗 Vị Trí Mã Nguồn Tham Chiếu Cho Slide 02
+* **Repo gốc Google Research (`models.py`):**
+  * Giải nén `decoder_out` và `tf.reshape` (Unflatten): [models.py#L207-L210](https://github.com/google-research/google-research/blob/master/tide/models.py#L207-L210)
+  * Ghép nối với ngoại sinh tương lai để bàn giao sang `final_decoder`: [models.py#L211-L212](https://github.com/google-research/google-research/blob/master/tide/models.py#L211-L212)
+* **Code PyTorch mô phỏng trong dự án:**
+  * Tính vector `g` và tái cấu trúc `D = g.view(-1, self.H, self.p)`: [simulate_forward_pass.py#L214-L225](../../../simulate_forward_pass.py#L214-L225)
+  * Kiểm thử kích thước Tensor `(B, H, p)`: [test_tensor_shapes.py#L108-L115](../../sprint-1/test_tensor_shapes.py#L108-L115)
+
+---
+
 ## 🎙️ Kịch Bản Lời Nói Thuyết Trình (Speaker Notes)
 
 > *"Trên slide này, chúng ta cùng theo dõi dòng chảy toán học bên trong Dense Decoder với ví dụ số liệu thực tế trên tập Electricity: $B=32$, chiều ẩn $1024$, cần dự báo $H=96$ giờ tới với kích thước đặc trưng mỗi bước là $p=16$.*

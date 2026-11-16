@@ -52,6 +52,16 @@ Hậu quả là mô hình cực kỳ tốn VRAM và rất dễ bị học vẹt 
 
 ---
 
+## 🔗 Vị Trí Mã Nguồn Tham Chiếu Cho Slide 04
+* **Repo gốc Google Research (`models.py`):**
+  * Tham số `decoder_output_dim` ($p$) & `hidden_dims` ($n_d$ lớp): [models.py#L133-L140](https://github.com/google-research/google-research/blob/master/tide/models.py#L133-L140)
+  * Nhánh `lin_b` và `lin_res` trong khối cuối (nơi phát sinh $47.18\text{M}$ tham số khi $p=64$): [models.py#L40-L47](https://github.com/google-research/google-research/blob/master/tide/models.py#L40-L47)
+* **Code cấu hình thực nghiệm Table 8 trong dự án:**
+  * Cấu hình $p$ và `n_dec` cho Electricity & Traffic: [test_tensor_shapes.py#L11-L32](../../sprint-1/test_tensor_shapes.py#L11-L32)
+  * Nhánh `self.global_skip` chạy song song giúp giảm tải cho $n_d$: [simulate_forward_pass.py#L135-L136](../../../simulate_forward_pass.py#L135-L136)
+
+---
+
 ## 🎙️ Kịch Bản Lời Nói Thuyết Trình (Speaker Notes)
 
 > *"Đi vào phân tích sâu về mặt hiệu năng và thực nghiệm: Có hai siêu tham số quyết định trực tiếp sức mạnh của Dense Decoder là $p$ và $n_d$.*

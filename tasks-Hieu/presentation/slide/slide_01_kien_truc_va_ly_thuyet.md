@@ -49,6 +49,17 @@ flowchart LR
 
 ---
 
+## 🔗 Vị Trí Mã Nguồn Tham Chiếu Cho Slide 01
+* **Repo gốc Google Research (`models.py`):**
+  * Lớp khối thặng dư `MLPResidual`: [models.py#L29-L61](https://github.com/google-research/google-research/blob/master/tide/models.py#L29-L61)
+  * Hàm xếp chồng $n_d$ khối `_make_dnn_residual`: [models.py#L64-L81](https://github.com/google-research/google-research/blob/master/tide/models.py#L64-L81)
+  * Khởi tạo `self.decoder`: [models.py#L133-L140](https://github.com/google-research/google-research/blob/master/tide/models.py#L133-L140)
+* **Code PyTorch mô phỏng trong dự án:**
+  * Lớp `ResidualBlock`: [simulate_forward_pass.py#L35-L67](../../../simulate_forward_pass.py#L35-L67)
+  * Khởi tạo `self.dense_decoder`: [simulate_forward_pass.py#L115-L126](../../../simulate_forward_pass.py#L115-L126)
+
+---
+
 ## 🎙️ Kịch Bản Lời Nói Thuyết Trình (Speaker Notes)
 
 > *"Xin chào các bạn. Nhìn vào sơ đồ tổng thể Figure 1 của bài báo bên trái màn hình, ngay phía trên khối Dense Encoder màu xanh chính là phần trọng tâm của em: **Dense Decoder** (được khoanh khung đỏ).*

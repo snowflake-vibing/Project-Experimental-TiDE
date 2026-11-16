@@ -147,44 +147,25 @@ Cấu hình: Batch size $B = 32$, Chiều ẩn $d_{\text{hidden}} = 1024$, Horiz
 ## 3. 💻 Source Code: Đối Chiếu Repository Gốc & Triển Khai Thực Thi
 
 ### 3.1. Mã nguồn tương ứng trong repository chính thức của Google Research
-Trong mã nguồn [google-research/tide/model.py](https://github.com/google-research/google-research/tree/master/tide), cấu trúc Dense Decoder được khởi tạo và thực thi như sau:
+Trong mã nguồn chính thức [`google-research/google-research/blob/master/tide/models.py`](https://github.com/google-research/google-research/blob/master/tide/models.py) (viết bằng TensorFlow/Keras), cấu trúc Dense Decoder được khởi tạo tại [dòng 133–140](https://github.com/google-research/google-research/blob/master/tide/models.py#L133-L140) và thực thi tại [dòng 207–210](https://github.com/google-research/google-research/blob/master/tide/models.py#L207-L210):
 
 ```python
-# Trích xuất từ Google Research: tide/model.py
-class TiDE(nn.Module):
-    def __init__(self, ...):
-        # ...
-        # Khởi tạo các tầng cho Dense Decoder
-        decoder_layers = []
-        # Các khối trung gian giữ nguyên số chiều hidden_dim
-        for i in range(self.num_decoder_layers - 1):
-            decoder_layers.append(
-                ResidualBlock(
-                    in_dim=self.hidden_dim,
-                    hidden_dim=self.hidden_dim,
-                    out_dim=self.hidden_dim,
-                    dropout=self.dropout
-                )
-            )
-        # Khối cuối cùng đưa về số chiều: horizon * decoder_output_dim
-        decoder_layers.append(
-            ResidualBlock(
-                in_dim=self.hidden_dim,
-                hidden_dim=self.hidden_dim,
-                out_dim=self.horizon * self.decoder_output_dim,
-                dropout=self.dropout
-            )
-        )
-        self.decoder = nn.Sequential(*decoder_layers)
+# Trích xuất nguyên văn từ Google Research: tide/models.py
+# 1. Khởi tạo chuỗi Residual Blocks cho Dense Decoder (Dòng 133-140)
+self.decoder = _make_dnn_residual(
+    model_config.get('hidden_dims')[:-1]
+    + [
+        model_config.get('decoder_output_dim') * self.pred_len,
+    ],
+    layer_norm=layer_norm,
+    dropout_rate=dropout_rate,
+)
 
-    def forward(self, ...):
-        # ...
-        # e: Tensor bối cảnh ẩn [batch_size, hidden_dim]
-        g = self.decoder(e)  # Output: [batch_size, horizon * decoder_output_dim]
-        
-        # Thao tác Unflatten tái cấu trúc trục thời gian
-        # D: [batch_size, horizon, decoder_output_dim]
-        D = g.view(-1, self.horizon, self.decoder_output_dim)
+# 2. Thực thi giải nén & Unflatten trong hàm call() (Dòng 207-210)
+decoder_out = self.decoder(encoding)
+decoder_out = tf.reshape(
+    decoder_out, [bsize, -1, self.pred_len]
+)  # shape: [batch_size, p, H]
 ```
 
 ### 3.2. Mã nguồn thực thi trong file mô phỏng của dự án
