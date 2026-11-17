@@ -9,25 +9,25 @@
 
 ## 🖼️ Hình Ảnh & Sơ Đồ Minh Họa Đưa Lên Slide
 
-### 1.0. Slide 01 / 12 — Bảng thuật ngữ cốt lõi (`MLPResidual`, `Dense Encoder`, `Dense Decoder`, `Temporal Decoder`, `Covariate Highway`)
+### 1.0. Slide 01 / 11 — Bảng thuật ngữ cốt lõi (`MLPResidual`, `Dense Encoder`, `Dense Decoder`, `Temporal Decoder`, `Covariate Highway`)
 
 ![Slide 01: Bảng thuật ngữ cốt lõi trong TiDE](./images/slide_01_bang_thuat_ngu_cot_loi.png)
 
-### 1.1. Slide 02 / 12 — Phạm vi thuyết trình trên Figure 1 (Không trình bày phần bên dưới)
+### 1.1. Slide 02 / 11 — Phạm vi thuyết trình trên Figure 1 (Không trình bày phần bên dưới)
 
 ![Slide 02: Vị trí Temporal Decoder và Global Residual trên Figure 1](./images/slide_02_vi_tri_kien_truc.png)
 
-### 1.2. Slide 03 / 12 — Tách 3 Card riêng biệt & Lý do phải có Temporal Decoder ("Covariate Highway")
+### 1.2. Slide 03 / 11 — So sánh 2 cột: KHÔNG CÓ vs CÓ Temporal Decoder ("Covariate Highway")
 
-![Slide 03: Phân biệt 3 khối và Covariate Highway](./images/slide_03_phan_biet_3_khoi_va_highway.png)
+![Slide 03: Phân biệt KHÔNG CÓ vs CÓ Temporal Decoder](./images/slide_03_phan_biet_3_khoi_va_highway.png)
 
-### 1.3. Slide 04 / 12 — Hai cơ chế song song trực tiếp tạo dự báo cuối cùng
+### 1.3. Slide 04 / 11 — Hai cơ chế song song trực tiếp tạo dự báo cuối cùng (đầy đủ Shape)
 
 ![Slide 04: Hai cơ chế song song tạo dự báo cuối cùng](./images/slide_04_hai_nhanh_song_song.png)
 
-### 1.4. Slide 05 / 12 — Chứng minh mối liên hệ DLinear & Kích thước Tensor (`Electricity`)
+### 1.4. Slide 05 / 11 — Chứng minh mối liên hệ DLinear & Kích thước Tensor tổng quát
 
-![Slide 05: Mối liên hệ DLinear và Kích thước Tensor](./images/slide_05_lien_he_dlinear_va_tensor.png)
+![Slide 05: Mối liên hệ DLinear và Kích thước Tensor tổng quát](./images/slide_05_lien_he_dlinear_va_tensor.png)
 
 ---
 
@@ -85,13 +85,15 @@ $$
 
 ---
 
-### 3. Bảng kích thước Tensor đầu vào & đầu ra (`Electricity`: `B=32, L=720, H=96, p=16, r_tilde=4`)
+### 3. Bảng kích thước Tensor tổng quát (Ký hiệu: $B$ = Batch, $L$ = Lookback, $H$ = Horizon, $p$ = DecoderDim, $\tilde{r}$ = CovWidth)
 
-| Thành phần | Tensor đầu vào | Phép biến đổi / Trung gian | Tensor đầu ra |
+| Thành phần | Shape đầu vào | Phép biến đổi / Trung gian | Shape đầu ra |
 | :--- | :--- | :--- | :--- |
-| **Temporal Decoder** | $\mathbf{d}_t$: `(32, 96, 16)`<br>$\tilde{\mathbf{x}}_{\mathrm{fut}}$: `(32, 96, 4)` | `Concat` $\to$ `(32, 96, 20)` $\to$ `MLPResidual(out=1)` | $\hat{\mathbf{y}}_{\mathrm{NL}}$: `(32, 96)` |
-| **Global Residual** | $\mathbf{y}_{\mathrm{norm}}$: `(32, 720)` | Chiếu tuyến tính `Linear(720 -> 96)` | $\hat{\mathbf{y}}_{\mathrm{Lin}}$: `(32, 96)` |
-| **Tổng hợp cuối cùng** | $\hat{\mathbf{y}}_{\mathrm{NL}}, \hat{\mathbf{y}}_{\mathrm{Lin}}$: `(32, 96)` | $\hat{\mathbf{y}}_{\mathrm{NL}} + \hat{\mathbf{y}}_{\mathrm{Lin}}$ (+ Đảo RevIN) | $\hat{\mathbf{y}}_{\mathrm{final}}$: `(32, 96)` |
+| **Temporal Decoder** | $\mathbf{d}_t$: `Shape: (B, H, p)`<br>$\tilde{\mathbf{x}}_{\mathrm{fut}}$: `Shape: (B, H, r_tilde)` | `Concat` $\to$ `Shape: (B, H, p + r_tilde)` $\to$ `MLPResidual(out=1)` | $\hat{\mathbf{y}}_{\mathrm{NL}}$: `Shape: (B, H)` |
+| **Global Residual** | $\mathbf{y}_{\mathrm{norm}}$: `Shape: (B, L)` | Chiếu tuyến tính `Linear(L -> H)` | $\hat{\mathbf{y}}_{\mathrm{Lin}}$: `Shape: (B, H)` |
+| **Tổng hợp cuối cùng** | $\hat{\mathbf{y}}_{\mathrm{NL}}, \hat{\mathbf{y}}_{\mathrm{Lin}}$: `Shape: (B, H)` | $\hat{\mathbf{y}}_{\mathrm{NL}} + \hat{\mathbf{y}}_{\mathrm{Lin}}$ (+ Đảo RevIN) | $\hat{\mathbf{y}}_{\mathrm{final}}$: `Shape: (B, H)` |
+
+*(Ví dụ cấu hình chuẩn trên tập `Electricity`: $B = 512,\; L = 720,\; H = 96,\; p = 8,\; \tilde{r} = 4$).*
 
 ---
 

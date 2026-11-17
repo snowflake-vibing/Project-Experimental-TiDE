@@ -7,19 +7,19 @@
 
 ## 🖼️ Hình Ảnh & Sơ Đồ Minh Họa Đưa Lên Slide
 
-### 2.1. Slide 06 / 12 — Source code chính thức (`models.py`) & Ánh xạ phương trình toán học
+### 2.1. Slide 06 / 11 — Source code chính thức (`models.py`) & Ánh xạ phương trình toán học
 
 ![Slide 06: Source code models.py và ánh xạ phương trình](./images/slide_06_source_code_va_equation.png)
 
-### 2.2. Slide 07 / 12 — Cấu hình Siêu tham số (Hyperparameters — Table 7 & Table 8, Trang 20–21)
+### 2.2. Slide 07 / 11 — Cấu hình Siêu tham số (Hyperparameters — Table 7 & Table 8, Trang 20–21)
 
 ![Slide 07: Cấu hình Siêu tham số Hyperparameters trên 7 Datasets](./images/slide_07_cau_hinh_hyperparameter.png)
 
-### 2.3. Slide 08 / 12 — Ablation Study 1 (Figure 3 Trang 10–11): Vai trò Temporal Decoder
+### 2.3. Slide 08 / 11 — Ablation Study 1 (Figure 3 Trang 10–11): Vai trò Temporal Decoder
 
 ![Slide 08: Ablation Study 1 Temporal Decoder Figure 3](./images/slide_08_ablation_temporal_decoder.png)
 
-### 2.4. Slide 09 / 12 — Ablation Study 2 (Table 5 Trang 11): Vai trò Residual Connections (`Electricity`)
+### 2.4. Slide 09 / 11 — Ablation Study 2 (Table 5 Trang 11): Vai trò Residual Connections (`Electricity`)
 
 ![Slide 09: Ablation Study 2 Residual Connections Electricity](./images/slide_09_ablation_global_residual.png)
 
