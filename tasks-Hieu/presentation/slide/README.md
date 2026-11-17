@@ -6,6 +6,8 @@
 > 🎙️ **KỊCH BẢN THUYẾT TRÌNH TỪNG SLIDE (WORD-FOR-WORD SCRIPT):**  
 > Đã có file kịch bản lời nói chi tiết 1-đối-1 cho cả 11 Slide (kèm thời lượng, phân đoạn mở - thân - kết, điểm nhấn laser và dự phòng câu hỏi phản biện):  
 > 👉 [**`script_thuyet_trinh_tung_slide.md`**](./script_thuyet_trinh_tung_slide.md)
+>
+> 📌 **Bộ quy tắc thiết kế slide chuẩn mực:** Xem tại [**`rule_slide.md`**](./rule_slide.md) *(bắt buộc áp dụng cho toàn bộ slide mới hoặc cập nhật)*.
 
 ---
 
