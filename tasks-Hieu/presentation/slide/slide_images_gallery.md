@@ -2,6 +2,8 @@
 
 > [!NOTE]
 > File này tổng hợp **11 Slide trình chiếu chuẩn Seminar 16:9 đồng bộ** (180 DPI, đánh số từ **Slide 01 / 11** đến **Slide 11 / 11**, đồng nhất bảng màu, font chữ, cỡ Header/Body/Card và Footer trích nguồn) xếp đúng **1-đối-1 theo từng mục nội dung**.
+> 
+> 🎙️ **Kịch bản lời nói thuyết trình tương ứng:** Xem tại [**`script_thuyet_trinh_tung_slide.md`**](./script_thuyet_trinh_tung_slide.md).
 
 ---
 

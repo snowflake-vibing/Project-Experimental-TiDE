@@ -2,6 +2,11 @@
 
 > **Phạm vi & Bố cục (Không tính slide Intro/Outro):** Tập trung vào **hai cơ chế trực tiếp tạo ra dự báo cuối cùng** trong TiDE, chia thành **3 phần rõ ràng** theo đúng bố cục bạn yêu cầu — đáp ứng trọn vẹn **5 tiêu chuẩn bắt buộc** và **7 nội dung cốt lõi**. Mỗi slide đều có sẵn hình ảnh PNG độ phân giải cao (180 DPI), sơ đồ Mermaid, nội dung súc tích chiếu trên slide, vị trí dòng code chính xác và kịch bản lời nói (Speaker Notes).
 
+> [!TIP]
+> 🎙️ **KỊCH BẢN THUYẾT TRÌNH TỪNG SLIDE (WORD-FOR-WORD SCRIPT):**  
+> Đã có file kịch bản lời nói chi tiết 1-đối-1 cho cả 11 Slide (kèm thời lượng, phân đoạn mở - thân - kết, điểm nhấn laser và dự phòng câu hỏi phản biện):  
+> 👉 [**`script_thuyet_trinh_tung_slide.md`**](./script_thuyet_trinh_tung_slide.md)
+
 ---
 
 ## 📑 Danh Sách 3 Phần Slide Chính Thức (Chuẩn Seminar 16:9 — 11 Slides)
