@@ -14,9 +14,15 @@
 
 ---
 
-## 🖼️ Thư Viện Hình Ảnh Trình Chiếu (`images/`)
-Tất cả 4 file ảnh PNG sắc nét đã nằm sẵn trong [`images/`](./images/) để bạn kéo thả trực tiếp vào PowerPoint, Canva hoặc Google Slides:
+## 🖼️ Thư Viện Hình Ảnh Trình Chiếu (`images/` & [`slide_images_gallery.md`](./slide_images_gallery.md))
+👉 **Xem toàn bộ 8 ảnh xếp theo đúng từng mục nội dung trong 1 file duy nhất:** [**`slide_images_gallery.md`**](./slide_images_gallery.md)
+
+Tất cả 8 file ảnh PNG sắc nét (180 DPI) đã nằm sẵn trong [`images/`](./images/) để bạn kéo thả trực tiếp vào PowerPoint, Canva hoặc Google Slides:
 * [`fig_p0_figure1_highlight.png`](./images/fig_p0_figure1_highlight.png) — Vị trí khoanh vùng Temporal Decoder & Global Residual trên Figure 1 gốc
+* [`fig_p1_temporal_decoder_highway.png`](./images/fig_p1_temporal_decoder_highway.png) — Cơ chế "Covariate Highway" & Vì sao không dùng thẳng Dense Decoder
 * [`fig_p1_temporal_and_global_residual.png`](./images/fig_p1_temporal_and_global_residual.png) — Sơ đồ 2 nhánh song song tạo dự báo cuối cùng
-* [`fig_p2_ablation_residual_results.png`](./images/fig_p2_ablation_residual_results.png) — Biểu đồ Ablation Study thật từ Table 5 (Trang 11 Paper)
+* [`fig_p1_tensor_shapes_and_dlinear.png`](./images/fig_p1_tensor_shapes_and_dlinear.png) — Chứng minh DLinear là lớp con của TiDE & Bảng Tensor Shapes
+* [`fig_p2_source_code_mapping.png`](./images/fig_p2_source_code_mapping.png) — Bản đồ ánh xạ mã nguồn Google Research (`models.py`) vs PyTorch dự án
+* [`fig_p2_ablation_temporal_decoder.png`](./images/fig_p2_ablation_temporal_decoder.png) — Ablation Study 1 (Figure 3 Trang 10 Paper): Temporal Decoder sau 1 Epoch
+* [`fig_p2_ablation_residual_results.png`](./images/fig_p2_ablation_residual_results.png) — Biểu đồ Ablation Study 2 từ Table 5 (Trang 11 Paper)
 * [`fig_p3_adaptive_gated_fusion.png`](./images/fig_p3_adaptive_gated_fusion.png) — Sơ đồ đề xuất Adaptive Gated Fusion so sánh với TiDE gốc

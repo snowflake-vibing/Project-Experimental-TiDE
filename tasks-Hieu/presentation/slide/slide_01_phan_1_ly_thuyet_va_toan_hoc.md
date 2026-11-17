@@ -20,6 +20,12 @@
 
 ![Hai cơ chế trực tiếp tạo dự báo cuối cùng](./images/fig_p1_temporal_and_global_residual.png)
 
+### Cơ chế Covariate Highway (Temporal Decoder) & Chứng minh DLinear + Tensor Shapes
+
+![Vì sao cần Temporal Decoder Covariate Highway](./images/fig_p1_temporal_decoder_highway.png)
+
+![Mối liên hệ DLinear và Bảng kích thước Tensor](./images/fig_p1_tensor_shapes_and_dlinear.png)
+
 ### Sơ đồ khối Mermaid (Hiển thị trực tiếp trên GitHub)
 
 ```mermaid

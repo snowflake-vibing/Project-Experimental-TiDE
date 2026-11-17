@@ -6,6 +6,10 @@
 
 ## 🖼️ Hình Ảnh & Sơ Đồ Minh Họa Đưa Lên Slide
 
+![Bản đồ ánh xạ mã nguồn models.py và simulate_forward_pass.py](./images/fig_p2_source_code_mapping.png)
+
+![Ablation Study 1 Figure 3 Temporal Decoder](./images/fig_p2_ablation_temporal_decoder.png)
+
 ![Ablation Study Residual Connections trên tập Electricity](./images/fig_p2_ablation_residual_results.png)
 
 ### Sơ đồ đối chiếu dòng chảy Source Code & Kết luận Ablation Study:
