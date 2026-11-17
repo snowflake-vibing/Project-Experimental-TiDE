@@ -9,25 +9,37 @@
 
 ## 🖼️ Hình Ảnh & Sơ Đồ Minh Họa Đưa Lên Slide
 
-### 1.1. Slide 01 / 11 — Phạm vi thuyết trình trên Figure 1 (Không trình bày phần bên dưới)
+### 1.0. Slide 01 / 12 — Bảng thuật ngữ cốt lõi (`MLPResidual`, `Dense Encoder`, `Dense Decoder`, `Temporal Decoder`, `Covariate Highway`)
 
-![Slide 01: Vị trí Temporal Decoder và Global Residual trên Figure 1](./images/slide_01_vi_tri_kien_truc.png)
+![Slide 01: Bảng thuật ngữ cốt lõi trong TiDE](./images/slide_01_bang_thuat_ngu_cot_loi.png)
 
-### 1.2. Slide 02 / 11 — Tách 3 Card riêng biệt & Lý do phải có Temporal Decoder ("Covariate Highway")
+### 1.1. Slide 02 / 12 — Phạm vi thuyết trình trên Figure 1 (Không trình bày phần bên dưới)
 
-![Slide 02: Phân biệt 3 khối và Covariate Highway](./images/slide_02_phan_biet_3_khoi_va_highway.png)
+![Slide 02: Vị trí Temporal Decoder và Global Residual trên Figure 1](./images/slide_02_vi_tri_kien_truc.png)
 
-### 1.3. Slide 03 / 11 — Hai cơ chế song song trực tiếp tạo dự báo cuối cùng
+### 1.2. Slide 03 / 12 — Tách 3 Card riêng biệt & Lý do phải có Temporal Decoder ("Covariate Highway")
 
-![Slide 03: Hai cơ chế song song tạo dự báo cuối cùng](./images/slide_03_hai_nhanh_song_song.png)
+![Slide 03: Phân biệt 3 khối và Covariate Highway](./images/slide_03_phan_biet_3_khoi_va_highway.png)
 
-### 1.4. Slide 04 / 11 — Chứng minh mối liên hệ DLinear & Kích thước Tensor (`Electricity`)
+### 1.3. Slide 04 / 12 — Hai cơ chế song song trực tiếp tạo dự báo cuối cùng
 
-![Slide 04: Mối liên hệ DLinear và Kích thước Tensor](./images/slide_04_lien_he_dlinear_va_tensor.png)
+![Slide 04: Hai cơ chế song song tạo dự báo cuối cùng](./images/slide_04_hai_nhanh_song_song.png)
+
+### 1.4. Slide 05 / 12 — Chứng minh mối liên hệ DLinear & Kích thước Tensor (`Electricity`)
+
+![Slide 05: Mối liên hệ DLinear và Kích thước Tensor](./images/slide_05_lien_he_dlinear_va_tensor.png)
 
 ---
 
 ## 📋 Nội Dung Cụ Thể Trình Bày Trên Slide (Hiển thị cho khán giả)
+
+### 0. Giải thích 5 thuật ngữ nền tảng (Slide 01 — Mở đầu)
+
+* **`MLPResidual` (Residual Block — Hình 1, Trang 4–5):** Khối xây dựng cơ bản của mọi tầng trong TiDE, gồm 1 tầng ẩn ReLU $\to$ 1 tầng Linear + Dropout $\oplus$ nhánh tắt tuyến tính (`Skip Connection`) $\to$ chuẩn hóa `LayerNorm`. Dùng làm lõi cho `Feature Projection`, `Dense Encoder`, `Dense Decoder` và chính `Temporal Decoder` (`output_dim=1`).
+* **`Dense Encoder` (Mục 4.1, Trang 5):** Chồng gồm $n_e$ khối `MLPResidual`, gom chung quá khứ $\mathbf{y}_{1:L}^{(i)}$, ngoại sinh đã nén $\tilde{\mathbf{x}}_{1:L+H}^{(i)}$ và thuộc tính tĩnh $\mathbf{a}^{(i)}$ để nén thành **1 vector ẩn duy nhất** $\mathbf{e}^{(i)}$.
+* **`Dense Decoder` (Mục 4.2, Trang 6):** Chồng gồm $n_d$ khối `MLPResidual`, giải nén $\mathbf{e}^{(i)}$ ra kích thước $H \times p$ rồi `Reshape` thành $H$ vector bối cảnh $\mathbf{d}_t^{(i)} \in \mathbb{R}^p$ (chưa ghép riêng ngoại sinh từng bước $t$).
+* **`Temporal Decoder` (Mục 4.2, Trang 6 — Trọng tâm):** Đúng **1 khối `MLPResidual` duy nhất** có `output_dim = 1` (chia sẻ trọng số $\forall t$), ghép trực tiếp $\mathbf{d}_t^{(i)}$ với $\tilde{\mathbf{x}}_{L+t}^{(i)}$ để xuất giá trị dự báo phi tuyến $\hat{\mathbf{y}}_{\mathrm{NL}, L+t}^{(i)}$.
+* **`Covariate Highway` (Mục 4.2, Trang 6):** Đường cao tốc đi tắt mà `Temporal Decoder` mở cho biến ngoại sinh tương lai $\tilde{\mathbf{x}}_{L+t}^{(i)}$ nối thẳng tới dự báo tại đúng thời điểm $L+t$, tránh bị pha loãng qua nút thắt `Dense Encoder -> Dense Decoder`.
 
 ### 1. Phân biệt rõ các khối & Cơ chế Temporal Decoder ("Covariate Highway")
 

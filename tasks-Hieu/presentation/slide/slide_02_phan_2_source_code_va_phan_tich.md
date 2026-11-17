@@ -7,21 +7,21 @@
 
 ## 🖼️ Hình Ảnh & Sơ Đồ Minh Họa Đưa Lên Slide
 
-### 2.1. Slide 05 / 11 — Source code chính thức (`models.py`) & Ánh xạ phương trình toán học
+### 2.1. Slide 06 / 12 — Source code chính thức (`models.py`) & Ánh xạ phương trình toán học
 
-![Slide 05: Source code models.py và ánh xạ phương trình](./images/slide_05_source_code_va_equation.png)
+![Slide 06: Source code models.py và ánh xạ phương trình](./images/slide_06_source_code_va_equation.png)
 
-### 2.2. Slide 06 / 11 — Cấu hình Siêu tham số (Hyperparameters — Table 7 & Table 8, Trang 20–21)
+### 2.2. Slide 07 / 12 — Cấu hình Siêu tham số (Hyperparameters — Table 7 & Table 8, Trang 20–21)
 
-![Slide 06: Cấu hình Siêu tham số Hyperparameters trên 7 Datasets](./images/slide_06_cau_hinh_hyperparameter.png)
+![Slide 07: Cấu hình Siêu tham số Hyperparameters trên 7 Datasets](./images/slide_07_cau_hinh_hyperparameter.png)
 
-### 2.3. Slide 07 / 11 — Ablation Study 1 (Figure 3 Trang 10–11): Vai trò Temporal Decoder
+### 2.3. Slide 08 / 12 — Ablation Study 1 (Figure 3 Trang 10–11): Vai trò Temporal Decoder
 
-![Slide 07: Ablation Study 1 Temporal Decoder Figure 3](./images/slide_07_ablation_temporal_decoder.png)
+![Slide 08: Ablation Study 1 Temporal Decoder Figure 3](./images/slide_08_ablation_temporal_decoder.png)
 
-### 2.4. Slide 08 / 11 — Ablation Study 2 (Table 5 Trang 11): Vai trò Residual Connections (`Electricity`)
+### 2.4. Slide 09 / 12 — Ablation Study 2 (Table 5 Trang 11): Vai trò Residual Connections (`Electricity`)
 
-![Slide 08: Ablation Study 2 Residual Connections Electricity](./images/slide_08_ablation_global_residual.png)
+![Slide 09: Ablation Study 2 Residual Connections Electricity](./images/slide_09_ablation_global_residual.png)
 
 ---
 
@@ -76,7 +76,7 @@ y_hat_norm = y_hat_nl + y_hat_lin                                    # Dòng 265
   * **Trong khi xảy ra sự kiện Type A:** Bản có Temporal Decoder bám kịp biên độ tăng đột biến nhanh hơn nhờ đường cao tốc nối thẳng từ biến ngoại sinh chỉ báo sự kiện.
   * **Ngay sau khi sự kiện kết thúc (`Time > 200`):** Bản **không có Temporal Decoder (đường xanh lá) bị trật nhịp nặng (thrown off)** vì `Dense Encoder` chưa kịp điều chỉnh lại nhận thức về bối cảnh quá khứ; trong khi **bản có Temporal Decoder ổn định trở lại ngay lập tức** sau đúng 1 Epoch.
 
-### 4. Phân tích Ablation Study 2: Vai trò Global Residual (Table 5 / Figure 5, Trang 11 — Xem Slide 08)
+### 4. Phân tích Ablation Study 2: Vai trò Global Residual (Table 5 / Figure 5, Trang 11 — Xem Slide 09)
 
 * **Nhận xét trực tiếp từ ảnh số liệu bài báo gốc (Trung bình 5 lần chạy trên `Electricity`):**
   * **Ở các tầm dự báo $H = 96 \to 336$:** Khi loại bỏ các kết nối thặng dư (`TiDE no res.`), cả MSE và MAE đều **tăng lên rõ rệt và có ý nghĩa thống kê** (đặc biệt tại $H=336$, MSE tăng từ `0.161` lên `0.172` tương đương tăng $+6.8\%$ sai số, MAE tăng từ `0.261` lên `0.274`).
@@ -95,13 +95,13 @@ y_hat_norm = y_hat_nl + y_hat_lin                                    # Dòng 265
 
 ## 🎙️ Kịch Bản Lời Nói Thuyết Trình (Speaker Notes)
 
-> "Sang Phần 2 là Source Code, Hyperparameters và Phân tích Ablation Study. Trước hết trên Slide 05 là mã nguồn trích nguyên văn từ file `models.py` trong repo gốc Google Research ở các dòng 141 đến 214, đặt cạnh bản PyTorch của dự án mình — nhấn mạnh dòng 203 `residual_out`, dòng 211–213 `final_decoder`, và dòng 214 `out += residual_out`.
+> "Sang Phần 2 là Source Code, Hyperparameters và Phân tích Ablation Study. Trước hết trên Slide 06 là mã nguồn trích nguyên văn từ file `models.py` trong repo gốc Google Research ở các dòng 141 đến 214, đặt cạnh bản PyTorch của dự án mình — nhấn mạnh dòng 203 `residual_out`, dòng 211–213 `final_decoder`, và dòng 214 `out += residual_out`.
 >
-> Tiếp theo trên **Slide 06 là bảng cấu hình Hyperparameters chính thức (Table 8, Trang 21)** cho toàn bộ 7 tập benchmark. Trong đó `batchSize=512` và `temporalWidth=4` được giữ cố định; riêng phần Temporal Decoder của chúng ta chỉ điều chỉnh đúng 2 tham số là `decoderOutputDim` ($p \in \{8, 16, 32\}$) và `temporalDecoderHidden` ($16, 64, 128$), còn nhánh Global Residual không cần thêm bất kỳ hyperparameter nào vì ánh xạ cố định $L \to H$.
+> Tiếp theo trên **Slide 07 là bảng cấu hình Hyperparameters chính thức (Table 8, Trang 21)** cho toàn bộ 7 tập benchmark. Trong đó `batchSize=512` và `temporalWidth=4` được giữ cố định; riêng phần Temporal Decoder của chúng ta chỉ điều chỉnh đúng 2 tham số là `decoderOutputDim` ($p \in \{8, 16, 32\}$) và `temporalDecoderHidden` ($16, 64, 128$), còn nhánh Global Residual không cần thêm bất kỳ hyperparameter nào vì ánh xạ cố định $L \to H$.
 >
 > Để chứng minh hai thành phần này thực sự thiết yếu, bài báo đưa ra 2 thí nghiệm Ablation Study ở Mục 5.4:
-> 1. Với **Temporal Decoder** (**Slide 07**, Figure 3 Trang 10): Chỉ sau đúng 1 Epoch trên Electricity chèn sự kiện Type A gấp 3 lần biên độ, bản thiếu Temporal Decoder (đường xanh lá) bị trật nhịp vọt lên cao sau khi sự kiện kết thúc, còn bản đầy đủ xử lý mượt mà tức thì.
-> 2. Với **Residual Connections** (**Slide 08**, Table 5 Trang 11): Khi bỏ kết nối thặng dư (`TiDE no res.`), sai số MSE/MAE ở các tầm dự báo 96 đến 336 đều tăng rõ rệt — ví dụ ở $H=336$, MSE tăng từ `0.161` lên `0.172` ($+6.8\%$).
+> 1. Với **Temporal Decoder** (**Slide 08**, Figure 3 Trang 10): Chỉ sau đúng 1 Epoch trên Electricity chèn sự kiện Type A gấp 3 lần biên độ, bản thiếu Temporal Decoder (đường xanh lá) bị trật nhịp vọt lên cao sau khi sự kiện kết thúc, còn bản đầy đủ xử lý mượt mà tức thì.
+> 2. Với **Residual Connections** (**Slide 09**, Table 5 Trang 11): Khi bỏ kết nối thặng dư (`TiDE no res.`), sai số MSE/MAE ở các tầm dự báo 96 đến 336 đều tăng rõ rệt — ví dụ ở $H=336$, MSE tăng từ `0.161` lên `0.172` ($+6.8\%$).
 >
 > Tuy nhiên, nhìn lại dòng code 214 `out += residual_out`, ta phát hiện ra giới hạn **cộng cứng 1:1** — mở đường cho Phần 3 đề xuất cải tiến ngay sau đây."
 

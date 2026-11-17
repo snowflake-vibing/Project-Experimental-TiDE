@@ -2,34 +2,57 @@
 ## CHUYÊN ĐỀ: TEMPORAL DECODER & GLOBAL RESIDUAL CONNECTION TRONG MÔ HÌNH TiDE
 
 > [!NOTE]
-> **Tài liệu tham chiếu:** Kịch bản này được biên soạn bám sát 100% theo thứ tự 1-đối-1 của 11 Slide trong [`slide_images_gallery.md`](./slide_images_gallery.md) và các file nội dung chi tiết ([`slide_01`](./slide_01_phan_1_ly_thuyet_va_toan_hoc.md), [`slide_02`](./slide_02_phan_2_source_code_va_phan_tich.md), [`slide_03`](./slide_03_phan_3_de_xuat_cai_tien.md)).
-> * **Người thuyết trình:** Thành viên phụ trách Phần 2 & 3 của kiến trúc TiDE (Bắt đầu sau khi thành viên trước hoàn thành phần `Dense Encoder` và `Dense Decoder`).
-> * **Tổng thời lượng ước tính:** **10 – 12 phút** (trung bình ~1 phút/slide).
+> **Tài liệu tham chiếu:** Kịch bản này được biên soạn bám sát 100% theo thứ tự 1-đối-1 của **12 Slide** trong [`slide_images_gallery.md`](./slide_images_gallery.md) và các file nội dung chi tiết ([`slide_01`](./slide_01_phan_1_ly_thuyet_va_toan_hoc.md), [`slide_02`](./slide_02_phan_2_source_code_va_phan_tich.md), [`slide_03`](./slide_03_phan_3_de_xuat_cai_tien.md)).
+> * **Người thuyết trình:** Thành viên phụ trách Phần 2 & 3 của kiến trúc TiDE (`Temporal Decoder` & `Global Residual Connection`).
+> * **Tổng thời lượng ước tính:** **11 – 13 phút** (trung bình ~1 phút/slide).
 > * **Phong cách thuyết trình:** Học thuật, đĩnh đạc, tự tin, tập trung giải thích "bản chất kỹ thuật" và "bằng chứng thực nghiệm", không đọc chay slide.
 
 ---
 
-## ⏱️ PHÂN BỔ THỜI GIAN TOÀN BỘ BÀI NÓI (11 SLIDES)
+## ⏱️ PHÂN BỔ THỜI GIAN TOÀN BỘ BÀI NÓI (12 SLIDES)
 
 ```mermaid
 flowchart LR
-    P1["Phần 1: Lý Thuyết & Toán Học\n(Slides 01 - 04)\n⏱️ 3.5 - 4.0 Phút"] --> P2["Phần 2: Code, Hyperparams & Ablation\n(Slides 05 - 08)\n⏱️ 3.5 - 4.0 Phút"]
-    P2 --> P3["Phần 3: Đề Xuất Cải Tiến & Đóng Góp\n(Slides 09 - 11)\n⏱️ 3.0 - 3.5 Phút"]
+    P1["Phần 1: Thuật Ngữ, Lý Thuyết & Toán\n(Slides 01 - 05)\n⏱️ 4.0 - 4.5 Phút"] --> P2["Phần 2: Code, Hyperparams & Ablation\n(Slides 06 - 09)\n⏱️ 3.5 - 4.0 Phút"]
+    P2 --> P3["Phần 3: Đề Xuất Cải Tiến & Đóng Góp\n(Slides 10 - 12)\n⏱️ 3.5 - 4.0 Phút"]
 ```
 
 ---
 
-## 📖 PHẦN 1: LÝ THUYẾT & TOÁN HỌC (SLIDES 01 – 04)
+## 📖 PHẦN 1: THUẬT NGỮ, LÝ THUYẾT & TOÁN HỌC (SLIDES 01 – 05)
 
 ---
 
-### 🟢 SLIDE 01 / 11 — ĐỊNH VỊ PHẠM VI TRÌNH BÀY TRÊN KIẾN TRÚC TỔNG THỂ
+### 🟢 SLIDE 01 / 12 — BẢNG THUẬT NGỮ CỐT LÕI TRONG TiDE
 
-* **Ảnh slide:** `slide_01_vi_tri_kien_truc.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-01--11-11--định-vị-hai-cơ-chế-trên-figure-1-gốc-trang-5))
+* **Ảnh slide:** `slide_01_bang_thuat_ngu_cot_loi.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-01--12-10--bảng-thuật-ngữ-cốt-lõi-trong-tide-mlpresidual-dense-encoder-dense-decoder-temporal-decoder-covariate-highway))
+* **Thời lượng dự kiến:** 50 – 60 giây.
+* **Mục tiêu slide:** Làm rõ ngay từ đầu 5 thuật ngữ nền tảng (`MLPResidual`, `Dense Encoder`, `Dense Decoder`, `Temporal Decoder`, `Covariate Highway`) để Hội đồng theo dõi mạch kiến trúc thống nhất.
+
+![Slide 01: Bảng thuật ngữ cốt lõi trong TiDE](./images/slide_01_bang_thuat_ngu_cot_loi.png)
+
+#### 🎙️ Kịch bản lời nói (Word-for-Word Script):
+
+> "Kính thưa quý thầy cô và các bạn, trước khi đi sâu vào kiến trúc TiDE, ở **Slide 01** mở đầu này em xin thống nhất nhanh **5 thuật ngữ cốt lõi** sẽ xuyên suốt toàn bộ bài trình bày:
+>
+> 1. **`MLPResidual` (Residual Block):** Đây là khối xây dựng nền tảng cho mọi tầng trong TiDE, gồm 1 tầng ẩn ReLU, 1 tầng Linear kèm Dropout, cộng một đường tắt tuyến tính (`Skip Connection`) và chuẩn hóa `LayerNorm`.
+> 2. **`Dense Encoder`:** Là chồng $n_e$ khối `MLPResidual` dùng để nén toàn bộ quá khứ, ngoại sinh và thuộc tính tĩnh thành **1 vector ẩn chung duy nhất** $\mathbf{e}^{(i)}$.
+> 3. **`Dense Decoder`:** Giải nén $\mathbf{e}^{(i)}$ thành $H$ vector bối cảnh quá khứ $\mathbf{d}_t^{(i)}$ cho từng bước tương lai $t$.
+> 4. **Và trọng tâm của phần này — `Temporal Decoder`:** Không phải một mạng nhiều tầng nữa, nó chỉ là **đúng 1 khối `MLPResidual` đơn lẻ có đầu ra kích thước bằng 1**, dùng để ghép trực tiếp bối cảnh $\mathbf{d}_t^{(i)}$ với ngoại sinh $\tilde{\mathbf{x}}_{L+t}^{(i)}$.
+> 5. **`Covariate Highway` (Đường cao tốc ngoại sinh):** Là tên ví von mà tác giả đặt cho vai trò của `Temporal Decoder` — mở một đường đi tắt trực tiếp giúp tín hiệu ngoại sinh tương lai chạm thẳng tới phép dự báo mà không bị pha loãng qua nút thắt cổ chai."
+
+* **🎬 Thao tác & Điểm nhấn hình ảnh (Visual Cues):**
+  * Chỉ lượt qua 3 thẻ phía trên rồi khoanh vào 2 thẻ lớn phía dưới (`Temporal Decoder` $\rightarrow$ `Covariate Highway`) để nhấn mạnh trọng tâm bài nói.
+
+---
+
+### 🟢 SLIDE 02 / 12 — ĐỊNH VỊ PHẠM VI TRÌNH BÀY TRÊN KIẾN TRÚC TỔNG THỂ
+
+* **Ảnh slide:** `slide_02_vi_tri_kien_truc.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-02--12-11--định-vị-hai-cơ-chế-trên-figure-1-gốc-trang-5))
 * **Thời lượng dự kiến:** 45 – 55 giây.
-* **Mục tiêu slide:** Định vị ngay lập tức vị trí thuyết trình trên Figure 1 bài báo gốc; phân định rõ ranh giới để Hội đồng hiểu mình không lặp lại nội dung của bạn trước.
+* **Mục tiêu slide:** Định vị ngay lập tức vị trí thuyết trình trên Figure 1 bài báo gốc; phân định rõ ranh giới hai cơ chế trực tiếp tạo đầu ra dự báo.
 
-![Slide 01: Vị trí Temporal Decoder và Global Residual trên Figure 1](./images/slide_01_vi_tri_kien_truc.png)
+![Slide 02: Vị trí Temporal Decoder và Global Residual trên Figure 1](./images/slide_02_vi_tri_kien_truc.png)
 
 #### 🎙️ Kịch bản lời nói (Word-for-Word Script):
 
@@ -50,17 +73,17 @@ flowchart LR
 
 ---
 
-### 🟢 SLIDE 02 / 11 — PHÂN BIỆT 3 KHỐI & CƠ CHẾ "COVARIATE HIGHWAY"
+### 🟢 SLIDE 03 / 12 — PHÂN BIỆT 3 KHỐI & CƠ CHẾ "COVARIATE HIGHWAY"
 
-* **Ảnh slide:** `slide_02_phan_biet_3_khoi_va_highway.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-02--11-12--tách-3-card-riêng-biệt-dense-encoder--dense-decoder--temporal-decoder--cơ-chế-covariate-highway))
+* **Ảnh slide:** `slide_03_phan_biet_3_khoi_va_highway.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-03--12-12--tách-3-card-riêng-biệt-dense-encoder--dense-decoder--temporal-decoder--cơ-chế-covariate-highway))
 * **Thời lượng dự kiến:** 60 – 75 giây.
 * **Mục tiêu slide:** Làm rõ sự khác biệt giữa 3 khối (Encoder - Dense Decoder - Temporal Decoder) và giải thích trực giác bản chất vì sao phải có Temporal Decoder ("Covariate Highway").
 
-![Slide 02: Phân biệt 3 khối và Covariate Highway](./images/slide_02_phan_biet_3_khoi_va_highway.png)
+![Slide 03: Phân biệt 3 khối và Covariate Highway](./images/slide_03_phan_biet_3_khoi_va_highway.png)
 
 #### 🎙️ Kịch bản lời nói (Word-for-Word Script):
 
-> "Quan sát trên Slide 02, chúng ta thấy 3 khối kiến trúc được đặt cạnh nhau:
+> "Quan sát trên Slide 03, chúng ta thấy 3 khối kiến trúc được đặt cạnh nhau:
 > 
 > Nhìn vào phương trình ở Thẻ thứ ba, `Temporal Decoder` thực chất là **đúng một khối `MLPResidual` duy nhất có kích thước đầu ra bằng 1**. Tại từng bước thời gian tương lai $t$, nó nhận đầu vào là vector bối cảnh quá khứ $d_t$ ghép trực tiếp với biến ngoại sinh tương lai tại đúng bước $t$ đó — ký hiệu là $\tilde{x}_{L+t}$.
 > 
@@ -77,17 +100,17 @@ flowchart LR
 
 ---
 
-### 🟢 SLIDE 03 / 11 — HAI NHÁNH SONG SONG & PHƯƠNG TRÌNH TỔNG HỢP CUỐI CÙNG
+### 🟢 SLIDE 04 / 12 — HAI NHÁNH SONG SONG & PHƯƠNG TRÌNH TỔNG HỢP CUỐI CÙNG
 
-* **Ảnh slide:** `slide_03_hai_nhanh_song_song.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-03--11-13--luồng-song-song-hai-cơ-chế--phương-trình-tổng-hợp-dự-báo-cuối-cùng))
+* **Ảnh slide:** `slide_04_hai_nhanh_song_song.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-04--12-13--luồng-song-song-hai-cơ-chế--phương-trình-tổng-hợp-dự-báo-cuối-cùng))
 * **Thời lượng dự kiến:** 50 – 60 giây.
 * **Mục tiêu slide:** Trình bày sơ đồ luồng dữ liệu song song và phân tích công thức tổng hợp cuối cùng giữa nhánh phi tuyến và nhánh tuyến tính.
 
-![Slide 03: Hai cơ chế song song tạo dự báo cuối cùng](./images/slide_03_hai_nhanh_song_song.png)
+![Slide 04: Hai cơ chế song song tạo dự báo cuối cùng](./images/slide_04_hai_nhanh_song_song.png)
 
 #### 🎙️ Kịch bản lời nói (Word-for-Word Script):
 
-> "Slide 03 mô tả bức tranh hoàn chỉnh về cách TiDE chốt ra kết quả dự báo:
+> "Slide 04 mô tả bức tranh hoàn chỉnh về cách TiDE chốt ra kết quả dự báo:
 > 
 > Nhìn vào sơ đồ, chúng ta thấy một cấu trúc song song gồm hai nhánh độc lập:
 > 
@@ -103,17 +126,17 @@ flowchart LR
 
 ---
 
-### 🟢 SLIDE 04 / 11 — CHỨNG MINH TOÁN HỌC: DLINEAR LÀ LỚP CON CỦA TiDE & LUỒNG TENSOR
+### 🟢 SLIDE 05 / 12 — CHỨNG MINH TOÁN HỌC: DLINEAR LÀ LỚP CON CỦA TiDE & LUỒNG TENSOR
 
-* **Ảnh slide:** `slide_04_lien_he_dlinear_va_tensor.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-04--11-14--chứng-minh-toán-học-mối-liên-hệ-với-dlinear--luồng-kích-thước-tensor))
+* **Ảnh slide:** `slide_05_lien_he_dlinear_va_tensor.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-05--12-14--chứng-minh-toán-học-mối-liên-hệ-với-dlinear--luồng-kích-thước-tensor))
 * **Thời lượng dự kiến:** 50 – 60 giây.
 * **Mục tiêu slide:** Chứng minh toán học rằng DLinear là lớp con của TiDE ($\text{DLinear} \subset \text{TiDE}$) và làm rõ các kích thước Tensor cụ thể trên tập benchmark `Electricity`.
 
-![Slide 04: Mối liên hệ DLinear và Kích thước Tensor](./images/slide_04_lien_he_dlinear_va_tensor.png)
+![Slide 05: Mối liên hệ DLinear và Kích thước Tensor](./images/slide_05_lien_he_dlinear_va_tensor.png)
 
 #### 🎙️ Kịch bản lời nói (Word-for-Word Script):
 
-> "Trên Slide 04, em xin làm rõ hai luận điểm cốt lõi:
+> "Trên Slide 05, em xin làm rõ hai luận điểm cốt lõi:
 > 
 > **Luận điểm 1: Mối quan hệ toán học với mô hình DLinear đình đám của Zeng et al. (AAAI 2023):**
 > Trong bài báo, các tác giả khẳng định: *Một mô hình thuần tuyến tính như DLinear luôn là một lớp con của TiDE*. 
@@ -130,23 +153,23 @@ flowchart LR
 
 ---
 
-## 💻 PHẦN 2: SOURCE CODE, HYPERPARAMETERS & ABLATION STUDY (SLIDES 05 – 08)
+## 💻 PHẦN 2: SOURCE CODE, HYPERPARAMETERS & ABLATION STUDY (SLIDES 06 – 09)
 
 ---
 
-### 🟢 SLIDE 05 / 11 — SOURCE CODE CHÍNH THỨC & ÁNH XẠ PHƯƠNG TRÌNH TOÁN HỌC
+### 🟢 SLIDE 06 / 12 — SOURCE CODE CHÍNH THỨC & ÁNH XẠ PHƯƠNG TRÌNH TOÁN HỌC
 
-* **Ảnh slide:** `slide_05_source_code_va_equation.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-05--11-21--source-code-chính-thức-modelspy--ánh-xạ-thẳng-ra-phương-trình-toán-học))
+* **Ảnh slide:** `slide_06_source_code_va_equation.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-06--12-21--source-code-chính-thức-modelspy--ánh-xạ-thẳng-ra-phương-trình-toán-học))
 * **Thời lượng dự kiến:** 55 – 65 giây.
 * **Mục tiêu slide:** Đối chiếu trực tiếp mã nguồn chính thức của Google Research (`models.py`) và code PyTorch của dự án với các phương trình toán học đã trình bày ở Phần 1.
 
-![Slide 05: Source code models.py và ánh xạ phương trình](./images/slide_05_source_code_va_equation.png)
+![Slide 06: Source code models.py và ánh xạ phương trình](./images/slide_06_source_code_va_equation.png)
 
 #### 🎙️ Kịch bản lời nói (Word-for-Word Script):
 
 > "Bước sang Phần 2, chúng ta cùng đối chiếu lý thuyết với mã nguồn hiện thực thực tế.
 > 
-> Trên Slide 05 là các dòng code trích nguyên văn từ repository chính thức của Google Research trong file `tide/models.py`, đặt song song với code PyTorch mà nhóm em đã tái hiện trong file `simulate_forward_pass.py`:
+> Trên Slide 06 là các dòng code trích nguyên văn từ repository chính thức của Google Research trong file `tide/models.py`, đặt song song với code PyTorch mà nhóm em đã tái hiện trong file `simulate_forward_pass.py`:
 > 
 > * **Ở tầng khởi tạo (`__init__`):** Dòng 141 định nghĩa `self.linear` chính là một lớp Dense đơn giản ánh xạ sang `pred_len`. Dòng 150 định nghĩa `self.final_decoder` là một khối `MLPResidual` với `output_dim = 1`.
 > * **Ở hàm thực thi (`call`):** Dòng 203 tính toán nhánh thặng dư `residual_out`. Dòng 211 nối vector bối cảnh với ngoại sinh tương lai thành `final_in`. Dòng 212 đưa qua `final_decoder`. 
@@ -159,17 +182,17 @@ flowchart LR
 
 ---
 
-### 🟢 SLIDE 06 / 11 — CẤU HÌNH SIÊU THAM SỐ TRÊN 7 BENCHMARK DATASETS
+### 🟢 SLIDE 07 / 12 — CẤU HÌNH SIÊU THAM SỐ TRÊN 7 BENCHMARK DATASETS
 
-* **Ảnh slide:** `slide_06_cau_hinh_hyperparameter.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-06--11-22--cấu-hình-siêu-tham-số-hyperparameters-trên-7-benchmark-datasets))
+* **Ảnh slide:** `slide_07_cau_hinh_hyperparameter.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-07--12-22--cấu-hình-siêu-tham-số-hyperparameters-trên-7-benchmark-datasets))
 * **Thời lượng dự kiến:** 55 – 65 giây.
 * **Mục tiêu slide:** Hệ thống hóa toàn bộ cấu hình Siêu tham số từ Bảng 7 và Bảng 8 trong Phụ lục bài báo; làm rõ sự tối giản về siêu tham số của hai cơ chế này.
 
-![Slide 06: Cấu hình Siêu tham số Hyperparameters trên 7 Datasets](./images/slide_06_cau_hinh_hyperparameter.png)
+![Slide 07: Cấu hình Siêu tham số Hyperparameters trên 7 Datasets](./images/slide_07_cau_hinh_hyperparameter.png)
 
 #### 🎙️ Kịch bản lời nói (Word-for-Word Script):
 
-> "Slide 06 tổng hợp toàn bộ cấu hình siêu tham số chính thức của tác giả trên cả 7 bộ dữ liệu chuẩn (trích từ Bảng 7 và Bảng 8 ở Phụ lục B.3 của bài báo).
+> "Slide 07 tổng hợp toàn bộ cấu hình siêu tham số chính thức của tác giả trên cả 7 bộ dữ liệu chuẩn (trích từ Bảng 7 và Bảng 8 ở Phụ lục B.3 của bài báo).
 > 
 > Em xin nhấn mạnh 3 điểm mấu chốt:
 > 
@@ -185,17 +208,17 @@ flowchart LR
 
 ---
 
-### 🟢 SLIDE 07 / 11 — ABLATION STUDY 1: VAI TRÒ TEMPORAL DECODER (ẢNH GỐC TỪ BÀI BÁO)
+### 🟢 SLIDE 08 / 12 — ABLATION STUDY 1: VAI TRÒ TEMPORAL DECODER (ẢNH GỐC TỪ BÀI BÁO)
 
-* **Ảnh slide:** `slide_07_ablation_temporal_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-07--11-23--ablation-study-1-vai-trò-temporal-decoder-ảnh-gốc-từ-bài-báo))
+* **Ảnh slide:** `slide_08_ablation_temporal_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-08--12-23--ablation-study-1-vai-trò-temporal-decoder-ảnh-gốc-từ-bài-báo))
 * **Thời lượng dự kiến:** 60 – 70 giây.
 * **Mục tiêu slide:** Phân tích thực nghiệm Ablation Study 1 (Figure 3 bài báo gốc); chứng minh Temporal Decoder giúp mô hình ổn định ngay sau sự kiện đột biến chỉ sau đúng 1 Epoch.
 
-![Slide 07: Ablation Study 1 Temporal Decoder Figure 3](./images/slide_07_ablation_temporal_decoder.png)
+![Slide 08: Ablation Study 1 Temporal Decoder Figure 3](./images/slide_08_ablation_temporal_decoder.png)
 
 #### 🎙️ Kịch bản lời nói (Word-for-Word Script):
 
-> "Để chứng minh Temporal Decoder không phải là một thành phần thừa, nhóm tác giả Google Research đã thiết kế một thí nghiệm triệt tiêu (Ablation Study) rất đặc biệt tại Hình 3 bài báo gốc, hiển thị trên Slide 07:
+> "Để chứng minh Temporal Decoder không phải là một thành phần thừa, nhóm tác giả Google Research đã thiết kế một thí nghiệm triệt tiêu (Ablation Study) rất đặc biệt tại Hình 3 bài báo gốc, hiển thị trên Slide 08:
 > 
 > Họ lấy dữ liệu `Electricity` và chèn vào các sự kiện nhân tạo: Sự kiện **Type A** làm tăng biên độ phụ tải lên gấp 3 đến 3.2 lần trong vòng 24 giờ. Điều kinh ngạc là họ đánh giá mô hình chỉ sau **đúng 1 Epoch huấn luyện duy nhất**!
 > 
@@ -211,17 +234,17 @@ flowchart LR
 
 ---
 
-### 🟢 SLIDE 08 / 11 — ABLATION STUDY 2: VAI TRÒ GLOBAL RESIDUAL CONNECTION (`ELECTRICITY`)
+### 🟢 SLIDE 09 / 12 — ABLATION STUDY 2: VAI TRÒ GLOBAL RESIDUAL CONNECTION (`ELECTRICITY`)
 
-* **Ảnh slide:** `slide_08_ablation_global_residual.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-08--11-24--ablation-study-2-vai-trò-residual-connections-ảnh-gốc-từ-bài-báo--electricity))
+* **Ảnh slide:** `slide_09_ablation_global_residual.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-09--12-24--ablation-study-2-vai-trò-residual-connections-ảnh-gốc-từ-bài-báo--electricity))
 * **Thời lượng dự kiến:** 60 – 75 giây.
 * **Mục tiêu slide:** Phân tích thực nghiệm Ablation Study 2 (Table 5 bài báo gốc); chỉ ra sự gia tăng sai số khi bỏ residual và giải thích thắc mắc vì sao tác giả chỉ công bố 1/7 dataset.
 
-![Slide 08: Ablation Study 2 Residual Connections Electricity](./images/slide_08_ablation_global_residual.png)
+![Slide 09: Ablation Study 2 Residual Connections Electricity](./images/slide_09_ablation_global_residual.png)
 
 #### 🎙️ Kịch bản lời nói (Word-for-Word Script):
 
-> "Tiếp tục trên Slide 08 là thí nghiệm Ablation thứ hai nhằm kiểm chứng vai trò của các kết nối thặng dư (Residual Connections), được trích từ Bảng 5 ở trang 11 bài báo gốc:
+> "Tiếp tục trên Slide 09 là thí nghiệm Ablation thứ hai nhằm kiểm chứng vai trò của các kết nối thặng dư (Residual Connections), được trích từ Bảng 5 ở trang 11 bài báo gốc:
 > 
 > Khi tác giả loại bỏ các kết nối thặng dư (ký hiệu là `TiDE no res.`):
 > * Ở các tầm dự báo từ 96 đến 336 bước, **sai số MSE và MAE đều tăng vọt rõ rệt**. Đặc biệt tại $H=336$, MSE tăng từ `0.161` lên `0.172` — tức sai số tăng tới **$+6.8\%$**, một mức suy giảm hiệu năng rất đáng kể trong dự báo chuỗi thời gian.
@@ -239,23 +262,23 @@ flowchart LR
 
 ---
 
-## 💡 PHẦN 3: ĐỀ XUẤT CẢI TIẾN & CONTRIBUTIONS (SLIDES 09 – 11)
+## 💡 PHẦN 3: ĐỀ XUẤT CẢI TIẾN & CONTRIBUTIONS (SLIDES 10 – 12)
 
 ---
 
-### 🟢 SLIDE 09 / 11 — ĐỀ XUẤT 1: CỔNG HỢP NHẤT THÍCH NGHI (*ADAPTIVE GATED FUSION*)
+### 🟢 SLIDE 10 / 12 — ĐỀ XUẤT 1: CỔNG HỢP NHẤT THÍCH NGHI (*ADAPTIVE GATED FUSION*)
 
-* **Ảnh slide:** `slide_09_de_xuat_1_gated_fusion.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-09--11-31--đề-xuất-1-cổng-hợp-nhất-thích-nghi-adaptive-gated-fusion-vs-cộng-cứng-11))
+* **Ảnh slide:** `slide_10_de_xuat_1_gated_fusion.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-10--12-31--đề-xuất-1-cổng-hợp-nhất-thích-nghi-adaptive-gated-fusion-vs-cộng-cứng-11))
 * **Thời lượng dự kiến:** 65 – 75 giây.
 * **Mục tiêu slide:** Trình bày đề xuất cải tiến số 1: Thay thế phép cộng cứng 1:1 bằng cơ chế Cổng thích nghi $\alpha_t \in (0, 1)$ với chi phí cực rẻ chỉ +21 tham số.
 
-![Slide 09: So sánh TiDE gốc và Adaptive Gated Fusion](./images/slide_09_de_xuat_1_gated_fusion.png)
+![Slide 10: So sánh TiDE gốc và Adaptive Gated Fusion](./images/slide_10_de_xuat_1_gated_fusion.png)
 
 #### 🎙️ Kịch bản lời nói (Word-for-Word Script):
 
-> "Để trả lời câu hỏi mở của đề tài: *'Có thể cải tiến cơ chế kết hợp giữa nhánh phi tuyến và tuyến tính để nâng cao độ chính xác không?'* — Em xin khẳng định là **HOÀN TOÀN CÓ THỂ**.
+> "Để trả lời câu hỏi mở của đề tài: *'Có thể cải tiến cơ chế kết hợp giữa nhánh phi tuyến và tuyến tính để nâng cao độ chính xác không?'* — Em xin khẳng định là **HOÀN TOÀN CÓ THỂ**, và mọi đề xuất đều xuất phát trực tiếp từ chính bằng chứng trong bài báo.
 > 
-> Trên Slide 09 là **Đề xuất cải tiến thứ nhất: Cơ chế Cổng Hợp Nhất Thích Nghi (Adaptive Gated Fusion)**.
+> Trên Slide 10 là **Đề xuất cải tiến thứ nhất: Cơ chế Cổng Hợp Nhất Thích Nghi (Adaptive Gated Fusion)**.
 > 
 > Trong thực tế, chuỗi thời gian có sự chuyển dịch chế độ (*regime-switching*): có những khoảng thời gian chuỗi biến thiên rất đều đặn (nhánh tuyến tính chiếm ưu thế), nhưng cũng có những thời điểm xảy ra sự kiện đột biến (nhánh phi tuyến cần can thiệp mạnh). Phép cộng cứng $1:1$ hiện tại vô tình bơm thêm nhiễu phi tuyến vào những vùng dữ liệu đang phẳng lặng.
 > 
@@ -271,51 +294,45 @@ flowchart LR
 
 ---
 
-### 🟢 SLIDE 10 / 11 — ĐỀ XUẤT 2: TÁCH XU HƯỚNG KIỂU DLINEAR CHO NHÁNH TUYẾN TÍNH
+### 🟢 SLIDE 11 / 12 — ĐỀ XUẤT 2: PHÂN RÃ XU HƯỚNG & ĐIỀU TIẾT HORIZON (XUẤT PHÁT TỪ PAPER)
 
-* **Ảnh slide:** `slide_10_de_xuat_2_trend_aware.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-10--11-32--đề-xuất-2-tách-xu-hướng-kiểu-dlinear-cho-nhánh-tuyến-tính-trend-aware-dual-stream))
-* **Thời lượng dự kiến:** 55 – 65 giây.
-* **Mục tiêu slide:** Trình bày đề xuất cải tiến số 2: Tích hợp bộ lọc Moving Average kiểu DLinear vào nhánh tuyến tính để loại bỏ tác động tiêu cực của các điểm dị biệt (outliers).
+* **Ảnh slide:** `slide_11_de_xuat_2_trend_aware.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-11--12-32--đề-xuất-2-phân-rã-xu-hướng--điều-tiết-horizon-xuất-phát-từ-table-2-table-5--mục-6-future-work))
+* **Thời lượng dự kiến:** 60 – 75 giây.
+* **Mục tiêu slide:** Chứng minh Đề xuất 2 xuất phát trực tiếp từ các điểm nghẽn thực nghiệm tại **Table 2 (Trang 8)**, **Table 5 (Trang 11)** và **Future Work Mục 6 (Trang 11)**.
 
-![Slide 10: Đề xuất 2 Trend Aware Dual Stream](./images/slide_10_de_xuat_2_trend_aware.png)
+![Slide 11: Đề xuất 2 Trend Aware Dual Stream](./images/slide_11_de_xuat_2_trend_aware.png)
 
 #### 🎙️ Kịch bản lời nói (Word-for-Word Script):
 
-> "Song song với việc điều tiết đầu ra, em xin giới thiệu **Đề xuất cải tiến thứ hai trên Slide 10: Tách Xu Hướng Kiểu DLinear Cho Nhánh Tuyến Tính (Trend-Aware Dual-Stream)**.
-> 
-> Hiện tại trong TiDE gốc, nhánh `self.linear` nhận trực tiếp chuỗi lịch sử $y_{1:L}$ thô để chiếu sang tương lai. Điều này tiềm ẩn một rủi ro lớn: nếu trong quá khứ có các điểm nhiễu gai hoặc dị biệt (*outliers*), phép chiếu thẳng của ma trận $W_{\text{res}}$ sẽ nhân rộng sai số này sang toàn bộ dải dự báo tương lai.
-> 
-> Để khắc phục, em đề xuất kế thừa kỹ thuật cốt lõi của DLinear:
-> * Dùng một bộ lọc trượt `Moving Average` với cửa sổ $k=25$ để tách chuỗi quá khứ thành hai thành phần: thành phần xu hướng mượt $y_{\text{trend}}$ và thành phần phần dư dao động $y_{\text{rem}}$.
-> * Hai thành phần này được chiếu qua hai tầng Linear chuyên biệt: một tầng chuyên nắm bắt xu hướng vĩ mô dài hạn, và một tầng chuyên nắm bắt tính chu kỳ cục bộ.
-> 
-> Nhờ đó, nhánh tuyến tính được bảo vệ vững chắc khỏi hiện tượng 'sốc do nhiễu', cung cấp một đường nền dự báo mượt mà và tin cậy hơn cho Temporal Decoder bổ sung chi tiết."
+> "Sang **Slide 11**, **Đề xuất thứ hai** của em không hề mang tính cảm tính, mà **xuất phát trực tiếp từ 3 bằng chứng thực nghiệm và hướng mở trong chính bài báo gốc**:
+>
+> * Thứ nhất, tại **Table 2 (Trang 8)**, dù thắng lớn ở Traffic và Electricity, nhưng trên tập `Weather` (10 phút, nhiễu cao) ở $H=96$, TiDE đạt MSE `0.166` — **thua PatchTST (`0.149`) tới 10.2%**, và trên `ETTm1` cũng thua DLinear (`0.299`).
+> * Thứ hai, tại **Table 5 (Trang 11)**, ở tầm xa $H=720$, Global Residual gốc gần như bão hòa (`0.196` vs `0.196`).
+> * Thứ ba, ngay trong **Mục 6 Future Work (Trang 11)**, chính tác giả Google Research thừa nhận cần nghiên cứu sâu ảnh hưởng của **mức độ xu hướng (*trend*) và chu kỳ (*seasonality*)** lên hiệu quả của kiến trúc MLP!
+>
+> Do đó, em đề xuất phân rã $\mathbf{y}_{1:L}$ qua `MovingAvg(k=25)` thành Trend và Phần dư để nhánh Linear giữ đúng chứng minh **tối ưu tuyến tính tại Phụ lục A** mà không bị gai nhiễu `Weather` kéo lệch; đồng thời nhân thêm vector học $\sigma(\boldsymbol{\gamma}) \in \mathbb{R}^H$ vào đầu ra Temporal Decoder để tự hãm độ trôi phi tuyến ở bước $H$ xa — vẫn bảo toàn $100\%$ tốc độ $O(L+H)$ và tính chất $\mathrm{DLinear} \subset \mathrm{TiDE}$!"
 
 * **🎬 Thao tác & Điểm nhấn hình ảnh (Visual Cues):**
-  * Chỉ vào khối `Moving Average` ở giữa sơ đồ: *"Biến chuỗi thô thành 2 dòng chảy: Xu hướng mượt và Dao động chu kỳ"*.
+  * Chỉ vào 2 hộp bằng chứng phía trên (`Table 2` & `Mục 6 Future Work`), rồi rà xuống 3 hộp cơ sở màu xanh ở đáy slide để thuyết phục Hội đồng về tính khả thi.
 
 ---
 
-### 🟢 SLIDE 11 / 11 — ĐÓNG GÓP KHOA HỌC (CONTRIBUTIONS) & LỘ TRÌNH THỰC NGHIỆM
+### 🟢 SLIDE 12 / 12 — ĐÓNG GÓP KHOA HỌC (TỪ KHOẢNG TRỐNG BÀI BÁO) & LỘ TRÌNH KIỂM CHỨNG
 
-* **Ảnh slide:** `slide_11_contributions_va_roadmap.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-11--11-33--đóng-góp-khoa-học-contributions--lộ-trình-kiểm-chứng-thực-nghiệm))
+* **Ảnh slide:** `slide_12_contributions_va_roadmap.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-12--12-33--đóng-góp-khoa-học-xuất-phát-từ-khoảng-trống-bài-báo--lộ-trình-kiểm-chứng))
 * **Thời lượng dự kiến:** 60 – 75 giây.
-* **Mục tiêu slide:** Tổng kết 3 đóng góp khoa học chính; trình bày lộ trình thực nghiệm rõ ràng, khả thi để kiểm chứng đề xuất; kết thúc bài thuyết trình trang trọng.
+* **Mục tiêu slide:** Tổng kết 3 đóng góp khoa học gắn chặt với khoảng trống thực nghiệm của bài báo; trình bày lộ trình kiểm chứng thuyết phục.
 
-![Slide 11: Đóng góp khoa học và lộ trình thực nghiệm](./images/slide_11_contributions_va_roadmap.png)
+![Slide 12: Đóng góp khoa học và lộ trình thực nghiệm](./images/slide_12_contributions_va_roadmap.png)
 
 #### 🎙️ Kịch bản lời nói (Word-for-Word Script):
 
-> "Để khép lại bài thuyết trình, Slide 11 tổng kết toàn bộ giá trị học thuật và lộ trình thực nghiệm mà nhóm hướng tới:
+> "Để khép lại bài thuyết trình, **Slide 12** tổng kết 3 đóng góp khoa học gắn chặt với các khoảng trống mà bài báo gốc để lại:
+> 1. **Hợp nhất thích nghi điều khiển từ ngoại sinh:** Giải quyết phép cộng cứng $1:1$ tại `models.py#L214`, tận dụng tín hiệu ngoại sinh quyết định sự kiện Type A/B ở **Figure 3** và tính tối ưu tuyến tính ở **Phụ lục A** với chỉ `+21` tham số ($\alpha_t$).
+> 2. **Giải quyết trực tiếp bài toán Future Work ở Mục 6 (Trang 11):** Đánh thẳng vào các tập TiDE thua PatchTST/DLinear ở **Table 2** (`Weather`, `ETTm1`) và vùng bão hòa $H=720$ (**Table 5**).
+> 3. **Hoàn thiện mảnh ghép Ablation Mục 5.4:** Bài báo gộp chung bỏ cả `MLP Skip` lẫn `Global Linear` trong `TiDE (no res.)` và chỉ thử trên `1/7` tập (`Electricity`). Nhóm đề xuất **tách riêng 2 loại residual** và kiểm chứng đủ **7 datasets**, giữ chi phí tham số tăng $< 0.1\%$ và thời gian huấn luyện tăng $< 5\%$ (**Mục 5.3**).
 > 
-> **Chúng em kỳ vọng 3 đóng góp khoa học nổi bật:**
-> 1. **Khả năng thích nghi đa chế độ:** Giải quyết dứt điểm sự cứng nhắc của phép cộng $1:1$, giúp mô hình thông minh hơn khi đối mặt với cả chuỗi ổn định lẫn biến cố bất ngờ.
-> 2. **Tính giải thích được cao (Interpretable AI):** Không còn là một hộp đen bí ẩn, giá trị cổng $\alpha_t$ cho phép chúng ta vẽ đồ thị để trực quan hóa và giải thích cho người dùng: tại ngày $t$, mô hình đang tin cậy vào xu hướng lịch sử bao nhiêu % và đang chịu tác động của sự kiện ngoại sinh bao nhiêu %.
-> 3. **Lấp đầy khoảng trống thực nghiệm của bài báo gốc:** Mở rộng thí nghiệm Ablation sang cả 6 tập benchmark còn lại (`Traffic`, `Weather`, `ETTh1/2`, `ETTm1/2`) mà bài báo gốc chưa công bố.
-> 
-> Nhóm đã chuẩn bị sẵn thiết kế kiểm chứng đối chứng 3 phiên bản, đo lường trên các chỉ số MSE/MAE với 5 seed độc lập.
-> 
-> Phần trình bày của em về hai cơ chế chốt chặn `Temporal Decoder` và `Global Residual Connection` xin được kết thúc tại đây. Kính chúc quý thầy cô nhiều sức khỏe và em rất mong nhận được những câu hỏi góp ý quý báu từ Hội đồng. Em xin chân thành cảm ơn!"
+> Phần trình bày của em về `Temporal Decoder` và `Global Residual Connection` xin được kết thúc tại đây. Kính chúc quý thầy cô nhiều sức khỏe và em rất mong nhận được những câu hỏi góp ý quý báu từ Hội đồng. Em xin chân thành cảm ơn!"
 
 * **🎬 Thao tác & Điểm nhấn hình ảnh (Visual Cues):**
   * Cúi đầu nhẹ chào Hội đồng, mắt nhìn thẳng tự tin, sẵn sàng chuyển sang phần Q&A.

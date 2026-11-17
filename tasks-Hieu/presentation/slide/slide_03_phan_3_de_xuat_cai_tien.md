@@ -7,17 +7,17 @@
 
 ## 🖼️ Hình Ảnh & Sơ Đồ Minh Họa Đưa Lên Slide
 
-### 3.1. Slide 09 / 11 — Đề xuất 1: Cổng Hợp Nhất Thích Nghi (*Adaptive Gated Fusion*) vs Cộng cứng `1:1`
+### 3.1. Slide 10 / 12 — Đề xuất 1: Cổng Hợp Nhất Thích Nghi (*Adaptive Gated Fusion*) vs Cộng cứng `1:1`
 
-![Slide 09: So sánh TiDE gốc và Adaptive Gated Fusion](./images/slide_09_de_xuat_1_gated_fusion.png)
+![Slide 10: So sánh TiDE gốc và Adaptive Gated Fusion](./images/slide_10_de_xuat_1_gated_fusion.png)
 
-### 3.2. Slide 10 / 11 — Đề xuất 2: Tách Xu Hướng Kiểu DLinear (*Trend-Aware Dual-Stream*)
+### 3.2. Slide 11 / 12 — Đề xuất 2: Phân rã Xu hướng & Điều tiết Horizon (*Trend-Aware & Horizon-Adaptive*)
 
-![Slide 10: Đề xuất 2 Trend Aware Dual Stream](./images/slide_10_de_xuat_2_trend_aware.png)
+![Slide 11: Đề xuất 2 Trend Aware Dual Stream](./images/slide_11_de_xuat_2_trend_aware.png)
 
-### 3.3. Slide 11 / 11 — Đóng Góp Khoa Học (Contributions) & Lộ Trình Thực Nghiệm
+### 3.3. Slide 12 / 12 — Đóng Góp Khoa Học (Contributions) & Lộ Trình Thực Nghiệm
 
-![Slide 11: Đóng góp khoa học và lộ trình thực nghiệm](./images/slide_11_contributions_va_roadmap.png)
+![Slide 12: Đóng góp khoa học và lộ trình thực nghiệm](./images/slide_12_contributions_va_roadmap.png)
 
 ### 3.4. Sơ đồ khối Mermaid (Hiển thị trực tiếp trên GitHub)
 
@@ -114,11 +114,11 @@ $$
 
 > "Cuối cùng ở Phần 3, toàn bộ đề xuất cải tiến của em **đều xuất phát trực tiếp từ những điểm nghẽn và gợi mở được chính nhóm tác giả Google Research ghi nhận trong bài báo**:
 >
-> 1. **Đề xuất 1 — Adaptive Gated Fusion (Slide 09):** Xuất phát từ dòng code 214 `out += residual_out` cộng cứng `1:1`. Kết hợp chứng minh từ Phụ lục A (mô hình tuyến tính đã tối ưu khi chuỗi vận động tuyến tính) và Figure 3 (biến ngoại sinh quyết định sự kiện Type A/B), ta chỉ cần thêm 1 cổng Sigmoid `alpha_t` tốn đúng **21 tham số** để tự động hạ nhiễu phi tuyến lúc yên tĩnh và mở hết cỡ khi có sự kiện đột biến.
+> 1. **Đề xuất 1 — Adaptive Gated Fusion (Slide 10):** Xuất phát từ dòng code 214 `out += residual_out` cộng cứng `1:1`. Kết hợp chứng minh từ Phụ lục A (mô hình tuyến tính đã tối ưu khi chuỗi vận động tuyến tính) và Figure 3 (biến ngoại sinh quyết định sự kiện Type A/B), ta chỉ cần thêm 1 cổng Sigmoid `alpha_t` tốn đúng **21 tham số** để tự động hạ nhiễu phi tuyến lúc yên tĩnh và mở hết cỡ khi có sự kiện đột biến.
 >
-> 2. **Đề xuất 2 — Phân rã Xu hướng & Điều tiết Horizon (Slide 10):** Xuất phát từ **Table 2 (Trang 8)** khi TiDE vẫn thua PatchTST `10.2%` trên tập `Weather` (`H=96`, nhiều nhiễu 10 phút) và thua DLinear ở `ETTm1`; đồng thời ở **Table 5 (Trang 11)** khi `H=720`, Global Residual gốc bị bão hòa (`0.196` vs `0.196`). Trong **Mục 6 Future Work**, chính tác giả cũng gợi mở phải xét ảnh hưởng của *trend* và *seasonality*. Tách chuỗi quá khứ qua `MovingAvg` như tinh thần DLinear giúp nhánh tuyến tính giữ được tính tối ưu ở Phụ lục A, còn hệ số học `sigma(gamma)` giúp hãm độ trôi phi tuyến ở tầm dự báo xa.
+> 2. **Đề xuất 2 — Phân rã Xu hướng & Điều tiết Horizon (Slide 11):** Xuất phát từ **Table 2 (Trang 8)** khi TiDE vẫn thua PatchTST `10.2%` trên tập `Weather` (`H=96`, nhiều nhiễu 10 phút) và thua DLinear ở `ETTm1`; đồng thời ở **Table 5 (Trang 11)** khi `H=720`, Global Residual gốc bị bão hòa (`0.196` vs `0.196`). Trong **Mục 6 Future Work**, chính tác giả cũng gợi mở phải xét ảnh hưởng của *trend* và *seasonality*. Tách chuỗi quá khứ qua `MovingAvg` như tinh thần DLinear giúp nhánh tuyến tính giữ được tính tối ưu ở Phụ lục A, còn hệ số học `sigma(gamma)` giúp hãm độ trôi phi tuyến ở tầm dự báo xa.
 >
-> 3. **Đóng góp & Lộ trình kiểm chứng (Slide 11):** Bên cạnh hai kiến trúc nâng cấp, ta còn hoàn thiện lỗ hổng ở **Mục 5.4 (Trang 11)** — tách bạch riêng `Global Linear Skip` khỏi `MLP Skip` và chạy đủ **7 datasets** thay vì chỉ `1/7` tập như bài báo gốc!"
+> 3. **Đóng góp & Lộ trình kiểm chứng (Slide 12):** Bên cạnh hai kiến trúc nâng cấp, ta còn hoàn thiện lỗ hổng ở **Mục 5.4 (Trang 11)** — tách bạch riêng `Global Linear Skip` khỏi `MLP Skip` và chạy đủ **7 datasets** thay vì chỉ `1/7` tập như bài báo gốc!"
 
 ---
 
