@@ -16,6 +16,8 @@
 
 👉 [**`slide/`**](./slide/README.md): **Thư mục 5 Slide nội dung chi tiết** (kèm hình ảnh PNG độ phân giải cao, sơ đồ Mermaid và lời thoại thuyết trình từng slide)
 
+👉 [**`temporal_decoder_and_residual/`**](./temporal_decoder_and_residual/README.md): **Chuyên đề 3 Phần: Temporal Decoder & Global Residual Connection** (Lý thuyết & Toán học • Source code & Phân tích Ablation Study • Đề xuất cải tiến Adaptive Gated Fusion)
+
 Tài liệu được biên soạn tinh gọn, không lan man, tập trung 100% vào đúng 6 gạch đầu dòng nhiệm vụ của scope:
 1. **Kiến trúc Dense Decoder gồm $n_d$ Residual Blocks:** Cấu tạo các khối trung gian và khối ngõ ra đặc biệt.
 2. **Cách chuyển $e^{(i)}$ thành vector $g^{(i)}$ có kích thước $H \times p$:** Cơ chế chiếu chiều và công thức ma trận ngõ ra.
