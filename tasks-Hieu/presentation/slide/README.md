@@ -1,25 +1,22 @@
-# 🎞️ BỘ SLIDE THUYẾT TRÌNH CHI TIẾT: DENSE DECODER (TiDE)
+# 🎞️ BỘ SLIDE THUYẾT TRÌNH 3 PHẦN: TEMPORAL DECODER & GLOBAL RESIDUAL CONNECTION
 
-> **Phạm vi:** Chỉ bao gồm **5 Slide nội dung cốt lõi** (không tính slide Intro/Outro theo đúng yêu cầu), trình bày trọn vẹn 6 gạch đầu dòng phân công và 5 tiêu chí đánh giá của hội đồng. Mỗi slide đều đính kèm **hình ảnh minh họa PNG độ phân giải cao**, **sơ đồ kiến trúc Mermaid**, **nội dung súc tích hiển thị trên slide**, và **kịch bản lời nói (Speaker Notes)** để thành viên nghe hiểu tường tận.
+> **Phạm vi & Bố cục (Không tính slide Intro/Outro):** Tập trung vào **hai cơ chế trực tiếp tạo ra dự báo cuối cùng** trong TiDE, chia thành **3 phần rõ ràng** theo đúng bố cục bạn yêu cầu — đáp ứng trọn vẹn **5 tiêu chuẩn bắt buộc** và **7 nội dung cốt lõi**. Mỗi slide đều có sẵn hình ảnh PNG độ phân giải cao (180 DPI), sơ đồ Mermaid, nội dung súc tích chiếu trên slide, vị trí dòng code chính xác và kịch bản lời nói (Speaker Notes).
 
 ---
 
-## 📑 Danh Sách 5 Slide Nội Dung Chính Thức
+## 📑 Danh Sách 3 Phần Slide Chính Thức
 
-| STT | Tên File Slide | Trọng Tâm Nội Dung | Hình Ảnh Đính Kèm |
+| Phần | File Nội Dung Chi Tiết | Nội Dung & Yêu Cầu Đáp Ứng | Hình Ảnh Đính Kèm (`images/`) |
 | :---: | :--- | :--- | :--- |
-| **Slide 01** | 🖼️ [**`slide_01_kien_truc_va_ly_thuyet.md`**](./slide_01_kien_truc_va_ly_thuyet.md) | **Kiến trúc $n_d$ Residual Blocks & Lý do thiết kế:** Vị trí khối Dense Decoder, cấu tạo các khối trung gian vs khối cuối, lý do triệt tiêu tích lũy sai số & tối ưu GPU. | [`fig1_dense_decoder_position.png`](./images/fig1_dense_decoder_position.png) |
-| **Slide 02** | 📐 [**`slide_02_toan_hoc_va_unflatten.md`**](./slide_02_toan_hoc_va_unflatten.md) | **Toán học giải nén ($e \to g$), Unflatten & Ý nghĩa $d_t$:** Công thức chiếu $H \times p$, vai trò $O(1)$ của `Reshape`, ý nghĩa $d_t$ để ghép ngoại sinh tương lai, bảng Tensor shape. | [`fig2_unflatten_tensor_flow.png`](./images/fig2_unflatten_tensor_flow.png) |
-| **Slide 03** | 💻 [**`slide_03_source_code_va_non_autoregressive.md`**](./slide_03_source_code_va_non_autoregressive.md) | **Source code gốc & Cơ chế Non-autoregressive:** Đối chiếu PyTorch code trong `google-research/tide/model.py`, so sánh sinh song song One-shot vs sinh tuần tự Autoregressive. | [`fig3_non_autoregressive_vs_autoregressive.png`](./images/fig3_non_autoregressive_vs_autoregressive.png) |
-| **Slide 04** | 📊 [**`slide_04_phan_tich_hieu_nang_va_gioi_han.md`**](./slide_04_phan_tich_hieu_nang_va_gioi_han.md) | **Phân tích siêu tham số ($p$, $n_d$) & Giới hạn:** Điểm ngọt $p \in [4, 16]$ vs bùng nổ $47.18\text{M}$ params ($H=720, p=64$); vai trò $n_d=2$; 3 giới hạn tiềm ẩn. | [`fig4_hyperparameter_p_impact.png`](./images/fig4_hyperparameter_p_impact.png) |
-| **Slide 05** | 💡 [**`slide_05_de_xuat_cai_tien_thuc_nghiem.md`**](./slide_05_de_xuat_cai_tien_thuc_nghiem.md) | **Đề xuất giả thuyết cải tiến thực nghiệm:** Low-Rank Factorized Projection giảm $93.2\%$ tham số khi $H=720$ + Depthwise Conv1D làm mịn $d_t$ + Ablation Study. | [`fig5_low_rank_proposal.png`](./images/fig5_low_rank_proposal.png) |
+| **Phần 1** | 📖 [**`slide_01_phan_1_ly_thuyet_va_toan_hoc.md`**](./slide_01_phan_1_ly_thuyet_va_toan_hoc.md) | **Lý thuyết & Toán học:**<br>• Cách Temporal Decoder kết hợp $d_t^{(i)}$ với future covariates tại từng thời điểm $t$.<br>• Lý do dùng Temporal Decoder ("Covariate Highway") thay vì dùng thẳng Dense Decoder.<br>• Cách Global Residual ánh xạ tuyến tính Lookback $\to$ Horizon.<br>• Phép cộng tổng hợp Nonlinear + Linear & mối liên hệ với **DLinear**.<br>• Bảng Tensor Shape đầu vào/đầu ra. | • [`fig_p0_figure1_highlight.png`](./images/fig_p0_figure1_highlight.png)<br>• [`fig_p1_temporal_and_global_residual.png`](./images/fig_p1_temporal_and_global_residual.png) |
+| **Phần 2** | 💻 [**`slide_02_phan_2_source_code_va_phan_tich.md`**](./slide_02_phan_2_source_code_va_phan_tich.md) | **Source code & Phân tích (Ablation Study):**<br>• Code chính xác từ Repo gốc Google Research (`models.py#L141-L155`, `#L203`, `#L211-L214`) và PyTorch (`simulate_forward_pass.py#L232-L266`).<br>• Ablation Study 1 (Figure 3): Thí nghiệm sự kiện Type A/B sau 1 Epoch.<br>• Ablation Study 2 (Table 5): Số liệu MSE/MAE trên Electricity (`TiDE` vs `TiDE no res.`).<br>• Giới hạn của phép cộng cứng `1:1`. | • [`fig_p2_ablation_residual_results.png`](./images/fig_p2_ablation_residual_results.png) |
+| **Phần 3** | 💡 [**`slide_03_phan_3_de_xuat_cai_tien.md`**](./slide_03_phan_3_de_xuat_cai_tien.md) | **Đề xuất & Hướng nghiên cứu tiếp:**<br>• Trả lời câu hỏi: Cải tiến cơ chế kết hợp nhánh phi tuyến và tuyến tính.<br>• Giả thuyết 1: *Adaptive Gated Fusion* ($\alpha_t \cdot \hat{y}_{\text{NL}} + (1 - \alpha_t) \cdot \hat{y}_{\text{Lin}}$), chỉ thêm 21 tham số.<br>• Giả thuyết 2: *Trend-Aware Dual-Stream* tách Trend kiểu DLinear.<br>• Code PyTorch `AdaptiveGatedTiDEHead` & Kịch bản thực nghiệm. | • [`fig_p3_adaptive_gated_fusion.png`](./images/fig_p3_adaptive_gated_fusion.png) |
 
 ---
 
 ## 🖼️ Thư Viện Hình Ảnh Trình Chiếu (`images/`)
-Tất cả hình ảnh minh họa chất lượng cao (180 DPI, định dạng PNG, chữ tiếng Việt rõ nét) đều nằm sẵn trong thư mục [`images/`](./images/) để bạn kéo thả trực tiếp vào PowerPoint, Canva hoặc Google Slides:
-- [`fig1_dense_decoder_position.png`](./images/fig1_dense_decoder_position.png)
-- [`fig2_unflatten_tensor_flow.png`](./images/fig2_unflatten_tensor_flow.png)
-- [`fig3_non_autoregressive_vs_autoregressive.png`](./images/fig3_non_autoregressive_vs_autoregressive.png)
-- [`fig4_hyperparameter_p_impact.png`](./images/fig4_hyperparameter_p_impact.png)
-- [`fig5_low_rank_proposal.png`](./images/fig5_low_rank_proposal.png)
+Tất cả 4 file ảnh PNG sắc nét đã nằm sẵn trong [`images/`](./images/) để bạn kéo thả trực tiếp vào PowerPoint, Canva hoặc Google Slides:
+* [`fig_p0_figure1_highlight.png`](./images/fig_p0_figure1_highlight.png) — Vị trí khoanh vùng Temporal Decoder & Global Residual trên Figure 1 gốc
+* [`fig_p1_temporal_and_global_residual.png`](./images/fig_p1_temporal_and_global_residual.png) — Sơ đồ 2 nhánh song song tạo dự báo cuối cùng
+* [`fig_p2_ablation_residual_results.png`](./images/fig_p2_ablation_residual_results.png) — Biểu đồ Ablation Study thật từ Table 5 (Trang 11 Paper)
+* [`fig_p3_adaptive_gated_fusion.png`](./images/fig_p3_adaptive_gated_fusion.png) — Sơ đồ đề xuất Adaptive Gated Fusion so sánh với TiDE gốc

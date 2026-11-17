@@ -14,9 +14,7 @@
 
 👉 [**`present_dense_decoder.md`**](./present_dense_decoder.md): **Báo cáo chuyên sâu giải phẫu toàn diện khối Dense Decoder**
 
-👉 [**`slide/`**](./slide/README.md): **Thư mục 5 Slide nội dung chi tiết** (kèm hình ảnh PNG độ phân giải cao, sơ đồ Mermaid và lời thoại thuyết trình từng slide)
-
-👉 [**`temporal_decoder_and_residual/`**](./temporal_decoder_and_residual/README.md): **Chuyên đề 3 Phần: Temporal Decoder & Global Residual Connection** (Lý thuyết & Toán học • Source code & Phân tích Ablation Study • Đề xuất cải tiến Adaptive Gated Fusion)
+👉 [**`slide/`**](./slide/README.md): **Thư mục 3 Phần Slide Thuyết Trình (Temporal Decoder & Global Residual Connection)** — kèm 4 hình ảnh PNG độ phân giải cao, sơ đồ Mermaid, vị trí dòng code chính xác và kịch bản lời nói cho từng phần.
 
 Tài liệu được biên soạn tinh gọn, không lan man, tập trung 100% vào đúng 6 gạch đầu dòng nhiệm vụ của scope:
 1. **Kiến trúc Dense Decoder gồm $n_d$ Residual Blocks:** Cấu tạo các khối trung gian và khối ngõ ra đặc biệt.
