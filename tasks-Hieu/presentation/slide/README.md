@@ -32,5 +32,5 @@ Tất cả 11 slide PNG đồng bộ chuẩn Seminar 16:9 (180 DPI, thống nh�
 * `Slide 07 / 11`: [`slide_07_ablation_temporal_decoder.png`](./images/slide_07_ablation_temporal_decoder.png) — Ablation Study 1 (Figure 3 Trang 10–11): Temporal Decoder sau 1 Epoch
 * `Slide 08 / 11`: [`slide_08_ablation_global_residual.png`](./images/slide_08_ablation_global_residual.png) — Ablation Study 2 (Ảnh cắt gốc Table 5 Trang 11): Vai trò Residual Connections (`Electricity`)
 * `Slide 09 / 11`: [`slide_09_de_xuat_1_gated_fusion.png`](./images/slide_09_de_xuat_1_gated_fusion.png) — Đề xuất 1: Adaptive Gated Fusion so sánh với TiDE gốc
-* `Slide 10 / 11`: [`slide_10_de_xuat_2_trend_aware.png`](./images/slide_10_de_xuat_2_trend_aware.png) — Đề xuất 2: Trend-Aware Dual-Stream tách MovingAvg kiểu DLinear
-* `Slide 11 / 11`: [`slide_11_contributions_va_roadmap.png`](./images/slide_11_contributions_va_roadmap.png) — Đóng góp khoa học (Contributions) & Lộ trình kiểm chứng thực nghiệm
+* `Slide 10 / 11`: [`slide_10_de_xuat_2_trend_aware.png`](./images/slide_10_de_xuat_2_trend_aware.png) — Đề xuất 2: Phân rã Xu hướng & Điều tiết Horizon (từ Table 2, Table 5 & Future Work Mục 6)
+* `Slide 11 / 11`: [`slide_11_contributions_va_roadmap.png`](./images/slide_11_contributions_va_roadmap.png) — Đóng góp khoa học (xuất phát từ khoảng trống Bài báo) & Lộ trình kiểm chứng

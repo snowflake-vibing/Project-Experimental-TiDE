@@ -76,14 +76,14 @@
 
 ---
 
-### Slide 10 / 11 (3.2) — Đề xuất 2: Tách Xu Hướng Kiểu DLinear Cho Nhánh Tuyến Tính (*Trend-Aware Dual-Stream*)
-* **Nguồn gốc:** Kết hợp bộ lọc `MovingAvg(k=25)` kiểu DLinear để bảo vệ nhánh `self.linear` ([`models.py#L203`](https://github.com/google-research/google-research/blob/master/tide/models.py#L203)) khỏi nhiễu gai *outliers*.
+### Slide 10 / 11 (3.2) — Đề xuất 2: Phân rã Xu hướng & Điều tiết Horizon (Xuất phát từ Table 2, Table 5 & Mục 6 Future Work)
+* **Nguồn gốc:** Xuất phát từ các điểm yếu thực nghiệm tại **Table 2 (Trang 8: Weather `0.166` vs PatchTST `0.149`, ETTm1 `0.306`)**, hiện tượng bão hòa ở $H=720$ tại **Table 5 (Trang 11)** và định hướng Trend/Seasonality tại **Mục 6 (Trang 11)**, kết hợp chứng minh tối ưu tuyến tính (**Phụ lục A**).
 
 ![Slide 10: Đề xuất 2 Trend Aware Dual Stream](./images/slide_10_de_xuat_2_trend_aware.png)
 
 ---
 
-### Slide 11 / 11 (3.3) — Đóng góp khoa học (Contributions) & Lộ trình kiểm chứng thực nghiệm
-* **Nguồn gốc:** Tổng hợp 3 đóng góp khoa học kỳ vọng (Chính xác đa chế độ • Siêu nhẹ +21 params & Giải thích được • Lấp khoảng trống 6/7 dataset chưa chạy Ablation) kèm kịch bản Ablation Protocol.
+### Slide 11 / 11 (3.3) — Đóng góp khoa học (Xuất phát từ khoảng trống Bài báo) & Lộ trình kiểm chứng
+* **Nguồn gốc:** Khắc phục cộng cứng `1:1` (`models.py#L214`), giải quyết Future Work Mục 6 (`Weather`/`ETTm1`/`H=720`), tách bạch `Global Linear` vs `MLP Skip` trên đủ 7 datasets (**Mục 5.4, Trang 11**) kèm lộ trình kiểm chứng thuyết phục.
 
 ![Slide 11: Đóng góp khoa học và lộ trình thực nghiệm](./images/slide_11_contributions_va_roadmap.png)

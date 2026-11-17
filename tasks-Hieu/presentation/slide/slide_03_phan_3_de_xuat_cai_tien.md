@@ -77,41 +77,48 @@ class AdaptiveGatedTiDEHead(nn.Module):
         return alpha * y_hat_nl + (1.0 - alpha) * y_hat_lin
 ```
 
-### 3. Giả thuyết 2: Tách Xu Hướng Kiểu DLinear Cho Nhánh Tuyến Tính (Trend-Aware Dual-Stream)
+### 3. Giả thuyết 2: Phân rã Xu hướng & Điều tiết Horizon cho Global Residual (Xuất phát từ Bài báo)
 
-Dùng bộ lọc `Moving Average` ($k = 25$) tách chuỗi quá khứ $\mathbf{y}_{1:L}^{(i)}$ thành thành phần mượt $\mathbf{y}_{\mathrm{trend}}^{(i)}$ và phần dư $\mathbf{y}_{\mathrm{rem}}^{(i)}$ trước khi chiếu qua hai lớp Linear độc lập, kết hợp trọng số học được theo horizon $\boldsymbol{\gamma} \in \mathbb{R}^{1 \times H}$:
+**3.1. Cơ sở trực tiếp từ các điểm nghẽn & hướng mở trong Bài báo gốc:**
+* **Điểm yếu thực nghiệm tại Table 2 (Trang 8):** Trên tập `Weather` (tần suất 10 phút, nhiễu cao) ở $H=96$, TiDE đạt MSE `0.166` (thua PatchTST `0.149` tới `10.2%`); trên `ETTm1` ở $H=96$, TiDE (`0.306`) cũng thua cả DLinear (`0.299`) và PatchTST (`0.293`).
+* **Bão hòa ở tầm xa tại Table 5 (Trang 11):** Trên `Electricity` ở $H=720$, sai số của TiDE và `TiDE (no res.)` tiệm cận nhau (`0.196` vs `0.196`), cho thấy trọng số cộng cố định `1:1` suy giảm hiệu lực ở bước xa.
+* **Hướng mở từ chính tác giả (Mục 6 Conclusion & Future Work, Trang 11):** Nhóm tác giả đề xuất cần phân tích sâu hơn hiệu quả của kiến trúc MLP so với Transformer ứng với **từng mức độ xu hướng (*trend*) và chu kỳ (*seasonality*)**; đồng thời tại Mục 4.2, nhánh Global Residual mới chiếu thẳng chuỗi thô $\mathbf{y}_{1:L}^{(i)}$ thay vì tách thành phần mượt như DLinear.
+
+**3.2. Phương trình cải tiến & Cơ sở thuyết phục:**
 
 $$
 \hat{\mathbf{y}}_{\mathrm{final}}^{(i)} = \big(\mathbf{W}_{\mathrm{trend}} \mathbf{y}_{\mathrm{trend}}^{(i)} + \mathbf{W}_{\mathrm{rem}} \mathbf{y}_{\mathrm{rem}}^{(i)} + \mathbf{b}\big) + \sigma(\boldsymbol{\gamma}) \odot \hat{\mathbf{y}}_{\mathrm{NL}}^{(i)}
 $$
 
-### 4. Đóng góp khoa học (Contributions) & Thiết kế kiểm chứng thực nghiệm
+* **Giữ nguyên tối ưu Phụ lục A:** Tách nền mượt $\mathbf{y}_{\mathrm{trend}}^{(i)}$ giúp nhánh Linear phát huy đúng chứng minh tối ưu cho hệ động lực tuyến tính mà không bị gai nhiễu tần số cao (`Weather`, `ETTm1`) kéo lệch.
+* **Xử lý suy giảm ở $H=720$:** Vector học $\sigma(\boldsymbol{\gamma}) \in \mathbb{R}^H$ tự động tiết giảm độ trôi phi tuyến của Temporal Decoder tại các bước tương lai xa.
+* **Bảo toàn $\mathrm{DLinear} \subset \mathrm{TiDE}$ & tốc độ $O(L+H)$:** Chi phí tham số tăng $< 0.1\%$, giữ nguyên tốc độ nhanh hơn Transformer $5\text{–}10\times$ (Mục 5.3).
+
+### 4. Đóng góp khoa học (Xuất phát từ khoảng trống Bài báo) & Lộ trình kiểm chứng
 
 **3 Đóng góp kỳ vọng chính (Contributions):**
 
-1. **Cải thiện độ chính xác trên chuỗi đa chế độ (*Regime-Switching*):** Khắc phục phép cộng cứng `1:1`, giảm nhiễu phi tuyến ở giai đoạn ổn định và khuếch đại nhạy bén khi có biến cố ngoại sinh.
-2. **Siêu nhẹ & Có khả năng giải thích (*Lightweight & Interpretable*):** Mạng cổng chỉ bổ sung **$21$ tham số** (`< 0.01%` mô hình) nhưng cho phép vẽ đồ thị biến thiên $\alpha_t \in (0, 1)$ để giải thích trực quan lúc nào mô hình dựa vào lịch sử tuyến tính, lúc nào dựa vào sự kiện ngoại sinh.
-3. **Lấp khoảng trống Ablation của bài báo gốc:** Mở rộng kiểm chứng sang cả **6 tập dữ liệu còn lại** (`Traffic`, `Weather`, `ETTh1/2`, `ETTm1/2`) thay vì chỉ dừng lại ở `1/7` tập (`Electricity`) như trong Figure 5 của bài báo gốc.
+1. **Hợp nhất thích nghi điều khiển từ ngoại sinh:** Khắc phục phép cộng cứng `1:1` (`models.py#L214`) bằng cổng $\alpha_t$ (`+21 params`). Tận dụng đúng tín hiệu ngoại sinh quyết định tốc độ bắt sự kiện Type A/B (**Figure 3, Trang 10**) và tối ưu hóa chế độ ổn định tuyến tính (**Phụ lục A**).
+2. **Giải quyết trực tiếp bài toán Future Work tại Mục 6 (Trang 11):** Nâng cấp Global Residual bằng phân rã Trend/Remainder + trọng số $\sigma(\boldsymbol{\gamma})$ theo horizon để xử lý trực diện các benchmark TiDE thua PatchTST/DLinear (**Table 2 Trang 8**: `Weather`, `ETTm1`) và vùng bão hòa $H=720$ (**Table 5**).
+3. **Hoàn thiện mảnh ghép Ablation Study còn thiếu tại Mục 5.4 (Trang 11):** Tác giả gộp chung bỏ cả `MLP ResidualBlock Skip` lẫn `Global Linear Residual` trong biến thể `TiDE (no res.)` và chỉ thử trên `1/7` tập (`Electricity`). Ta **tách riêng 2 thành phần skip** và mở rộng đánh giá sang đủ **7 datasets** (`Weather`, `Traffic`, `4 ETT`, `Electricity`).
 
-| Hạng mục | Thiết lập kiểm chứng đề xuất |
-| :--- | :--- |
-| **Datasets** | `Electricity`, `Semi-synthetic Electricity (Type A/B events)` & `ETTh1 / Traffic` (`H = 96, 192, 336, 720`). |
-| **Mô hình đối chứng** | (1) TiDE Gốc (`y_nl + y_lin`) vs (2) TiDE + `AdaptiveGatedTiDEHead` vs (3) TiDE + `Trend-Aware Dual-Stream`. |
-| **Chỉ số đo lường** | So sánh **MSE / MAE** (trung bình 5 seed), thời gian train/epoch (`< 5%` sai khác) và **trực quan hóa giá trị cổng $\alpha_t$** trong suốt chu kỳ sự kiện Type A. |
+| Bước kiểm chứng | Mục tiêu xuất phát từ Bài báo | Tiêu chí thuyết phục & Nghiệm thu |
+| :--- | :--- | :--- |
+| **Bước 1: Tách bạch Ablation Mục 5.4** | Mục 5.4 Trang 11 chưa tách `Global Linear` khỏi `MLP Skip` và thiếu `6/7` tập. | Đối chứng 3 baseline (`Full TiDE` vs `No Global Linear` vs `No MLP Skip`) trên `Electricity`, `Weather`, `Traffic`, `ETTm1`. |
+| **Bước 2: Kiểm chứng trên điểm yếu Table 2** | TiDE thua PatchTST/DLinear ở `Weather H=96..336` & `ETTm1 H=96`. | So sánh **MSE / MAE** (5 seeds) của 2 Đề xuất vs TiDE Gốc & PatchTST; kỳ vọng rút ngắn khoảng cách `0.166 -> ~0.149` trên `Weather`. |
+| **Bước 3: Nghiệm thu cơ chế & Chi phí (Mục 5.3)** | Giải thích $\alpha_t$ trên sự kiện `Type A/B` (Figure 3) và giữ tốc độ TiDE. | Đồ thị $\alpha_t$ tăng vọt đúng vùng sự kiện `24h`; tham số tăng $< 0.1\%$ và thời gian train/epoch tăng $< 5\%$. |
 
 ---
 
 ## 🎙️ Kịch Bản Lời Nói Thuyết Trình (Speaker Notes)
 
-> "Cuối cùng ở Phần 3, để trả lời trực tiếp câu hỏi mở của đề tài: **Có thể cải tiến cơ chế kết hợp giữa nhánh phi tuyến và nhánh tuyến tính để nâng cao độ chính xác không?** Câu trả lời chắc chắn là **CÓ**.
+> "Cuối cùng ở Phần 3, toàn bộ đề xuất cải tiến của em **đều xuất phát trực tiếp từ những điểm nghẽn và gợi mở được chính nhóm tác giả Google Research ghi nhận trong bài báo**:
 >
-> Như đã phân tích ở Phần 2, dòng code `out += residual_out` hiện tại ép cả hai nhánh cộng với tỷ lệ cứng 1:1 ở mọi thời điểm. Em xin đề xuất 2 giả thuyết cải tiến có thể kiểm chứng ngay bằng thực nghiệm:
+> 1. **Đề xuất 1 — Adaptive Gated Fusion (Slide 09):** Xuất phát từ dòng code 214 `out += residual_out` cộng cứng `1:1`. Kết hợp chứng minh từ Phụ lục A (mô hình tuyến tính đã tối ưu khi chuỗi vận động tuyến tính) và Figure 3 (biến ngoại sinh quyết định sự kiện Type A/B), ta chỉ cần thêm 1 cổng Sigmoid `alpha_t` tốn đúng **21 tham số** để tự động hạ nhiễu phi tuyến lúc yên tĩnh và mở hết cỡ khi có sự kiện đột biến.
 >
-> 1. **Adaptive Gated Fusion (Cổng hợp nhất thích nghi theo thời gian):** Ta thêm một tầng Linear nhỏ kết hợp hàm Sigmoid để sinh ra trọng số $\alpha_t \in (0, 1)$ cho từng mốc tương lai dựa trên chính $[\mathbf{d}_t ; \tilde{\mathbf{x}}_{L+t}]$. Khi chuỗi đang biến động bình thường, $\alpha_t$ hạ xuống để ưu tiên nhánh tuyến tính chống nhiễu; còn khi phát hiện sự kiện đột biến như Type A hoặc ngày lễ, cổng tự động mở $\alpha_t \to 1$ để ưu tiên Temporal Decoder. Đặc biệt, mạng cổng này chỉ tốn thêm đúng **21 tham số**, tốc độ tính toán gần như không đổi.
+> 2. **Đề xuất 2 — Phân rã Xu hướng & Điều tiết Horizon (Slide 10):** Xuất phát từ **Table 2 (Trang 8)** khi TiDE vẫn thua PatchTST `10.2%` trên tập `Weather` (`H=96`, nhiều nhiễu 10 phút) và thua DLinear ở `ETTm1`; đồng thời ở **Table 5 (Trang 11)** khi `H=720`, Global Residual gốc bị bão hòa (`0.196` vs `0.196`). Trong **Mục 6 Future Work**, chính tác giả cũng gợi mở phải xét ảnh hưởng của *trend* và *seasonality*. Tách chuỗi quá khứ qua `MovingAvg` như tinh thần DLinear giúp nhánh tuyến tính giữ được tính tối ưu ở Phụ lục A, còn hệ số học `sigma(gamma)` giúp hãm độ trôi phi tuyến ở tầm dự báo xa.
 >
-> 2. **Trend-Aware Dual-Stream:** Tách $\mathbf{y}_{1:L}$ thành Trend và Seasonal bằng Moving Average đúng theo tinh thần DLinear trước khi đưa vào `Global Linear Skip`, tránh để nhiễu gai làm lệch đường nền tuyến tính.
->
-> Bên dưới là thiết kế thí nghiệm đối chứng (Ablation Study) kèm đồ thị theo dõi giá trị $\alpha_t$ mà nhóm hoàn toàn có thể chạy kiểm chứng ngay trên bộ dữ liệu thực tế. Cảm ơn thầy cô và các bạn đã lắng nghe!"
+> 3. **Đóng góp & Lộ trình kiểm chứng (Slide 11):** Bên cạnh hai kiến trúc nâng cấp, ta còn hoàn thiện lỗ hổng ở **Mục 5.4 (Trang 11)** — tách bạch riêng `Global Linear Skip` khỏi `MLP Skip` và chạy đủ **7 datasets** thay vì chỉ `1/7` tập như bài báo gốc!"
 
 ---
 
