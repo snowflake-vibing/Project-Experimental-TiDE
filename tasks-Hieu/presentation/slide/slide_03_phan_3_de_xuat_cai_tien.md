@@ -7,17 +7,17 @@
 
 ## 🖼️ Hình Ảnh & Sơ Đồ Minh Họa Đưa Lên Slide
 
-### 3.1. Đề xuất 1 — Cổng Hợp Nhất Thích Nghi (*Adaptive Gated Fusion*) vs Cộng cứng `1:1`
+### 3.1. Slide 08 / 10 — Đề xuất 1: Cổng Hợp Nhất Thích Nghi (*Adaptive Gated Fusion*) vs Cộng cứng `1:1`
 
-![So sánh TiDE gốc và Adaptive Gated Fusion](./images/fig_p3_adaptive_gated_fusion.png)
+![Slide 08: So sánh TiDE gốc và Adaptive Gated Fusion](./images/slide_08_de_xuat_1_gated_fusion.png)
 
-### 3.2. Đề xuất 2 — Tách Xu Hướng Kiểu DLinear (*Trend-Aware Dual-Stream*)
+### 3.2. Slide 09 / 10 — Đề xuất 2: Tách Xu Hướng Kiểu DLinear (*Trend-Aware Dual-Stream*)
 
-![Đề xuất 2 Trend Aware Dual Stream](./images/fig_p3_2_trend_aware_dual_stream.png)
+![Slide 09: Đề xuất 2 Trend Aware Dual Stream](./images/slide_09_de_xuat_2_trend_aware.png)
 
-### 3.3. Đóng Góp Khoa Học (Contributions) & Lộ Trình Thực Nghiệm
+### 3.3. Slide 10 / 10 — Đóng Góp Khoa Học (Contributions) & Lộ Trình Thực Nghiệm
 
-![Đóng góp khoa học và lộ trình thực nghiệm](./images/fig_p3_3_contributions_and_roadmap.png)
+![Slide 10: Đóng góp khoa học và lộ trình thực nghiệm](./images/slide_10_contributions_va_roadmap.png)
 
 ### 3.4. Sơ đồ khối Mermaid (Hiển thị trực tiếp trên GitHub)
 

@@ -4,27 +4,27 @@
 
 ---
 
-## 📑 Danh Sách 3 Phần Slide Chính Thức
+## 📑 Danh Sách 3 Phần Slide Chính Thức (Chuẩn Seminar 16:9 — 10 Slides)
 
-| Phần | File Nội Dung Chi Tiết | Nội Dung & Yêu Cầu Đáp Ứng | Hình Ảnh Đính Kèm (`images/`) |
+| Phần | File Nội Dung Chi Tiết | Nội Dung & Yêu Cầu Đáp Ứng | Slides Đính Kèm (`images/`) |
 | :---: | :--- | :--- | :--- |
-| **Phần 1** | 📖 [**`slide_01_phan_1_ly_thuyet_va_toan_hoc.md`**](./slide_01_phan_1_ly_thuyet_va_toan_hoc.md) | **Lý thuyết & Toán học:**<br>• Cách Temporal Decoder kết hợp $d_t^{(i)}$ với future covariates tại từng thời điểm $t$.<br>• Lý do dùng Temporal Decoder ("Covariate Highway") thay vì dùng thẳng Dense Decoder.<br>• Cách Global Residual ánh xạ tuyến tính Lookback $\to$ Horizon.<br>• Phép cộng tổng hợp Nonlinear + Linear & mối liên hệ với **DLinear**.<br>• Bảng Tensor Shape đầu vào/đầu ra. | • [`fig_p0_figure1_highlight.png`](./images/fig_p0_figure1_highlight.png)<br>• [`fig_p1_temporal_and_global_residual.png`](./images/fig_p1_temporal_and_global_residual.png) |
-| **Phần 2** | 💻 [**`slide_02_phan_2_source_code_va_phan_tich.md`**](./slide_02_phan_2_source_code_va_phan_tich.md) | **Source code & Phân tích (Ablation Study):**<br>• Code chính xác từ Repo gốc Google Research (`models.py#L141-L155`, `#L203`, `#L211-L214`) và PyTorch (`simulate_forward_pass.py#L232-L266`).<br>• Ablation Study 1 (Figure 3): Thí nghiệm sự kiện Type A/B sau 1 Epoch.<br>• Ablation Study 2 (Table 5): Số liệu MSE/MAE trên Electricity (`TiDE` vs `TiDE no res.`).<br>• Giới hạn của phép cộng cứng `1:1`. | • [`fig_p2_ablation_residual_results.png`](./images/fig_p2_ablation_residual_results.png) |
-| **Phần 3** | 💡 [**`slide_03_phan_3_de_xuat_cai_tien.md`**](./slide_03_phan_3_de_xuat_cai_tien.md) | **Đề xuất & Đóng góp (Contributions):**<br>• Đề xuất 1 (3.1): *Adaptive Gated Fusion* ($\alpha_t \cdot \hat{\mathbf{y}}_{\mathrm{NL}} + (1 - \alpha_t) \cdot \hat{\mathbf{y}}_{\mathrm{Lin}}$), chỉ $+21$ tham số.<br>• Đề xuất 2 (3.2): *Trend-Aware Dual-Stream* tách Trend kiểu DLinear.<br>• Đóng góp 3.3 (Contributions): Chính xác đa chế độ • Giải thích được $\alpha_t$ • Lấp khoảng trống 6/7 tập Ablation. | • [`fig_p3_adaptive_gated_fusion.png`](./images/fig_p3_adaptive_gated_fusion.png)<br>• [`fig_p3_2_trend_aware_dual_stream.png`](./images/fig_p3_2_trend_aware_dual_stream.png)<br>• [`fig_p3_3_contributions_and_roadmap.png`](./images/fig_p3_3_contributions_and_roadmap.png) |
+| **Phần 1** | 📖 [**`slide_01_phan_1_ly_thuyet_va_toan_hoc.md`**](./slide_01_phan_1_ly_thuyet_va_toan_hoc.md) | **Lý thuyết & Toán học (Slides 01–04):**<br>• Định vị Figure 1 (Trang 5).<br>• Tách 3 Card: Dense Encoder • Dense Decoder • Temporal Decoder & Covariate Highway.<br>• Hai nhánh song song & phương trình tổng hợp.<br>• Chứng minh DLinear $\subset$ TiDE & Tensor Shapes (`Electricity`). | • [`slide_01_vi_tri_kien_truc.png`](./images/slide_01_vi_tri_kien_truc.png)<br>• [`slide_02_phan_biet_3_khoi_va_highway.png`](./images/slide_02_phan_biet_3_khoi_va_highway.png)<br>• [`slide_03_hai_nhanh_song_song.png`](./images/slide_03_hai_nhanh_song_song.png)<br>• [`slide_04_lien_he_dlinear_va_tensor.png`](./images/slide_04_lien_he_dlinear_va_tensor.png) |
+| **Phần 2** | 💻 [**`slide_02_phan_2_source_code_va_phan_tich.md`**](./slide_02_phan_2_source_code_va_phan_tich.md) | **Source code & Phân tích Ablation (Slides 05–07):**<br>• Code chính thức Google Research (`models.py#L128-L215`) ánh xạ thẳng ra Equations.<br>• Ablation Study 1 (Figure 3 Trang 10–11): Sự kiện Type A sau 1 Epoch.<br>• Ablation Study 2 (Table 5 Trang 11): Kết quả gốc trên `Electricity` & lý do chỉ show 1/7 tập. | • [`slide_05_source_code_va_equation.png`](./images/slide_05_source_code_va_equation.png)<br>• [`slide_06_ablation_temporal_decoder.png`](./images/slide_06_ablation_temporal_decoder.png)<br>• [`slide_07_ablation_global_residual.png`](./images/slide_07_ablation_global_residual.png) |
+| **Phần 3** | 💡 [**`slide_03_phan_3_de_xuat_cai_tien.md`**](./slide_03_phan_3_de_xuat_cai_tien.md) | **Đề xuất & Đóng góp (Slides 08–10):**<br>• Đề xuất 1 (3.1): *Adaptive Gated Fusion* (+21 params).<br>• Đề xuất 2 (3.2): *Trend-Aware Dual-Stream* tách Trend kiểu DLinear.<br>• Đóng góp 3.3 (Contributions): Chính xác đa chế độ • Giải thích được $\alpha_t$ • Lấp khoảng trống 6/7 tập Ablation. | • [`slide_08_de_xuat_1_gated_fusion.png`](./images/slide_08_de_xuat_1_gated_fusion.png)<br>• [`slide_09_de_xuat_2_trend_aware.png`](./images/slide_09_de_xuat_2_trend_aware.png)<br>• [`slide_10_contributions_va_roadmap.png`](./images/slide_10_contributions_va_roadmap.png) |
 
 ---
 
-## 🖼️ Thư Viện Hình Ảnh Trình Chiếu (`images/` & [`slide_images_gallery.md`](./slide_images_gallery.md))
-👉 **Xem toàn bộ 10 ảnh xếp theo đúng từng mục nội dung trong 1 file duy nhất:** [**`slide_images_gallery.md`**](./slide_images_gallery.md)
+## 🖼️ Thư Viện 10 Slide Trình Chiếu Chuẩn 16:9 (`images/` & [`slide_images_gallery.md`](./slide_images_gallery.md))
+👉 **Xem toàn bộ 10 slide đánh số (`Slide 01 / 10` → `Slide 10 / 10`) trong 1 file duy nhất:** [**`slide_images_gallery.md`**](./slide_images_gallery.md)
 
-Tất cả 10 file ảnh PNG sắc nét (180–200 DPI) đã nằm sẵn trong [`images/`](./images/) để bạn kéo thả trực tiếp vào PowerPoint, Canva hoặc Google Slides:
-* [`fig_p0_figure1_highlight.png`](./images/fig_p0_figure1_highlight.png) — Vị trí khoanh vùng Temporal Decoder & Global Residual trên Figure 1 gốc
-* [`fig_p1_temporal_decoder_highway.png`](./images/fig_p1_temporal_decoder_highway.png) — Tách 3 Card riêng (Dense Encoder • Dense Decoder • Temporal Decoder) & Cơ chế Highway
-* [`fig_p1_temporal_and_global_residual.png`](./images/fig_p1_temporal_and_global_residual.png) — Sơ đồ 2 nhánh song song tạo dự báo cuối cùng
-* [`fig_p1_tensor_shapes_and_dlinear.png`](./images/fig_p1_tensor_shapes_and_dlinear.png) — Chứng minh DLinear là lớp con của TiDE & Luồng Tensor Shapes
-* [`fig_p2_source_code_mapping.png`](./images/fig_p2_source_code_mapping.png) — Show nguyên đoạn Code gốc (`models.py#L128-L215`) ánh xạ thẳng ra Equations
-* [`fig_p2_ablation_temporal_decoder.png`](./images/fig_p2_ablation_temporal_decoder.png) — Ablation Study 1 (Figure 3 Trang 10 Paper): Temporal Decoder sau 1 Epoch
-* [`fig_p2_ablation_residual_results.png`](./images/fig_p2_ablation_residual_results.png) — Ablation Study 2 (Ảnh cắt gốc Table/Figure 5 Trang 11 Paper)
-* [`fig_p3_adaptive_gated_fusion.png`](./images/fig_p3_adaptive_gated_fusion.png) — Đề xuất 1 (3.1): Adaptive Gated Fusion so sánh với TiDE gốc
-* [`fig_p3_2_trend_aware_dual_stream.png`](./images/fig_p3_2_trend_aware_dual_stream.png) — Đề xuất 2 (3.2): Trend-Aware Dual-Stream tách MovingAvg kiểu DLinear
-* [`fig_p3_3_contributions_and_roadmap.png`](./images/fig_p3_3_contributions_and_roadmap.png) — Contributions & Lộ trình kiểm chứng thực nghiệm (3.3)
+Tất cả 10 slide PNG đồng bộ chuẩn Seminar 16:9 (180 DPI, thống nhất typography, header/footer nguồn gốc và số trang) đã nằm sẵn trong [`images/`](./images/) để trình chiếu trực tiếp:
+* `Slide 01 / 10`: [`slide_01_vi_tri_kien_truc.png`](./images/slide_01_vi_tri_kien_truc.png) — Vị trí khoanh vùng Temporal Decoder & Global Residual trên Figure 1 gốc
+* `Slide 02 / 10`: [`slide_02_phan_biet_3_khoi_va_highway.png`](./images/slide_02_phan_biet_3_khoi_va_highway.png) — Tách 3 Card riêng (Dense Encoder • Dense Decoder • Temporal Decoder) & Cơ chế Highway
+* `Slide 03 / 10`: [`slide_03_hai_nhanh_song_song.png`](./images/slide_03_hai_nhanh_song_song.png) — Sơ đồ 2 nhánh song song tạo dự báo cuối cùng
+* `Slide 04 / 10`: [`slide_04_lien_he_dlinear_va_tensor.png`](./images/slide_04_lien_he_dlinear_va_tensor.png) — Chứng minh DLinear là lớp con của TiDE & Luồng Tensor Shapes
+* `Slide 05 / 10`: [`slide_05_source_code_va_equation.png`](./images/slide_05_source_code_va_equation.png) — Show nguyên đoạn Code gốc (`models.py#L128-L215`) ánh xạ thẳng ra Equations
+* `Slide 06 / 10`: [`slide_06_ablation_temporal_decoder.png`](./images/slide_06_ablation_temporal_decoder.png) — Ablation Study 1 (Figure 3 Trang 10–11): Temporal Decoder sau 1 Epoch
+* `Slide 07 / 10`: [`slide_07_ablation_global_residual.png`](./images/slide_07_ablation_global_residual.png) — Ablation Study 2 (Ảnh cắt gốc Table 5 Trang 11): Vai trò Residual Connections (`Electricity`)
+* `Slide 08 / 10`: [`slide_08_de_xuat_1_gated_fusion.png`](./images/slide_08_de_xuat_1_gated_fusion.png) — Đề xuất 1: Adaptive Gated Fusion so sánh với TiDE gốc
+* `Slide 09 / 10`: [`slide_09_de_xuat_2_trend_aware.png`](./images/slide_09_de_xuat_2_trend_aware.png) — Đề xuất 2: Trend-Aware Dual-Stream tách MovingAvg kiểu DLinear
+* `Slide 10 / 10`: [`slide_10_contributions_va_roadmap.png`](./images/slide_10_contributions_va_roadmap.png) — Đóng góp khoa học (Contributions) & Lộ trình kiểm chứng thực nghiệm

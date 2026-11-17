@@ -7,17 +7,17 @@
 
 ## 🖼️ Hình Ảnh & Sơ Đồ Minh Họa Đưa Lên Slide
 
-### 2.1. Bản đồ đối chiếu Source Code (Repo gốc `models.py` vs PyTorch dự án)
+### 2.1. Slide 05 / 10 — Source code chính thức (`models.py`) & Ánh xạ phương trình toán học
 
-![Bản đồ ánh xạ mã nguồn models.py và simulate_forward_pass.py](./images/fig_p2_source_code_mapping.png)
+![Slide 05: Source code models.py và ánh xạ phương trình](./images/slide_05_source_code_va_equation.png)
 
-### 2.2. Ablation Study 1 (Ảnh trích Figure 3 — Trang 10 Bài báo): Vai trò Temporal Decoder
+### 2.2. Slide 06 / 10 — Ablation Study 1 (Figure 3 Trang 10–11): Vai trò Temporal Decoder
 
-![Ablation Study 1 Figure 3 Temporal Decoder](./images/fig_p2_ablation_temporal_decoder.png)
+![Slide 06: Ablation Study 1 Temporal Decoder Figure 3](./images/slide_06_ablation_temporal_decoder.png)
 
-### 2.3. Ablation Study 2 (Ảnh trích Table 5 / Figure 5 — Trang 11 Bài báo): Vai trò Residual Connections
+### 2.3. Slide 07 / 10 — Ablation Study 2 (Table 5 Trang 11): Vai trò Residual Connections (`Electricity`)
 
-![Ablation Study Residual Connections trên tập Electricity](./images/fig_p2_ablation_residual_results.png)
+![Slide 07: Ablation Study 2 Residual Connections Electricity](./images/slide_07_ablation_global_residual.png)
 
 ---
 

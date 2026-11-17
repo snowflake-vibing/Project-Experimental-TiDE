@@ -9,21 +9,21 @@
 
 ## 🖼️ Hình Ảnh & Sơ Đồ Minh Họa Đưa Lên Slide
 
-### 1.1. Phạm vi thuyết trình trên Figure 1 (Không trình bày phần bên dưới)
+### 1.1. Slide 01 / 10 — Phạm vi thuyết trình trên Figure 1 (Không trình bày phần bên dưới)
 
-![Vị trí Temporal Decoder và Global Residual trên Figure 1](./images/fig_p0_figure1_highlight.png)
+![Slide 01: Vị trí Temporal Decoder và Global Residual trên Figure 1](./images/slide_01_vi_tri_kien_truc.png)
 
-### 1.2. Định nghĩa nhanh các khối & Lý do phải có Temporal Decoder ("Covariate Highway")
+### 1.2. Slide 02 / 10 — Tách 3 Card riêng biệt & Lý do phải có Temporal Decoder ("Covariate Highway")
 
-![Vì sao cần Temporal Decoder Covariate Highway](./images/fig_p1_temporal_decoder_highway.png)
+![Slide 02: Phân biệt 3 khối và Covariate Highway](./images/slide_02_phan_biet_3_khoi_va_highway.png)
 
-### 1.3. Hai cơ chế song song trực tiếp tạo dự báo cuối cùng
+### 1.3. Slide 03 / 10 — Hai cơ chế song song trực tiếp tạo dự báo cuối cùng
 
-![Hai cơ chế trực tiếp tạo dự báo cuối cùng](./images/fig_p1_temporal_and_global_residual.png)
+![Slide 03: Hai cơ chế song song tạo dự báo cuối cùng](./images/slide_03_hai_nhanh_song_song.png)
 
-### 1.4. Chứng minh mối liên hệ DLinear & Kích thước Tensor (`Electricity`)
+### 1.4. Slide 04 / 10 — Chứng minh mối liên hệ DLinear & Kích thước Tensor (`Electricity`)
 
-![Mối liên hệ DLinear và Bảng kích thước Tensor](./images/fig_p1_tensor_shapes_and_dlinear.png)
+![Slide 04: Mối liên hệ DLinear và Kích thước Tensor](./images/slide_04_lien_he_dlinear_va_tensor.png)
 
 ---
 
