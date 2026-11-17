@@ -9,19 +9,19 @@
 
 ## 🖼️ Hình Ảnh & Sơ Đồ Minh Họa Đưa Lên Slide
 
-### 1.1. Slide 01 / 10 — Phạm vi thuyết trình trên Figure 1 (Không trình bày phần bên dưới)
+### 1.1. Slide 01 / 11 — Phạm vi thuyết trình trên Figure 1 (Không trình bày phần bên dưới)
 
 ![Slide 01: Vị trí Temporal Decoder và Global Residual trên Figure 1](./images/slide_01_vi_tri_kien_truc.png)
 
-### 1.2. Slide 02 / 10 — Tách 3 Card riêng biệt & Lý do phải có Temporal Decoder ("Covariate Highway")
+### 1.2. Slide 02 / 11 — Tách 3 Card riêng biệt & Lý do phải có Temporal Decoder ("Covariate Highway")
 
 ![Slide 02: Phân biệt 3 khối và Covariate Highway](./images/slide_02_phan_biet_3_khoi_va_highway.png)
 
-### 1.3. Slide 03 / 10 — Hai cơ chế song song trực tiếp tạo dự báo cuối cùng
+### 1.3. Slide 03 / 11 — Hai cơ chế song song trực tiếp tạo dự báo cuối cùng
 
 ![Slide 03: Hai cơ chế song song tạo dự báo cuối cùng](./images/slide_03_hai_nhanh_song_song.png)
 
-### 1.4. Slide 04 / 10 — Chứng minh mối liên hệ DLinear & Kích thước Tensor (`Electricity`)
+### 1.4. Slide 04 / 11 — Chứng minh mối liên hệ DLinear & Kích thước Tensor (`Electricity`)
 
 ![Slide 04: Mối liên hệ DLinear và Kích thước Tensor](./images/slide_04_lien_he_dlinear_va_tensor.png)
 
