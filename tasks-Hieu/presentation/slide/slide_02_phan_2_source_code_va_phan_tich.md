@@ -62,16 +62,15 @@ y_hat_norm = y_hat_nl + y_hat_lin                                    # Dòng 265
   * **Trong khi xảy ra sự kiện Type A:** Bản có Temporal Decoder bám kịp biên độ tăng đột biến nhanh hơn nhờ đường cao tốc nối thẳng từ biến ngoại sinh chỉ báo sự kiện.
   * **Ngay sau khi sự kiện kết thúc (`Time > 200`):** Bản **không có Temporal Decoder (đường xanh lá) bị trật nhịp nặng (thrown off)** vì `Dense Encoder` chưa kịp điều chỉnh lại nhận thức về bối cảnh quá khứ; trong khi **bản có Temporal Decoder ổn định trở lại ngay lập tức** sau đúng 1 Epoch.
 
-### 3. Phân tích Ablation Study 2: Vai trò Global Residual (Table 5 / Figure 5, Trang 11)
+### 3. Phân tích Ablation Study 2: Vai trò Global Residual (Table 5 / Figure 5, Trang 11 — Xem ảnh `2.3`)
 
-So sánh trên tập `Electricity` (trung bình 5 lần chạy) giữa **TiDE đầy đủ** và **TiDE (no res.)** *(loại bỏ cả skip trong ResidualBlock và Global Linear Residual)*:
-
-| Horizon ($H$) | TiDE (Đầy đủ) — MSE | TiDE (no res.) — MSE | TiDE (Đầy đủ) — MAE | TiDE (no res.) — MAE | Nhận xét |
-| :---: | :---: | :---: | :---: | :---: | :--- |
-| **96** | $\mathbf{0.132 \pm 0.003}$ | $0.136 \pm 0.001$ | $\mathbf{0.229 \pm 0.001}$ | $0.235 \pm 0.002$ | Sụt giảm có ý nghĩa thống kê |
-| **192** | $\mathbf{0.147 \pm 0.003}$ | $0.153 \pm 0.001$ | $\mathbf{0.243 \pm 0.001}$ | $0.253 \pm 0.001$ | Sai số MSE tăng $+0.006$, MAE $+0.010$ |
-| **336** | $\mathbf{0.161 \pm 0.001}$ | $0.172 \pm 0.003$ | $\mathbf{0.261 \pm 0.002}$ | $0.274 \pm 0.002$ | **Cách biệt lớn nhất** ($+0.011$ MSE) |
-| **720** | $0.196 \pm 0.002$ | $0.196 \pm 0.003$ | $\mathbf{0.294 \pm 0.001}$ | $0.295 \pm 0.002$ | Tiệm cận ở tầm siêu dài |
+* **Nhận xét trực tiếp từ ảnh số liệu bài báo gốc (Trung bình 5 lần chạy trên `Electricity`):**
+  * **Ở các tầm dự báo $H = 96 \to 336$:** Khi loại bỏ các kết nối thặng dư (`TiDE no res.`), cả MSE và MAE đều **tăng lên rõ rệt và có ý nghĩa thống kê** (đặc biệt tại $H=336$, MSE tăng từ `0.161` lên `0.172` tương đương tăng $+6.8\%$ sai số, MAE tăng từ `0.261` lên `0.274`).
+  * **Tại tầm siêu dài $H = 720$:** Sai số hai bản tiệm cận nhau (`0.196` vs `0.196` MSE).
+  * **Kết luận:** Kết nối thặng dư (trong đó có Global Residual) giúp mạng MLP giữ vững nền tảng tuyến tính và hội tụ chính xác hơn nhiều so với việc ép mạng sâu phải tự học lại phép chiếu thẳng từ đầu.
+* **Giải thích thắc mắc *"Tại sao bài báo có 7 datasets nhưng chỉ show ra 1 (`Electricity`)?"*:**
+  * Trong bài báo gốc (**Mục 5.4, Trang 11**), nhóm tác giả Google Research **chỉ thực hiện thí nghiệm bỏ Residual (`TiDE no res.`) trên đúng 1 tập đại diện là `Electricity`**.
+  * 6 tập còn lại (`Traffic`, `Weather`, `ETTh1/2`, `ETTm1/2`) chỉ được công bố kết quả cho bản TiDE đầy đủ tại **Table 2 (Trang 8)** và **Table 5 Phụ lục (Trang 19)** chứ tác giả **không chạy** `TiDE (no res.)` trên 6 tập đó. *(Đây chính là khoảng trống thực nghiệm ta đề xuất mở rộng ở Phần 3!)*
 
 ### 4. Giới hạn tiềm ẩn của cơ chế tổng hợp hiện tại
 

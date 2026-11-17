@@ -7,11 +7,19 @@
 
 ## 🖼️ Hình Ảnh & Sơ Đồ Minh Họa Đưa Lên Slide
 
-### 3.1. Cải tiến cơ chế tổng hợp: Adaptive Gated Fusion vs Cộng cứng `1:1`
+### 3.1. Đề xuất 1 — Cổng Hợp Nhất Thích Nghi (*Adaptive Gated Fusion*) vs Cộng cứng `1:1`
 
 ![So sánh TiDE gốc và Adaptive Gated Fusion](./images/fig_p3_adaptive_gated_fusion.png)
 
-### 3.2. Sơ đồ khối Mermaid (Hiển thị trực tiếp trên GitHub)
+### 3.2. Đề xuất 2 — Tách Xu Hướng Kiểu DLinear (*Trend-Aware Dual-Stream*)
+
+![Đề xuất 2 Trend Aware Dual Stream](./images/fig_p3_2_trend_aware_dual_stream.png)
+
+### 3.3. Đóng Góp Khoa Học (Contributions) & Lộ Trình Thực Nghiệm
+
+![Đóng góp khoa học và lộ trình thực nghiệm](./images/fig_p3_3_contributions_and_roadmap.png)
+
+### 3.4. Sơ đồ khối Mermaid (Hiển thị trực tiếp trên GitHub)
 
 ```mermaid
 flowchart LR
@@ -77,7 +85,13 @@ $$
 \hat{\mathbf{y}}_{\mathrm{final}}^{(i)} = \big(\mathbf{W}_{\mathrm{trend}} \mathbf{y}_{\mathrm{trend}}^{(i)} + \mathbf{W}_{\mathrm{rem}} \mathbf{y}_{\mathrm{rem}}^{(i)} + \mathbf{b}\big) + \sigma(\boldsymbol{\gamma}) \odot \hat{\mathbf{y}}_{\mathrm{NL}}^{(i)}
 $$
 
-### 4. Thiết kế kiểm chứng thực nghiệm (Experimental Protocol)
+### 4. Đóng góp khoa học (Contributions) & Thiết kế kiểm chứng thực nghiệm
+
+**3 Đóng góp kỳ vọng chính (Contributions):**
+
+1. **Cải thiện độ chính xác trên chuỗi đa chế độ (*Regime-Switching*):** Khắc phục phép cộng cứng `1:1`, giảm nhiễu phi tuyến ở giai đoạn ổn định và khuếch đại nhạy bén khi có biến cố ngoại sinh.
+2. **Siêu nhẹ & Có khả năng giải thích (*Lightweight & Interpretable*):** Mạng cổng chỉ bổ sung **$21$ tham số** (`< 0.01%` mô hình) nhưng cho phép vẽ đồ thị biến thiên $\alpha_t \in (0, 1)$ để giải thích trực quan lúc nào mô hình dựa vào lịch sử tuyến tính, lúc nào dựa vào sự kiện ngoại sinh.
+3. **Lấp khoảng trống Ablation của bài báo gốc:** Mở rộng kiểm chứng sang cả **6 tập dữ liệu còn lại** (`Traffic`, `Weather`, `ETTh1/2`, `ETTm1/2`) thay vì chỉ dừng lại ở `1/7` tập (`Electricity`) như trong Figure 5 của bài báo gốc.
 
 | Hạng mục | Thiết lập kiểm chứng đề xuất |
 | :--- | :--- |
