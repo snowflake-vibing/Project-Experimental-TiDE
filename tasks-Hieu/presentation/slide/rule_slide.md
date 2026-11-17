@@ -23,9 +23,9 @@
   * **Footer bắt buộc ghi rõ nguồn gốc cụ thể:** Phải ghi chính xác vị trí xuất xứ của nội dung trên bài báo (Tên mục, Số `Figure`/`Table`, Số trang) và/hoặc vị trí dòng code trong repository (VD: `models.py#L141-L214`, `simulate_forward_pass.py#L228-L266`).
   * **Đánh số slide rõ ràng:** Góc dưới bên phải bắt buộc có huy hiệu đánh số liên tục dạng `Slide XX / NN` (VD: `Slide 01 / 11` → `Slide 11 / 11`).
 * **Typography & Khoảng cách trong Card (Rất quan trọng):**
-  * **Cỡ chữ đủ lớn để chiếu hội trường:** Nội dung text trong card tối thiểu **`10.1–10.8 pt`**; tiêu đề card **`11.2–11.8 pt`**; khoảng cách dòng thoáng (`linespacing = 1.48–1.58`). Tránh viết chữ quá nhỏ hoặc nhồi quá nhiều chữ vào 1 hộp.
+  * **Cỡ chữ đủ lớn để chiếu hội trường:** Nội dung text trong card tối thiểu **`10.5–11.5 pt`**; tiêu đề card **`11.5–12.2 pt`**; khoảng cách dòng thoáng (`linespacing = 1.50–1.58`). Tránh viết chữ quá nhỏ hoặc nhồi quá nhiều chữ vào 1 hộp.
   * **Thu hẹp khoảng cách giữa Title và Text:** Nội dung trong card phải được neo từ trên xuống (`va='top'`) ngay bên dưới tiêu đề (`Title`), tuyệt đối không căn giữa theo chiều dọc khiến phần đầu và thân card bị tách bởi khoảng trống lớn thừa thãi.
-  * **Card vừa khít nội dung:** Điều chỉnh kích thước card (*fit*) cân đối với lượng chữ, giữ lề đồng đều giữa các cột/hàng.
+  * **Card BẮT BUỘC vừa khít nội dung (*Auto-Fit*, cấm chừa khoảng trống rỗng):** Chiều cao mỗi card phải **co khít chính xác** theo chiều cao thực tế của tiêu đề + toàn bộ nội dung chữ bên trong (chỉ chừa phần lề padding trên/dưới đồng đều `~0.16–0.22 in`, tuyệt đối không đặt chiều cao cố định quá lớn làm nửa dưới card bị bỏ trống). Các card cùng một hàng ngang nên có số dòng tương đồng nhau để khi co khít cùng một chiều cao hàng (`row_h`), không có card nào bị dư khoảng trắng thừa ở đáy.
   * **Sạch cú pháp thô:** Khi render ảnh PNG (Matplotlib/Pillow), tuyệt đối không để sót ký tự Markdown thô như `**in đậm**` hay `` `code` ``.
 
 ---
@@ -78,7 +78,7 @@
 
 ## ✅ Checklist Nghiệm thu trước khi Commit
 
-- [ ] Tất cả slide dùng chung chuẩn **16:9**, đồng nhất Header/Footer, cỡ chữ nội dung `>= 10 pt` và khoảng cách Title-to-Body gọn chặt.
+- [ ] Tất cả slide dùng chung chuẩn **16:9**, đồng nhất Header/Footer, cỡ chữ nội dung `>= 10.5 pt`, khoảng cách Title-to-Body gọn chặt và **toàn bộ card co khít đúng chiều cao chữ (không còn khoảng trắng rỗng thừa ở cuối card)**.
 - [ ] Đã đánh số thứ tự chính xác `Slide 01 / NN` → `Slide NN / NN` cả trong ảnh PNG lẫn toàn bộ file `.md` (`README.md`, `slide_01..03`, `slide_images_gallery.md`, `script_thuyet_trinh_tung_slide.md`).
 - [ ] Đã mở kiểm tra trực quan **từng ảnh PNG** (không chữ tràn viền, không mũi tên đè chữ, không ký tự `**` / `` ` `` thô).
 - [ ] Đã kiểm tra tự động toàn bộ liên kết `./images/*.png` không bị gãy link nào và tuân thủ [`RULE.md`](../../../RULE.md).
