@@ -124,13 +124,13 @@ Nghe tới đây, chắc hẳn bạn mới sẽ thắc mắc: *"Ủa, nếu các
 
 * **Ảnh slide:** `slide_03b_ban_chat_toan_hoc.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-05--13-từ-công-thức-toán-học-suy-ra-code-modelspy--độc-lập-tính-toán-vs-tương-quan-biểu-diễn))
 * **Thời lượng dự kiến:** 90 – 110 giây.
-* **Mục tiêu slide:** Giải thích rõ ràng, bình dân nhất nghịch lý *"các bước tính độc lập nhau nhưng kết quả dự báo vẫn ăn khớp liên tục với nhau"*, đi theo đúng 3 tầng trên từng thẻ: **(1) Công thức Toán học $\rightarrow$ (2) Nguyên văn code `models.py` $\rightarrow$ (3) Nhận xét**.
+* **Mục tiêu slide:** Giải thích rõ ràng, bình dân nhất nghịch lý *"các bước tính độc lập nhau nhưng kết quả dự báo vẫn ăn khớp liên tục với nhau"*, đi theo đúng 3 tầng trên từng thẻ: **(1) Công thức Toán học → (2) Nguyên văn code `models.py` → (3) Nhận xét**.
 
 ![Slide 05: Từ công thức toán học suy ra code](./images/slide_03b_ban_chat_toan_hoc.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Slide 05 này trả lời câu hỏi quan trọng nhất để hiểu bản chất `Dense Decoder`: làm sao TiDE vừa tính song song độc lập $H$ ngày (không ngày nào chờ ngày nào), mà kết quả các ngày liền kề lại không bị rời rạc vô lý? Mời cả nhóm nhìn vào 2 thẻ đối xứng, mỗi thẻ đi theo đúng 3 tầng: **(1) Công thức Toán học $\rightarrow$ (2) Nguyên văn code `models.py` $\rightarrow$ (3) Nhận xét**.
+Slide 05 này trả lời câu hỏi quan trọng nhất để hiểu bản chất `Dense Decoder`: làm sao TiDE vừa tính song song độc lập $H$ ngày (không ngày nào chờ ngày nào), mà kết quả các ngày liền kề lại không bị rời rạc vô lý? Mời cả nhóm nhìn vào 2 thẻ đối xứng, mỗi thẻ đi theo đúng 3 tầng: **(1) Công thức Toán học → (2) Nguyên văn code `models.py` → (3) Nhận xét**.
 
 **Thẻ trái (xanh lá) — Độc lập lúc tính toán (Tốc độ GPU):**
 
