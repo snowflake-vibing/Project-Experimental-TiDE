@@ -20,6 +20,29 @@ flowchart LR
 
 ---
 
+### 🟢 SLIDE INTRO — MỞ ĐẦU: TỔNG QUAN CHUYÊN ĐỀ DENSE DECODER TRONG TiDE
+
+* **Thời lượng dự kiến:** 45 – 55 giây.
+* **Mục tiêu slide:** Chào hỏi nhóm, nêu bật vai trò sống còn của khối `Dense Decoder` trong TiDE, giới thiệu mục tiêu buổi tech-talk và lộ trình 3 phần của bài trình bày.
+
+#### 🎙️ Lời thoại trình bày (Team Tech-talk):
+
+Chào cả nhóm! Hôm nay mình sẽ phụ trách chia sẻ chuyên sâu về **Khối Dense Decoder** trong kiến trúc mô hình dự báo chuỗi thời gian dài hạn **TiDE** (Das et al., 2023).
+
+Trong bức tranh tổng thể của TiDE, nếu `Dense Encoder` đóng vai trò nén toàn bộ dữ liệu quá khứ, thì **`Dense Decoder` chính là "trái tim giải mã"**: nó quyết định cách mô hình sinh ra toàn bộ dự báo tương lai chỉ trong **một lần chạy duy nhất (One-Shot)**, nhanh hơn Transformer 5 đến 10 lần. Tuy nhiên, chính khối này cũng chứa **nút thắt phình to tham số lớn nhất** khi chúng ta dự báo tầm xa lên tới $H = 720$ bước.
+
+Mục tiêu của mình trong khoảng 10–12 phút tới là giúp anh em trong nhóm nắm trọn vẹn 3 phần:
+1. **Phần 1 (Slides 01 – 05):** Thống nhất bộ thuật ngữ, vị trí kiến trúc, hiểu tận gốc bản chất *vừa độc lập tính toán vừa tương quan biểu diễn* và phép Reshape.
+2. **Phần 2 (Slides 06 – 08):** Soi luồng chạy code thực tế trong `models.py`, xem cấu hình siêu tham số trên 7 tập dữ liệu chuẩn và chỉ ra nguyên nhân bùng nổ tham số ở tầng cuối.
+3. **Phần 3 (Slides 09 – 10):** Đề xuất giải pháp **Low-Rank Projection** giảm tới 92.6% tham số cùng lộ trình phân công chạy thực nghiệm trên Kaggle.
+
+Không để anh em đợi lâu, mình bước ngay vào **Slide 01** để thống nhất bộ ký hiệu và 5 thuật ngữ nền tảng trước nhé!
+
+* **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
+  * Chiếu Slide Tiêu đề / Bìa chuyên đề, nhìn bao quát cả nhóm, nhấn mạnh cụm từ **"Trái tim giải mã One-Shot"** và **"Nút thắt tham số khi H=720"**.
+
+---
+
 ## 📖 PHẦN 1: THUẬT NGỮ, KIẾN TRÚC & TOÁN HỌC (SLIDES 01 – 05)
 
 ---
