@@ -41,15 +41,14 @@
 
 ### Tổng kết kỹ thuật & Hai điểm nghẽn thực nghiệm
 
-- **Ảnh hưởng của `decoderOutputDim`** ($p$):
-  - *Khi $p$ quá nhỏ ($p = 1, 2$):* Gây **nghẽn cổ chai thông tin (Information Bottleneck)** — vector $\mathbf{d}_t^{(i)}$ quá hẹp, thiếu dung lượng mã hóa đồng thời pha, xu hướng và dao động đa biến tại bước $t$.
-  - *Khi $p$ quá lớn ($p = 32, 64$):* Kích thước ngõ ra $H \cdot p$ phình to khiến tầng chiếu cuối cực nặng và dễ **Overfitting** trên các tập dữ liệu nhỏ (như ETT). Khoảng cân bằng tối ưu theo Table 8 là $p \in [8, 16]$.
-- **Ảnh hưởng của số lớp Dense Decoder** ($n_d$):
-  - $n_d = 1$ giúp tốc độ nhanh gọn (1 khối vừa lọc phi tuyến vừa mở rộng $d_h \rightarrow H \cdot p$).
-  - $n_d = 2$ thêm 1 tầng tinh chỉnh ở không gian ẩn $(B, d_h)$ trước khi chiếu.
-  - $n_d \geq 3$ bị bão hòa (0/7 datasets chọn) vì nhánh cộng tuyến tính toàn cục (Global Linear) đã gánh xu hướng chính.
-- **Hai giới hạn cốt lõi của Dense Decoder gốc:**
-  1. **Cố định cứng Horizon** $H$: Ma trận ngõ ra khóa cứng số hàng bằng $H \cdot p$ lúc khởi tạo (`models.py#L136`).
+- **Quan sát thực nghiệm về `decoderOutputDim`** ($p$) **từ Table 8:**
+  - Cả 7/7 bộ dữ liệu đều đạt `validation loss` tốt nhất trong khoảng $p \in [8, 32]$ (0/7 tập chọn $p = 4$), phổ biến nhất là $p \in [8, 16]$.
+  - *Giả thuyết kỹ thuật (chưa có ablation trong bài báo):* Nếu $p$ quá nhỏ ($p \le 4$) có thể gây **nghẽn cổ chai thông tin (Information Bottleneck)**; ngược lại, khi $p$ lớn ($32$) kết hợp với horizon dài sẽ làm kích thước ngõ ra $H \cdot p$ phình to, tốn VRAM và tăng tham số tầng cuối.
+- **Quan sát thực nghiệm về số lớp Dense Decoder** ($n_d$) **từ Table 8:**
+  - Tác giả chỉ quét $n_d \in \{1, 2, 3\}$ và chọn theo `validation loss` thấp nhất: 3/7 tập chọn $n_d = 1$, 4/7 tập chọn $n_d = 2$, và **0/7 tập chọn $n_d = 3$**.
+  - *Giả thuyết kỹ thuật (chưa có ablation trong bài báo):* Việc $n_d = 3$ không được chọn gợi ý rằng năng lực phi tuyến có thể đã bão hòa sớm khi đã có nhánh `Global Linear` gánh xu hướng chính.
+- **Hai giới hạn kiến trúc chứng minh trực tiếp từ `models.py`:**
+  1. **Cố định cứng Horizon** $H$: Ma trận ngõ ra khóa cứng số hàng bằng $H \cdot p$ lúc khởi tạo (`models.py#L136`), không thể suy luận trực tiếp sang $H$ khác nếu không train lại.
   2. **Bùng nổ tham số tầng chiếu cuối:** Trong `MLPResidual` (`models.py#L40-L47`), cả `lin_b` và đường tắt `lin_res` đều có kích thước $(d_h \times H \cdot p)$. Trên **Electricity** ở $H = 720$ ($d_h = 1024, p = 8 \Rightarrow H \cdot p = 5760$), riêng 2 ma trận cuối đã chiếm:
 
 $$

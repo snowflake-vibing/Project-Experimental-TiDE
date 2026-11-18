@@ -238,20 +238,13 @@ Slide 09 tổng hợp toàn bộ cấu hình siêu tham số chuẩn mà nhóm t
 Trong quá trình tìm kiếm (Table 7), tác giả cố định `batchSize = 512`, tối ưu hàm loss `MSE` bằng thuật toán `Adam`, và quét 3 siêu tham số chính của Dense Decoder: kích thước ẩn `hiddenSize` ($d_h$) trong $\{256, 512, 1024\}$; chiều bối cảnh `decoderOutputDim` ($p$) trong $\{4, 8, 16, 32\}$; và số lớp `numDecoderLayers` ($n_d$) trong $\{1, 2, 3\}$.
 
 Khi nhìn vào kết quả tối ưu được chọn ở Table 8:
-* Về cấu hình từng tập đáng chú ý: tập `Electricity` dùng mô hình rất lớn với $d_h = 1024, n_d = 2, p = 8$; tập `Traffic` dùng $d_h = 256, n_d = 1, p = 16$; **riêng tập `ETTh2` chọn $p = 32$ lớn nhất trong cả 7 tập** — điều này sẽ làm phình to tầng cuối cực mạnh khi dự báo ở $H = 720$. Ngoài ra, hầu hết các tập đều bật `layerNorm = True` (chỉ riêng `Traffic` là `False`) và sử dụng `dropoutLevel` dao động từ $0.0$ đến $0.5$.
+* Về cấu hình từng tập đáng chú ý: tập `Electricity` dùng mô hình rất lớn với $d_h = 1024, n_d = 2, p = 8$; tập `Traffic` dùng $d_h = 256, n_d = 1, p = 16$; **riêng tập `ETTh2` chọn $p = 32$ lớn nhất trong cả 7 tập** — điều này làm tăng mạnh kích thước tầng cuối khi dự báo ở $H = 720$. Ngoài ra, 6/7 tập bật `layerNorm = True` (chỉ riêng `Traffic` là `False`) và `dropoutLevel` dao động từ $0.0$ đến $0.5$.
 
-Đặc biệt, có một **quy luật rất thú vị về số lớp $n_d$** mà anh em cần hiểu rõ lý do:
+Một điểm rất quan trọng về mặt khoa học mà anh em cần nắm rõ: **Trong bài báo gốc, tác giả KHÔNG giải thích lý thuyết vì sao tập này chọn $n_d=1$ còn tập kia chọn $n_d=2$, hay vì sao `ETTh2` lại chọn $p=32$.** Tại Phụ lục B.3 (Trang 20), tác giả nêu rõ toàn bộ các con số trong Table 8 được chọn hoàn toàn dựa trên thực nghiệm: chạy quét dải siêu tham số ở Table 7 và lấy bộ số cho **`validation loss` thấp nhất** trên từng tập.
 
-**1. Tại sao `Traffic`, `ETTm1`, `Weather` chỉ cần chọn đúng $n_d = 1$ (1 lớp duy nhất)?**
-* Với tập `Traffic`, dữ liệu này có tới **862 cảm biến giao thông** chạy song song (số chiều cực lớn), nên giữ $n_d = 1$ giúp mô hình đủ nhẹ để không bị quá tải bộ nhớ GPU.
-* Với `Weather` và `ETTm1` (chu kỳ đo 15 phút), đây là các dữ liệu vật lý tự nhiên (nhiệt độ, áp suất) có chu kỳ ngày/đêm lặp lại rất đều đặn và mượt mà. Vì nhánh đường tắt tuyến tính (`Global Residual`) đã gánh phần xu hướng chính rồi, nên chỉ cần 1 lớp phi tuyến là đủ.
-
-**2. Tại sao `Electricity`, `ETTm2`, `ETTh1`, `ETTh2` phải chọn $n_d = 2$?**
-* Các tập này (đặc biệt là phụ tải điện) bị ảnh hưởng mạnh bởi **thói quen sinh hoạt phức tạp của con người** (giờ cao điểm, cuối tuần, biến động đột ngột). Cần 2 lớp: lớp đầu xử lý tinh chỉnh trong không gian ẩn, lớp thứ hai mới bung ra toàn horizon để đủ sức học các đường cong phức tạp này.
-
-**3. Điều đặc biệt nhất: Tại sao KHÔNG CÓ BẤT KỲ tập nào ($0/7$) chọn $n_d = 3$?**
-* Thứ nhất là **bão hòa hiệu năng**: Dense Decoder không phải làm việc một mình mà đã có `Global Residual` và `Temporal Decoder` hỗ trợ, nên thêm lớp thứ 3 cũng không mang lại thêm độ chính xác.
-* Thứ hai là **nguy cơ học vẹt (Overfitting)**: Các tập như ETT có kích thước mẫu khá nhỏ, thêm tầng thứ 3 làm dư thừa tham số, dẫn đến kết quả trên tập kiểm định (validation loss) bị tệ đi nên bị loại ngay lập tức!
+Từ kết quả thực nghiệm của Table 8, chúng ta ghi nhận một quan sát đáng chú ý về số lớp $n_d$:
+* **Có 3 tập (`Traffic`, `ETTm1`, `Weather`) đạt `validation loss` tốt nhất ở $n_d = 1$**, và **4 tập (`Electricity`, `ETTm2`, `ETTh1`, `ETTh2`) đạt tốt nhất ở $n_d = 2$**.
+* **Đặc biệt, không có bất kỳ tập nào ($0/7$) chọn $n_d = 3$.** Điều này gợi ý một giả thuyết kiến trúc hợp lý: vì TiDE đã có nhánh tuyến tính `Global Residual` gánh xu hướng chính và `Temporal Decoder` tinh chỉnh ở đầu ra, nên năng lực phi tuyến của `Dense Decoder` có thể đã bão hòa ở 1–2 tầng (hoặc việc thêm tầng thứ 3 làm tăng `validation loss`). Tuy nhiên, vì bài báo không công bố bảng ablation cho $n_d$, giả thuyết này sẽ được nhóm mình kiểm chứng trực tiếp bằng thực nghiệm ở Phần 3!
 
 ---
 
@@ -259,25 +252,23 @@ Khi nhìn vào kết quả tối ưu được chọn ở Table 8:
 
 * **Ảnh slide:** `slide_08_phan_tich_p_nd_va_gioi_han.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-10--13-phân-tích-ảnh-hưởng-của-p-n_d--giới-hạn-khi-horizon-h-dài))
 * **Thời lượng dự kiến:** 80 – 90 giây.
-* **Mục tiêu slide:** Phân tích rõ ảnh hưởng của $p$ và $n_d$, nêu bật **2 giới hạn lớn của Dense Decoder** (cố định horizon $H$ và bùng nổ 11.8M–23.6M tham số), cùng lời thừa nhận từ Mục 6 của bài báo.
+* **Mục tiêu slide:** Phân tách rạch ròi giữa **quan sát thực nghiệm từ Table 8**, **giả thuyết kỹ thuật chưa có ablation**, **2 giới hạn chứng minh trực tiếp từ code `models.py`**, và **lời thừa nhận từ Mục 6 của bài báo**.
 
 ![Slide 10: Phân tích p, n_d và Giới hạn](./images/slide_08_phan_tich_p_nd_va_gioi_han.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Từ bảng cấu hình ở Slide 09, Slide 10 này đào sâu vào ảnh hưởng của hai siêu tham số $p$, $n_d$ và tổng hợp **toàn bộ các giới hạn cốt lõi của khối Dense Decoder** khi đưa vào thực tế dự báo tầm xa.
+Từ bảng cấu hình ở Slide 09, Slide 10 này tổng hợp lại các quan sát về $p$, $n_d$ và chỉ ra **những giới hạn rõ ràng nhất của khối Dense Decoder**, phân tách rạch ròi giữa cái bài báo đã chứng minh và cái nhóm mình đặt giả thuyết để kiểm chứng:
 
-**Trước hết là giới hạn từ việc chọn $p$ (`decoderOutputDim`) và $n_d$:**
-* **Giới hạn khi $p$ quá nhỏ ($p = 1, 2$ hay $4$):** Sẽ gây ra **nghẽn cổ chai thông tin (Information Bottleneck)** — vector $\mathbf{d}_t$ quá hẹp nên thiếu dung lượng mô tả đồng thời cả pha chu kỳ lẫn biên độ dao động. Đó là lý do trong cả 7/7 bộ dữ liệu ở Table 8, không tập nào chọn $p = 4$, mà khoảng cân bằng tốt nhất nằm trong $[8, 16]$.
-* **Giới hạn khi $p$ quá lớn ($p = 32, 64$):** Kích thước tầng cuối $H \cdot p$ phình to cực nhanh, gây tốn VRAM và rất dễ dẫn đến **Overfitting** (học vẹt) trên các tập dữ liệu nhỏ như ETT.
-* **Giới hạn về độ sâu $n_d$:** Khi $n_d \ge 3$, mô hình rơi vào trạng thái **bão hòa** ($0/7$ tập chọn) vì nhánh `Global Linear` đã gánh xu hướng lớn, nên việc xếp thêm tầng không giúp dự báo chính xác hơn mà chỉ gây nặng máy.
-* **Khoảng trống thực nghiệm trong bài báo:** Dù $p$ ảnh hưởng lớn như vậy, nhưng nhóm tác giả Google chưa hề công bố thí nghiệm Ablation riêng để khảo sát độ nhạy của $p$.
+**1. Quan sát và khoảng trống thực nghiệm về $p$ và $n_d$:**
+* Trong bài báo, tác giả định nghĩa $p$ (`decoderOutputDim`) ở Mục 4.2 (Trang 6) và quét trong $\{4, 8, 16, 32\}$ ở Table 7. Kết quả ở Table 8 cho thấy **0/7 tập chọn $p = 4$** (cả 7 tập đều chọn trong $[8, 32]$, phổ biến nhất là $8$ và $16$) và **0/7 tập chọn $n_d = 3$**.
+* Tuy nhiên, **bài báo KHÔNG công bố thí nghiệm Ablation riêng cho độ nhạy của $p$ và $n_d$**. Do đó, nhận định rằng $p$ quá nhỏ ($p=1, 2, 4$) dễ gây nghẽn cổ chai thông tin, hay $n_d \ge 3$ bị bão hòa hiện vẫn là **giả thuyết kỹ thuật** dựa trên phân bố chọn lọc của Table 8 — và nhóm mình sẽ đo đạc định lượng chính xác các giả thuyết này ở Bước 2 của lộ trình thực nghiệm.
 
-**Tiếp theo là hai giới hạn kiến trúc chí mạng của Dense Decoder khi dự báo Horizon $H$ dài:**
-* **Giới hạn 1 — Bị khóa cứng vào độ dài Horizon $H$:** Vì ma trận ngõ ra của khối cuối khóa cứng số hàng bằng đúng $H \cdot p$ ngay từ lúc khởi tạo mạng (`models.py#L136`), nên kiến trúc này **không thể linh hoạt thay đổi tầm dự báo lúc suy luận**. Cụ thể, một mô hình đã train ở $H = 96$ thì hoàn toàn không thể chạy suy luận trực tiếp cho $H = 192$ hay $720$ nếu không train lại từ đầu (khác với các mô hình tự hồi quy có thể chạy thêm vòng lặp).
-* **Giới hạn 2 — Bùng nổ tham số khi $H$ lớn:** Như đã thấy trong `models.py` (dòng 40–47), khối cuối có tới **2 ma trận dày đặc** (`lin_b` ở nhánh chính và `lin_res` ở nhánh tắt) cùng có kích thước `(d_h, H * p)`. Khi dự báo xa $H = 720$: trên `Electricity` ($d_h = 1024, p = 8$), ngõ ra là $5{,}760$, nên chỉ riêng 2 ma trận cuối này đã ngốn mất **~11.8 triệu tham số**! Còn trên `ETTh2` ($d_h = 512, p = 32$), ngõ ra vọt lên $23{,}040$ chiều, tương đương **~23.6 triệu tham số**!
+**2. Hai giới hạn kiến trúc có thể chứng minh trực tiếp từ mã nguồn (`models.py`):**
+* **Giới hạn 1 — Bị khóa cứng vào độ dài Horizon $H$:** Vì ma trận ngõ ra của khối cuối khóa cứng số hàng bằng đúng $H \cdot p$ ngay từ lúc khởi tạo mạng (`models.py#L136`), nên kiến trúc này **không thể linh hoạt thay đổi tầm dự báo lúc suy luận**. Một mô hình đã train ở $H = 96$ hoàn toàn không thể chạy suy luận trực tiếp cho $H = 192$ hay $720$ nếu không train lại từ đầu.
+* **Giới hạn 2 — Bùng nổ tham số khi $H$ hoặc $p$ lớn:** Trong `models.py` (dòng 40–47), khối cuối có tới **2 ma trận dày đặc** (`lin_b` ở nhánh chính và `lin_res` ở nhánh tắt) cùng có kích thước `(d_h, H * p)`. Đây là phép tính số học chính xác từ code: khi dự báo xa $H = 720$, trên `Electricity` ($d_h = 1024, p = 8$), ngõ ra là $5{,}760$, nên chỉ riêng 2 ma trận cuối đã chiếm **~11.8 triệu tham số**; còn trên `ETTh2` ($d_h = 512, p = 32$), ngõ ra lên tới $23{,}040$ chiều, tương đương **~23.6 triệu tham số**!
 
-Và chính tác giả bài báo cũng thẳng thắn thừa nhận giới hạn này tại **Mục 6 Conclusion (Trang 11)**: *"Transformers hiệu quả về mặt tham số hơn MLPs khi mô hình lớn"*. Đây chính là động lực trực tiếp dẫn chúng ta tới giải pháp tối ưu ở Phần 3!
+Và chính tác giả bài báo cũng thẳng thắn thừa nhận hạn chế về tham số này tại **Mục 6 Conclusion (Trang 11)**: *"Transformers hiệu quả về mặt tham số hơn MLPs khi mô hình lớn"*. Đây chính là cơ sở khoa học vững chắc nhất dẫn tới đề xuất tối ưu ở Phần 3!
 
 ---
 
@@ -312,7 +303,7 @@ Và chính tác giả bài báo cũng thẳng thắn thừa nhận giới hạn 
 1. **Giảm tới ~92.6% tham số tầng chiếu cuối:** Trên cấu hình `Electricity` ở $H = 720, r = 64$, tổng tham số rớt từ **11.8 triệu xuống chỉ còn 0.87 triệu**!
 2. **Giảm lượng phép tính (FLOPs) hơn 13 lần:** Nhẹ hơn rất nhiều khi chạy trên GPU.
 3. **Giữ nguyên 100% tính chất One-Shot $O(1)$:** Mô hình vẫn chạy song song một lèo không thêm bất kỳ vòng lặp nào.
-4. **Đóng vai trò điều chuẩn chống Overfitting:** Ép thông tin qua nút thắt $r = 64$ buộc mạng chỉ giữ lại các quy luật dao động chính, tự động loại bỏ nhiễu ngẫu nhiên của chuỗi dài.
+4. **Tiềm năng điều chuẩn giảm Overfitting (Implicit Regularization):** Việc giới hạn hạng ma trận qua nút thắt $r = 64$ làm giảm đáng kể bậc tự do của tầng chiếu cuối, từ đó kỳ vọng hạn chế việc ghi nhớ nhiễu trên các chuỗi dài — giả thuyết này sẽ được nhóm kiểm chứng thực nghiệm trực tiếp ở Slide 12.
 
 ---
 
