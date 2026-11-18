@@ -130,15 +130,17 @@ Nghe tới đây, chắc hẳn bạn mới sẽ thắc mắc: *"Ủa, nếu các
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Để trả lời câu hỏi vừa rồi một cách thuyết phục nhất, chúng ta đi theo đúng một mạch logic: **từ bản chất toán học suy thẳng ra cách tác giả viết code trong `models.py`**.
+Để trả lời câu hỏi vừa rồi một cách thuyết phục nhất, chúng ta đi theo đúng 3 phần trên từng cột của **Slide 05**: **từ (1) Công thức Toán học $\rightarrow$ (2) Đoạn code nguyên văn trong `models.py` $\rightarrow$ (3) Nhận xét trực tiếp**.
 
-Trước hết, tại sao nó lại **Độc lập tính toán ($O(1)$ trên GPU)**?
-Về mặt toán học, khi tách ma trận chiếu tầng cuối thành từng khối cho mỗi ngày $t$, đạo hàm giữa ngày $t$ và ngày $s$ khác bằng $0$. Nói nôm na là trên sơ đồ tính toán **không có sợi dây nào nối ngang giữa ngày này với ngày kia** — toàn bộ chỉ là một phép nhân ma trận lớn. Từ đó suy ra trong code `models.py`, tác giả **không cần viết vòng lặp `for t in range(H)`**. Chỉ cần đúng **1 lớp `Dense(p * H)`** duy nhất để GPU tính song song cả $H$ ngày trong một nhịp, sau đó gọi `tf.reshape` là ra tensor `(B, p, H)`.
+Ở cột trái — **Độc lập tính toán ($O(1)$ trên GPU)**:
+* Mục **1 (Công thức Toán)** chỉ rõ đạo hàm riêng $\partial \mathbf{d}_t / \partial \mathbf{d}_s = \mathbf{0}$ giữa hai bước khác nhau.
+* Bê sang mục **2 (Code nguyên văn `models.py#L133-L137` và `#L207-L208`)**: tác giả chỉ cần định nghĩa đúng một tầng `self.decoder = _make_dnn_residual(... decoder_output_dim * self.pred_len)` rồi gọi `decoder_out = self.decoder(encoding)` và `tf.reshape(decoder_out, [bsize, -1, self.pred_len])`.
+* Từ đó rút ra mục **3 (Nhận xét)**: toàn bộ $H$ bước tính gói gọn trong một phép nhân ma trận GPU ($O(1)$), tuyệt đối không có vòng lặp tuần tự `for t in range(H)` nên vừa nhanh vừa triệt tiêu tích lũy sai số.
 
-Nhưng nếu tính độc lập như vậy, tại sao các ngày vẫn **Tương quan chặt chẽ với nhau**?
-Toán học chỉ ra 3 lý do rất rõ ràng: Thứ nhất, tuy tính song song nhưng mọi ngày đều "sinh ra từ một gốc mẹ" là vector tóm tắt quá khứ $\mathbf{e}$, nên về tổng thể chúng vẫn có hiệp phương sai tương quan với nhau. Thứ hai, lúc huấn luyện, gradient sai số của tất cả $H$ ngày cùng dội ngược về cập nhật chung cho vector $\mathbf{e}$, ép các trọng số phải học phối hợp nhịp nhàng và mượt mà theo thời gian. Thứ ba là có thêm nhánh đường tắt `Global Residual` nối thẳng quá khứ sang tương lai.
-
-Ba điều đó ánh xạ trực tiếp thành 3 dòng cài đặt rất gọn trong `models.py`: cả $H$ cột $\mathbf{d}_t$ đều cắt ra từ **chung một tensor `encoded`**; toàn bộ mô hình tối ưu **chung một hàm Loss `MSE`** chấm điểm đồng thời cả $H$ ngày; và cuối cùng code cộng trực tiếp nhánh tắt tuyến tính `+ self.linear_skip(past_y)`.
+Sang cột phải — **Tương quan biểu diễn**:
+* Mục **1 (Công thức Toán)** cho thấy hiệp phương sai biên giữa $\mathbf{d}_t$ và $\mathbf{d}_s$ khác $0$, gradient của cả $H$ bước cùng dội về $\mathbf{e}^{(i)}$, kèm nhánh tuyến tính $\hat{y}_{\mathrm{res},t}$.
+* Chiếu thẳng vào mục **2 (Code nguyên văn `models.py#L203-L214` và `#L225`)**: mọi nhánh đều đọc chung `encoding = self.encoder(encoder_input)`, cộng thêm `residual_out = self.linear(past_ts)` qua dòng `out += residual_out`, và tối ưu chung một hàm `loss = train_loss(ytrue, all_preds)` cho cả $H$ bước.
+* Kết luận ở mục **3 (Nhận xét)**: các bước vẫn giữ đồng bộ chu kỳ & xu hướng toàn cục nhờ chung gốc `encoding` và `loss`, nhưng cái giá phải trả là ma trận chiếu tầng cuối có kích thước cứng $(H \cdot p) \times d_h$ gây phình tham số ở $H=720$ — đây chính là cầu nối sang đề xuất Phần 3!
 
 ---
 

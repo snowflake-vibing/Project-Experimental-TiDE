@@ -53,31 +53,65 @@ $$
 
 ![Slide 05: Từ công thức toán học suy ra code](./images/slide_03b_ban_chat_toan_hoc.png)
 
-### Liên kết từ Công thức Toán học sang cài đặt `models.py`
+### Liên kết từ Công thức Toán học sang cài đặt nguyên văn trong `google-research/tide/models.py`
 
 #### A. Độc lập tính toán ($O(1)$ GPU Parallelism)
 
-* **1. Công thức Toán học:** Tách ma trận chiếu tầng cuối $\mathbf{W} \in \mathbb{R}^{(H\cdot p)\times d_h}$ thành $H$ khối con $\mathbf{W}_t \in \mathbb{R}^{p\times d_h}$ theo từng bước thời gian:
+* **1. Công thức Toán học:**
 
 $$
-\mathbf{d}_t^{(i)} = \mathbf{W}_t \mathbf{v}^{(n_d-1)} + \mathbf{b}_t \implies \frac{\partial \mathbf{d}_t^{(i)}}{\partial \mathbf{d}_s^{(i)}} = \mathbf{0} \quad (\forall t \neq s)
+\mathbf{W} = [\mathbf{W}_1; \dots; \mathbf{W}_H] \in \mathbb{R}^{(H\cdot p)\times d_h}, \quad \mathbf{d}_t^{(i)} = \mathbf{W}_t \mathbf{v}^{(n_d-1)} + \mathbf{b}_t
 $$
 
-Đồ thị tính toán không có cạnh nối giữa bước $t$ và $s$; toàn bộ $\mathbf{g} = \mathbf{W}\mathbf{v} + \mathbf{b}$ là 1 phép nhân ma trận duy nhất (Single GEMM Kernel).
+$$
+\frac{\partial \mathbf{d}_t^{(i)}}{\partial \mathbf{d}_s^{(i)}} = \mathbf{0} \quad (\forall t \neq s)
+$$
 
-* **2. Suy ra cài đặt trong Code (`models.py`):** Không dùng vòng lặp `for t in range(H)`. Tác giả chỉ cần đúng **1 lớp `Dense(p * H)`** tính song song toàn bộ $H$ bước trên GPU, rồi gọi `tf.reshape(out, [bsize, -1, pred_len])` để tạo tensor `(B, p, H)`.
+* **2. Suy ra cài đặt nguyên văn trong Code (`models.py#L133-L140, #L207-L210`):**
+
+```python
+# models.py#L133-L137: 1 tầng Dense xuất p * pred_len
+self.decoder = _make_dnn_residual(
+    model_config.get('hidden_dims')[:-1]
+    + [model_config.get('decoder_output_dim') * self.pred_len],
+    layer_norm=layer_norm, dropout_rate=dropout_rate,
+)
+# models.py#L207-L210: Forward song song & Reshape ra H bước
+decoder_out = self.decoder(encoding)
+decoder_out = tf.reshape(decoder_out, [bsize, -1, self.pred_len])
+```
+
+* **3. Nhận xét:**
+  * Không có cạnh nối giữa $\mathbf{d}_t$ và $\mathbf{d}_s$: toàn bộ $H$ bước được tính trong 1 GEMM Kernel ($O(1)$ song song GPU), triệt tiêu lỗi tích lũy sai số.
+  * Không dùng vòng lặp `for t in range(H)` vì toàn bộ đã gộp thành 1 tầng `Dense(p * H)` + `tf.reshape` chi phí $O(1)$.
 
 #### B. Tương quan biểu diễn (Representational Correlation)
 
 * **1. Công thức Toán học:**
 
 $$
-\mathrm{Cov}(\mathbf{d}_t^{(i)}, \mathbf{d}_s^{(i)}) = \mathbf{W}_t \, \mathbf{\Sigma}_{\mathbf{e}} \, \mathbf{W}_s^\top \neq \mathbf{0}, \qquad \nabla_{\mathbf{e}^{(i)}} \mathcal{L} = \sum_{t=1}^H \mathbf{W}_t^\top \nabla_{\mathbf{d}_t^{(i)}} \mathcal{L}, \qquad \hat{y}_{\mathrm{res}, t}^{(i)} = \sum_{l=1}^L W_{\mathrm{res}, t, l} \cdot y_l^{(i)}
+\mathrm{Cov}(\mathbf{d}_t^{(i)}, \mathbf{d}_s^{(i)}) = \mathbf{W}_t \, \mathbf{\Sigma}_{\mathbf{e}} \, \mathbf{W}_s^\top \neq \mathbf{0} \quad \left(\mathrm{Cov}(\mathbf{d}_t, \mathbf{d}_s \mid \mathbf{e}) = 0\right)
 $$
 
-Việc chia sẻ chung vector ẩn $\mathbf{e}^{(i)}$ tạo ra hiệp phương sai biên khác không; Gradient tổng hợp từ cả $H$ bước ép $\mathbf{W}_t$ học tính trơn tru; và $\mathbf{W}_{\mathrm{res}}$ giữ trực tiếp chu kỳ trễ.
+$$
+\nabla_{\mathbf{e}^{(i)}} \mathcal{L} = \sum_{t=1}^H \mathbf{W}_t^\top \nabla_{\mathbf{d}_t^{(i)}} \mathcal{L}, \qquad \hat{y}_{\mathrm{res}, t}^{(i)} = \sum_{l=1}^L W_{\mathrm{res}, t, l} \cdot y_l^{(i)}
+$$
 
-* **2. Suy ra cài đặt trong Code (`models.py`):** Mọi lát cắt $\mathbf{d}_t$ đều cắt ra từ chung 1 tensor `encoded`; tối ưu chung 1 hàm Loss `MSE(y_true, y_pred)` cho cả $H$ bước; và cộng trực tiếp nhánh tắt tuyến tính `+ self.linear_skip(past_y)`.
+* **2. Suy ra cài đặt nguyên văn trong Code (`models.py#L203-L214, #L225`):**
+
+```python
+# models.py#L203-L214: Dùng chung encoding & Linear Skip past_ts
+residual_out = self.linear(past_ts)
+encoding = self.encoder(encoder_input)
+final_in = tf.concat([decoder_out, enc_fut], axis=1)
+out += residual_out
+# models.py#L225: Tối ưu chung 1 hàm Loss cho cả H bước
+loss = train_loss(ytrue, all_preds)
+```
+
+* **3. Nhận xét:**
+  * Dù độc lập tính toán, cả $H$ lát cắt vẫn liên kết chặt chẽ qua chung $\mathbf{e}^{(i)}$, chung hàm Loss $\mathcal{L}$ và nhánh `self.linear(past_ts)` giữ chu kỳ.
+  * Đổi lại, lớp chiếu cuối có kích thước cứng $(H \cdot p) \times d_h$ gây phình tham số ở $H=720$ — cơ sở trực tiếp cho giải pháp Low-Rank ở Phần 3.
 
 ---
 
