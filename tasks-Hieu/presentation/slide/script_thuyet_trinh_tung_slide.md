@@ -44,10 +44,10 @@ Chào mọi người! Trong kiến trúc TiDE, sau khi `Dense Encoder` nén toà
 
 **2. Năm thuật ngữ cốt lõi (chia 2 hàng trên slide):**
 * **Thẻ 1 — `MLPResidual` (Residual Block):** Đơn vị xử lý cơ sở lặp $n_d$ lần, gồm nhánh phi tuyến Linear $\to$ ReLU $\to$ Linear $\to$ Dropout, cộng song song với nhánh tắt tuyến tính `lin_res` và `LayerNorm`.
-* **Thẻ 2 — `Unflatten` (Thao tác Reshape):** Phép biến đổi hình học khôi phục lại trục thời gian $H$ từ vector phẳng `Shape: (B, H * p)` thành ma trận 2 chiều `Shape: (B, p, H)` trong TensorFlow (hoặc `(B, H, p)` trong PyTorch), chỉ cập nhật metadata stride bộ nhớ với chi phí $O(1)$ không tốn copy dữ liệu.
+* **Thẻ 2 — `Unflatten` (Thao tác Reshape):** Phép biến đổi hình học khôi phục lại trục thời gian $H$ từ vector phẳng `Shape: (B, H * p)` thành ma trận `Shape: (B, p, H)` theo đúng quy ước của bài báo gốc, chỉ cập nhật metadata stride bộ nhớ với chi phí $O(1)$ không tốn copy dữ liệu.
 * **Thẻ 3 — `Information Bottleneck` (Nghẽn cổ chai thông tin):** Hiện tượng mất mát thông tin khi ép biểu diễn qua không gian chiều $p$ quá nhỏ (như $p = 1, 2$) — thiếu dung lượng giữ cả pha chu kỳ lẫn xu hướng; ngược lại $p$ quá lớn ($32, 64$) lại gây bùng nổ tham số và Overfitting.
-* **Thẻ 4 — `LayerNorm` (Chuẩn hóa theo tầng):** Khác với `BatchNorm`, `LayerNorm` chuẩn hóa trực tiếp trên chiều đặc trưng (feature dimension) của từng mẫu độc lập nên hoàn toàn không phụ thuộc kích thước Batch khi suy luận. Trong khối `MLPResidual`, nó đặt ở cuối cùng sau phép cộng nhánh tắt (`+ lin_res`) giúp giữ ổn định phân phối, tránh bùng nổ hay triệt tiêu gradient, và có thể bật/tắt qua cờ `use_layer_norm`.
-* **Thẻ 5 — `Dropout` (Điều chuẩn ngẫu nhiên):** Tắt ngẫu nhiên một tỷ lệ $p_{\text{drop}}$ các nơ-ron ở nhánh phi tuyến trong lúc huấn luyện (đồng thời nhân bù $\frac{1}{1 - p_{\text{drop}}}$ cho các phần tử giữ lại để bảo toàn kỳ vọng). Tác giả đặt Dropout ngay sau `Dense(Linear)` để ép mạng không phụ thuộc vào vài đặc trưng cố định và chống Overfitting, với `dropout_rate` quét trong $\{0.0, 0.1, 0.2, 0.3, 0.5\}$.
+* **Thẻ 4 — `LayerNorm` (Chuẩn hóa theo tầng):** Khác với `BatchNorm`, `LayerNorm` chuẩn hóa trực tiếp trên chiều đặc trưng của từng mẫu độc lập theo công thức trên slide nên không phụ thuộc kích thước Batch khi suy luận. Trong `MLPResidual`, nó đặt ở cuối cùng sau phép cộng nhánh tắt (`+ lin_res`) giúp ổn định gradient, và bật/tắt qua cờ `use_layer_norm`.
+* **Thẻ 5 — `Dropout` (Điều chuẩn ngẫu nhiên):** Tắt ngẫu nhiên một tỷ lệ `p_drop` các nơ-ron ở nhánh phi tuyến lúc huấn luyện (và nhân bù hệ số như trên slide để giữ nguyên kỳ vọng). Nó đặt ngay sau `Dense(Linear)` để chống Overfitting, với `dropout_rate` quét trong `{0.0, 0.1, 0.2, 0.3, 0.5}` và tự động tắt khi Inference.
 
 Nắm chắc 5 thuật ngữ và các con số này rồi, giờ chúng ta đi vào vị trí kiến trúc trên Figure 1 ở Slide 02 nhé!
 
@@ -60,8 +60,8 @@ Nắm chắc 5 thuật ngữ và các con số này rồi, giờ chúng ta đi v
 ### 🟢 SLIDE 02 / 10 — VỊ TRÍ KHỐI DENSE DECODER & UNFLATTEN TRÊN FIGURE 1
 
 * **Ảnh slide:** `slide_02_vi_tri_dense_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-02--10-vị-trí-khối-dense-decoder--unflatten-trên-figure-1))
-* **Thời lượng dự kiến:** 50 – 60 giây.
-* **Mục tiêu slide:** Định vị chính xác vị trí trên Figure 1; **giải thích cụ thể, chi tiết cơ chế ghép nối với ngoại sinh ở tầng kế tiếp** diễn ra như thế nào.
+* **Thời lượng dự kiến:** 40 – 45 giây.
+* **Mục tiêu slide:** Định vị chính xác vị trí khối Dense Decoder và Unflatten trên Figure 1; giới thiệu vai trò cầu nối chuyển sang `Temporal Decoder` (chi tiết cách ghép ngoại sinh sẽ được giải thích cụ thể ở Slide 05 và Slide 06).
 
 ![Slide 02: Vị trí Dense Decoder](./images/slide_02_vi_tri_dense_decoder.png)
 
@@ -69,37 +69,19 @@ Nắm chắc 5 thuật ngữ và các con số này rồi, giờ chúng ta đi v
 
 Nhìn lên Figure 1 trích từ trang 5 của bài báo gốc ở Slide 02:
 
-Khối `Dense Decoder` (được khoanh vàng ở giữa) nhận vector ẩn toàn cục $\mathbf{e}^{(i)}$ từ Encoder truyền lên, xử lý qua $n_d$ khối để bung ra vector phẳng $\mathbf{g}^{(i)}$ `Shape: (B, H * p)`. Ngay sau đó, phép `Unflatten` bổ đôi kích thước này ra thành $H$ lát cắt vector $\mathbf{d}_t^{(i)}$ (mỗi lát cắt có chiều dài $p$).
+Khối `Dense Decoder` (được khoanh vàng ở giữa) nhận vector ẩn toàn cục $\mathbf{e}^{(i)}$ từ `Dense Encoder` truyền lên, xử lý qua $n_d$ khối để bung ra vector phẳng $\mathbf{g}^{(i)}$ có `Shape: (B, H * p)`. Ngay sau đó, phép `Unflatten` định hình lại thành ma trận $\mathbf{D}^{(i)}$ kích thước `(B, p, H)` để tách ra $H$ vector bối cảnh $\mathbf{d}_t^{(i)}$ tương ứng với từng bước thời gian tương lai.
 
-**Ở đây, anh em chắc chắn sẽ thắc mắc: 'Tầng kế tiếp ghép ngoại sinh thì cụ thể là ghép như thế nào?'**
-
-Mình xin giải thích cặn kẽ luồng ghép nối này:
-
-**Bước 1: Trích xuất vector bối cảnh:** Tại mỗi bước thời gian tương lai $t \in \{1, \dots, H\}$, mô hình trích lấy đúng lát cắt $\mathbf{d}_t^{(i)}$ (chiều dài $p$).
-
-**Bước 2: Nối mảng với biến ngoại sinh tương lai:** Đem ghép nối tiếp (nối mảng `concatenate`) với vector biến ngoại sinh tương lai tại đúng bước $t$ đó — ký hiệu là $\tilde{\mathbf{x}}_{L+t}^{(i)}$ (ngoại sinh này đã được chiếu nén về số chiều $\tilde{r} = 4$).
-
-Kết quả tạo thành một vector tổng hợp có kích thước:
-
-$$
-\mathbf{u}_t = \big[\mathbf{d}_t^{(i)} \; ; \; \tilde{\mathbf{x}}_{L+t}^{(i)}\big] \in \mathbb{R}^{p + \tilde{r}}
-$$
-
-*(Ví dụ: $8 + 4 = 12$, hoặc $16 + 4 = 20$).*
-
-**Bước 3: Dự báo phi tuyến:** Vector ghép $\mathbf{u}_t$ này được nạp vào một khối `MLPResidual` nhỏ ở cổng ra có `output_dim = 1` để xuất ra đúng 1 con số dự báo phi tuyến tại ngày $t$.
-
-Như vậy, vai trò sống còn của Dense Decoder là **tạo sẵn $H$ bộ khung bối cảnh quá khứ $\mathbf{d}_t$ cho từng ngày**, để sang tầng sau, ngày nào có sự kiện ngoại sinh gì (như khuyến mãi, thời tiết xấu) thì chỉ việc ráp thông tin ngoại sinh của ngày đó vào khung $\mathbf{d}_t$ tương ứng để dự báo!
+Nói ngắn gọn, vai trò sống còn của Dense Decoder là **tạo sẵn $H$ bộ khung bối cảnh quá khứ $\mathbf{d}_t$ cho từng ngày**. Còn việc từng khung $\mathbf{d}_t$ này sẽ ghép nối với biến ngoại sinh tương lai ở tầng kế tiếp (`Temporal Decoder`) cụ thể như thế nào, mình sẽ giải thích chi tiết ở phần Reshape (Slide 05) và quy trình Code (Slide 06) ngay sau đây nhé!
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Dùng tay chỉ luồng: $\mathbf{e}$ đi vào Decoder $\to$ Unflatten ra $H$ nhánh $\mathbf{d}_t$ $\to$ mỗi nhánh $t$ ghép với ngoại sinh tương lai $\tilde{\mathbf{x}}_{L+t}$ tương ứng $\to$ tạo thành vector $p + \tilde{r}$.
+  * Dùng tay chỉ luồng trên Figure 1: $\mathbf{e}^{(i)}$ đi vào `Dense Decoder` $\to$ `Unflatten` ra các lát cắt $\mathbf{d}_t$ $\to$ chuyển lên `Temporal Decoder`.
 
 ---
 
 ### 🟢 SLIDE 03A / 10 — CÁCH DENSE DECODER TẠO BIỂU DIỄN TOÀN HORIZON (ONE-SHOT VS TUẦN TỰ)
 
 * **Ảnh slide:** `slide_03_one_shot_vs_tuan_tu.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-03a--10-cách-dense-decoder-tạo-biểu-diễn-toàn-horizon-one-shot-vs-tuần-tự))
-* **Thời lượng dự kiến:** 55 – 65 giây.
+* **Thời lượng dự kiến:** 50 – 60 giây.
 * **Mục tiêu slide:** So sánh trực diện hai cơ chế giải mã: Autoregressive truyền thống (vòng lặp tuần tự $O(H)$, tích lũy sai số) vs Non-autoregressive One-Shot của TiDE (sinh đồng thời toàn bộ $H$ bước, $O(1)$ GPU).
 
 ![Slide 03A: One-Shot vs Tuần tự](./images/slide_03_one_shot_vs_tuan_tu.png)
@@ -109,13 +91,8 @@ Như vậy, vai trò sống còn của Dense Decoder là **tạo sẵn $H$ bộ 
 Ở Slide 03A, chúng ta cùng làm sáng tỏ triết lý giải mã của TiDE so với các mô hình dự báo chuỗi truyền thống qua 2 cột đối chiếu trực diện:
 
 **1. Cột bên trái — Cách truyền thống: Sinh tuần tự (Autoregressive):**
-* Trong các kiến trúc như RNN, LSTM, Seq2Seq hay Transformer Decoder cổ điển: họ xuất phát từ giả định xác suất chuỗi Markov, muốn đoán ngày mai ($y_2$) bắt buộc phải biết kết quả ngày hôm nay ($y_1$). Nghĩa là mỗi bước tương lai phụ thuộc điều kiện vào bước ngay trước nó:
-
-$$
-P(y_1, y_2, \dots, y_H \mid y_{1:L}) = \prod_{t=1}^H P(y_t \mid y_{1:L}, y_1, \dots, y_{t-1})
-$$
-
-* Họ bắt buộc phải chạy theo vòng lặp tuần tự $H$ bước: đoán $\hat{y}_1 \to$ nạp lại đoán $\hat{y}_2 \to \dots \to \hat{y}_H$.
+* Trong các kiến trúc như RNN, LSTM, Seq2Seq hay Transformer Decoder cổ điển: họ xuất phát từ giả định chuỗi Markov, tức là muốn đoán ngày mai bắt buộc phải biết kết quả ngày hôm nay.
+* Vì vậy họ bắt buộc phải chạy theo vòng lặp tuần tự $H$ bước: đoán bước 1 $\to$ nạp lại đoán bước 2 $\to \dots \to$ bước $H$.
 * Hậu quả là: GPU bị nghẽn ở độ phức tạp tuần tự $O(H)$, và nguy hiểm nhất là **tích lũy sai số (Error Accumulation)** — bước đầu tiên lệch 1 ly thì đến bước $H=720$ kết quả bị trôi dạt hoàn toàn!
 
 **2. Cột bên phải — Dense Decoder (TiDE): Sinh song song One-Shot:**
@@ -123,173 +100,94 @@ $$
 * Mọi lát cắt $\mathbf{d}_1, \dots, \mathbf{d}_H$ đều được trích xuất độc lập trực tiếp từ $\mathbf{e}^{(i)}$, không bước nào lấy output của bước trước làm input.
 * Nhờ đó, TiDE **triệt tiêu 100% hiện tượng tích lũy sai số**, đạt độ phức tạp $O(1)$ trên GPU và **chạy nhanh hơn Transformer từ 5 đến 10 lần**!
 
-Vậy câu hỏi học thuật lớn nhất đặt ra là: *"Nếu các bước chạy độc lập như vậy, cơ sở toán học nào chứng minh chúng không bị mất mối tương quan chuỗi thời gian giữa các ngày?"* Chúng ta cùng đi sang Slide 03B để bóc tách hệ thống công thức toán học nhé!
+Vậy câu hỏi học thuật lớn nhất đặt ra là: *"Nếu các bước chạy độc lập như vậy, cơ sở toán học nào chứng minh chúng không bị mất mối tương quan chuỗi thời gian giữa các ngày?"* Chúng ta cùng sang Slide 03B để xem các công thức chứng minh nhé!
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
   * Chỉ vào cột trái: gạch chéo đỏ vào vòng lặp tuần tự và mũi tên tích lũy sai số.
-  * Chỉ sang cột phải: nhấn mạnh biểu thức nhân ma trận chiếu 1 phát ra toàn bộ $H \cdot p$ phần tử song song.
+  * Chỉ sang cột phải: nhấn mạnh cơ chế chiếu 1 phát ra toàn bộ $H \cdot p$ phần tử song song.
 
 ---
 
 ### 🟢 SLIDE 03B / 10 — BẢN CHẤT TOÁN HỌC: ĐỘC LẬP TÍNH TOÁN VS TƯƠNG QUAN BIỂU DIỄN
 
 * **Ảnh slide:** `slide_03b_ban_chat_toan_hoc.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-03b--10-bản-chất-toán-học--độc-lập-tính-toán-vs-tương-quan-biểu-diễn))
-* **Thời lượng dự kiến:** 65 – 75 giây.
-* **Mục tiêu slide:** Giải quyết triệt để câu hỏi học thuật cốt lõi bằng **hệ thống công thức toán học tường minh**: Chứng minh Dense Decoder **vừa độc lập tính toán ($O(1)$ GPU) vừa tương quan biểu diễn sâu sắc (Hiệp phương sai toàn phần & Liên kết Gradient)**.
+* **Thời lượng dự kiến:** 60 – 70 giây.
+* **Mục tiêu slide:** Giải thích trực quan ý nghĩa hệ thống công thức trên slide để chứng minh Dense Decoder **vừa độc lập tính toán ($O(1)$ GPU) vừa tương quan biểu diễn sâu sắc**.
 
 ![Slide 03B: Bản chất toán học](./images/slide_03b_ban_chat_toan_hoc.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Slide 03B này là vũ khí toán học sắc bén nhất để giải đáp câu hỏi: **"Làm sao Dense Decoder vừa độc lập tính toán trên GPU nhưng các bước thời gian vẫn tương quan mật thiết với nhau?"**
+Slide 03B này tổng hợp toàn bộ hệ thống công thức để trả lời câu hỏi: **"Làm sao Dense Decoder vừa độc lập tính toán trên GPU nhưng các bước thời gian vẫn tương quan mật thiết với nhau?"**
 
-Nhóm mình hãy nhìn vào 2 cột trên màn hình:
+Anh em nhìn vào 2 cột công thức trên màn hình:
 
 **Cột bên trái — Độc lập tính toán triệt để (Computational Independence):**
-
-Xét ma trận chiếu ngõ ra tầng cuối $\mathbf{W} \in \mathbb{R}^{(H \cdot p) \times d_h}$ và vector định thiên $\mathbf{b} \in \mathbb{R}^{H \cdot p}$. Ta bóc tách thành $H$ ma trận con $\mathbf{W}_t \in \mathbb{R}^{p \times d_h}$ xếp chồng theo từng bước thời gian:
-
-$$
-\mathbf{W} = \begin{bmatrix} \mathbf{W}_1 \\ \mathbf{W}_2 \\ \vdots \\ \mathbf{W}_H \end{bmatrix}, \quad \mathbf{b} = \begin{bmatrix} \mathbf{b}_1 \\ \mathbf{b}_2 \\ \vdots \\ \mathbf{b}_H \end{bmatrix}
-$$
-
-Khi đó, lát cắt vector bối cảnh $\mathbf{d}_t^{(i)} \in \mathbb{R}^p$ tại mỗi thời điểm $t$ được tính trực tiếp từ tầng ẩn $\mathbf{v}^{(n_d-1)}$:
-
-$$
-\mathbf{d}_t^{(i)} = \mathbf{W}_t \mathbf{v}^{(n_d-1)} + \mathbf{b}_t
-$$
-
-Đạo hàm riêng chéo giữa hai thời điểm bất kỳ $t$ và $s$ ($t \neq s$) triệt tiêu hoàn toàn:
-
-$$
-\frac{\partial \mathbf{d}_t^{(i)}}{\partial \mathbf{d}_s^{(i)}} = \mathbf{0}, \quad \forall t \neq s
-$$
-
-Điều này chứng minh trên đồ thị tính toán: **hoàn toàn không có cạnh nối nào giữa bước $t$ và bước $s$**! Phép tính $\mathbf{g}^{(i)} = \mathbf{W}\mathbf{v} + \mathbf{b}$ là đúng một toán tử GEMM (Single Parallel GEMM Kernel) duy nhất trên GPU, phân bổ song song đồng loạt trên hàng nghìn nhân CUDA với độ sâu $O(1)$.
+* **Ở mục 1 trên slide**, ma trận chiếu tầng cuối $\mathbf{W}$ được bóc tách thành $H$ ma trận con tương ứng với từng bước thời gian $t$, nhân trực tiếp với tầng ẩn trước đó để ra lát cắt $\mathbf{d}_t$.
+* **Nhìn vào công thức đạo hàm riêng bằng 0 ở mục 2**: Điều này chứng minh trên đồ thị tính toán **hoàn toàn không có cạnh nối nào giữa bước $t$ và bước $s$**. Bước này không chờ và không lấy đầu vào từ bước kia.
+* **Chốt lại ở mục 3**: Toàn bộ phép tính thu gọn thành đúng một toán tử nhân ma trận (GEMM Kernel) duy nhất trên GPU, chạy song song đồng loạt trên hàng nghìn nhân CUDA với độ sâu $O(1)$.
 
 **Cột bên phải — Tương quan biểu diễn sâu sắc (Representational Correlation):**
-
-Vậy nếu tính toán độc lập thì tương quan giữa các ngày đến từ đâu? Có 3 công thức chứng minh bản chất toán học:
-
-**1. Luật Hiệp phương sai toàn phần (Law of Total Covariance):**
-Về mặt xác suất, khi biết vector ẩn toàn cục $\mathbf{e}^{(i)}$, các bước tương lai độc lập có điều kiện: $\mathrm{Cov}(\mathbf{d}_t^{(i)}, \mathbf{d}_s^{(i)} \mid \mathbf{e}^{(i)}) = \mathbf{0}$. Nhưng hiệp phương sai biên giữa hai bước bất kỳ $t$ và $s$ thì lại khác không:
-
-$$
-\mathrm{Cov}(\mathbf{d}_t^{(i)}, \mathbf{d}_s^{(i)}) = \mathbb{E}_{\mathbf{e}}\!\left[\mathrm{Cov}(\mathbf{d}_t^{(i)}, \mathbf{d}_s^{(i)} \mid \mathbf{e}^{(i)})\right] + \mathrm{Cov}_{\mathbf{e}}\!\left(\mathbb{E}[\mathbf{d}_t^{(i)} \mid \mathbf{e}^{(i)}], \, \mathbb{E}[\mathbf{d}_s^{(i)} \mid \mathbf{e}^{(i)}]\right)
-$$
-
-$$
-\mathrm{Cov}(\mathbf{d}_t^{(i)}, \mathbf{d}_s^{(i)}) = \mathbf{W}_t \, \mathbf{\Sigma}_{\mathbf{e}} \, \mathbf{W}_s^\top \neq \mathbf{0}
-$$
-
-Với $\mathbf{\Sigma}_{\mathbf{e}} = \mathrm{Cov}(\mathbf{e}^{(i)})$ là ma trận hiệp phương sai của vector bối cảnh lịch sử. Biểu thức $\mathbf{W}_t \mathbf{\Sigma}_{\mathbf{e}} \mathbf{W}_s^\top$ chứng minh rằng **hai bước $t$ và $s$ luôn tương quan mật thiết vì cùng được sinh ra từ nguồn thông tin lịch sử chung $\mathbf{e}^{(i)}$**!
-
-**2. Động lực học liên kết Gradient khi Backpropagation:**
-Khi huấn luyện với hàm mất mát toàn horizon $\mathcal{L} = \sum_{t=1}^H \ell(\hat{y}_t^{(i)}, y_t^{(i)})$, gradient cập nhật vector ẩn chung $\mathbf{e}^{(i)}$ là tổng đóng góp đồng thời của tất cả các bước:
-
-$$
-\nabla_{\mathbf{e}^{(i)}} \mathcal{L} = \sum_{t=1}^H \mathbf{W}_t^\top \nabla_{\mathbf{d}_t^{(i)}} \mathcal{L}
-$$
-
-Mọi bước $t$ cùng đồng thời kéo vector $\mathbf{e}^{(i)}$ về nghiệm tối ưu chung, ép các ma trận $\mathbf{W}_t$ phải học được tính trơn tru thời gian (temporal smoothness) nhịp nhàng giữa các bước kế tiếp.
-
-**3. Khóa tương quan trễ tuyến tính qua Global Residual:**
-Đồng thời, nhánh đường tắt $\mathbf{W}_{\mathrm{res}} \in \mathbb{R}^{H \times L}$ liên kết trực tiếp quá khứ sang tương lai:
-
-$$
-\hat{\mathbf{y}}_{\mathrm{res}}^{(i)} = \mathbf{W}_{\mathrm{res}} \mathbf{y}_{1:L}^{(i)} \implies \hat{y}_{\mathrm{res}, t}^{(i)} = \sum_{l=1}^L W_{\mathrm{res}, t, l} \cdot y_l^{(i)}
-$$
-
-Nó bảo toàn nguyên vẹn tính tự hồi quy và các chu kỳ mùa vụ như 24 giờ hay 168 giờ.
+* **Ở mục 1 — Luật Hiệp phương sai toàn phần trên slide:** Dù độc lập có điều kiện khi đã biết $\mathbf{e}^{(i)}$, nhưng công thức hiệp phương sai biên ở dưới vẫn **khác không**! Lý do là vì mọi bước đều cùng chia sẻ nguồn gốc từ vector bối cảnh lịch sử $\mathbf{e}^{(i)}$, tạo nên sự tương quan xuyên suốt toàn horizon.
+* **Ở mục 2 — Công thức Gradient khi Backprop:** Khi huấn luyện, gradient của tất cả $H$ bước đều cộng dồn về để cập nhật chung vector $\mathbf{e}^{(i)}$. Việc cùng kéo $\mathbf{e}^{(i)}$ về một nghiệm tối ưu chung ép các ma trận chiếu phải học được tính trơn tru và nhịp nhàng giữa các ngày liên tiếp.
+* **Ở mục 3 — Nhánh đường tắt Global Residual:** Công thức cuối cùng nối thẳng dữ liệu quá khứ sang tương lai qua ma trận tuyến tính, giúp bảo toàn nguyên vẹn tính tự hồi quy và các chu kỳ mùa vụ (như 24 giờ, 168 giờ).
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ sang cột trái: trỏ vào công thức $\frac{\partial \mathbf{d}_t}{\partial \mathbf{d}_s} = \mathbf{0}$, nhấn mạnh đồ thị tính toán phẳng $O(1)$.
-  * Chỉ sang cột phải: trỏ vào công thức hiệp phương sai $\mathbf{W}_t \mathbf{\Sigma}_{\mathbf{e}} \mathbf{W}_s^\top$ và công thức gradient tổng $\sum \mathbf{W}_t^\top \nabla_{\mathbf{d}_t} \mathcal{L}$.
+  * Chỉ sang cột trái: trỏ vào công thức đạo hàm bằng 0 ở mục 2, nhấn mạnh đồ thị tính toán phẳng $O(1)$.
+  * Chỉ sang cột phải: trỏ vào công thức hiệp phương sai khác không ở mục 1 và công thức gradient tổng ở mục 2.
 
 ---
 
 ### 🟢 SLIDE 04 / 10 — KIẾN TRÚC $n_d$ RESIDUAL BLOCKS & CHUYỂN $\mathbf{e}^{(i)}$ THÀNH $\mathbf{g}^{(i)}$
 
 * **Ảnh slide:** `slide_04_kien_truc_nd_residual_blocks.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-04--10-kiến-trúc-n_d-residual-blocks--chuyển-mathbfei-thành-mathbfgi))
-* **Thời lượng dự kiến:** 60 – 70 giây.
-* **Mục tiêu slide:** Bóc tách hệ phương trình toán học qua từng tầng; giải thích vai trò bắt buộc của ma trận chiếu đường tắt $\mathbf{W}_{\text{skip}}^{(n_d)}$ ở khối cuối cùng.
+* **Thời lượng dự kiến:** 50 – 60 giây.
+* **Mục tiêu slide:** Bóc tách luồng biến đổi qua từng tầng theo hai phương trình trên slide; giải thích vai trò bắt buộc của ma trận chiếu đường tắt $\mathbf{W}_{\text{skip}}^{(n_d)}$ ở khối cuối cùng.
 
 ![Slide 04: Kiến trúc n_d Residual Blocks](./images/slide_04_kien_truc_nd_residual_blocks.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Slide 04 đi sâu vào cấu trúc toán học bên trong Dense Decoder khi nhận đầu vào $\mathbf{v}^{(0)} = \mathbf{e}^{(i)} \in \mathbb{R}^{d_h}$:
+Slide 04 đi sâu vào cấu trúc bên trong khối Dense Decoder khi nhận vector $\mathbf{e}^{(i)}$ từ Encoder truyền lên. Nhìn vào hai phương trình trên slide, Dense Decoder chia làm 2 giai đoạn biến đổi rất rõ ràng:
 
-Dense Decoder chia làm 2 giai đoạn biến đổi rất rõ ràng:
+* **Giai đoạn 1 — Các khối trung gian (từ tầng $1$ đến $n_d - 1$, nếu chọn $n_d \geq 2$):** Như phương trình phía trên trên màn hình, ở các tầng này chiều vào và chiều ra đều giữ cố định là `(B, d_h)` để tinh chỉnh biểu diễn phi tuyến.
+* **Giai đoạn 2 — Khối cuối cùng ($l = n_d$):** Đây là tầng đặc biệt nhất theo phương trình thứ hai trên slide. Chiều đầu ra không còn là $d_h$, mà được bung rộng ra kích thước $H \cdot p$!
 
-**Giai đoạn 1: Các khối trung gian từ tầng $1$ đến tầng $n_d - 1$ (nếu chọn $n_d \geq 2$):**
+Anh em lưu ý chi tiết kỹ thuật rất quan trọng ở khối cuối này:
+Vì số chiều đầu vào là $d_h$ còn đầu ra là $H \cdot p$ (hai số này lệch nhau rất lớn, ví dụ $1024$ vs $5760$), nhánh tắt Skip Connection không thể cộng trực tiếp phần tử với phần tử được. Do đó, tác giả **bắt buộc phải đặt thêm một ma trận chiếu đường tắt $\mathbf{W}_{\text{skip}}$ có kích thước $(H \cdot p) \times d_h$** như mình khoanh tròn trên slide để đồng bộ kích thước rồi mới cộng residual!
 
-Ở các tầng này, chiều vào và chiều ra đều giữ cố định là `Shape: (B, d_h)`:
-
-$$
-\mathbf{v}^{(l)} = \mathrm{LayerNorm}\!\left(\mathrm{Dropout}\!\left(\mathbf{W}_2^{(l)}\,\mathrm{ReLU}\!\left(\mathbf{W}_1^{(l)}\mathbf{v}^{(l-1)} + \mathbf{b}_1^{(l)}\right) + \mathbf{b}_2^{(l)}\right) + \mathbf{W}_{\mathrm{res}}^{(l)}\mathbf{v}^{(l-1)}\right)
-$$
-
-**Giai đoạn 2: Khối cuối cùng $l = n_d$ — Tầng chiếu mở rộng:**
-
-Đây là tầng đặc biệt nhất: Chiều đầu ra không còn là $d_h$, mà được mở rộng ra kích thước khổng lồ: $H \cdot p$!
-
-$$
-\mathbf{g}^{(i)} = \mathrm{LayerNorm}\!\left(\mathrm{Dropout}\!\left(\mathbf{W}_2^{(n_d)}\,\mathrm{ReLU}\!\left(\mathbf{W}_1^{(n_d)}\mathbf{v}^{(n_d-1)} + \mathbf{b}_1^{(n_d)}\right) + \mathbf{b}_2^{(n_d)}\right) + \mathbf{W}_{\mathrm{skip}}^{(n_d)}\mathbf{v}^{(n_d-1)}\right)
-$$
-
-Anh em lưu ý chi tiết kỹ thuật này:
-Vì số chiều đầu vào là $d_h$ còn đầu ra là $H \cdot p$ (hai số này lệch nhau rất lớn, ví dụ $1024$ vs $5760$), nhánh tắt Skip Connection không thể cộng trực tiếp phần tử với phần tử được. Do đó, tác giả **bắt buộc phải đặt một ma trận chiếu đường tắt $\mathbf{W}_{\text{skip}}^{(n_d)}$ có kích thước $(H \cdot p) \times d_h$** để nhân với vector đầu vào, đưa nó lên cùng số chiều $H \cdot p$ rồi mới cộng residual!
-
-Đầu ra thu được là vector phẳng $\mathbf{g}^{(i)}$ có `Shape: (B, H * p)`. Chính sự xuất hiện của ma trận $\mathbf{W}_{\text{skip}}$ này cộng với ma trận của nhánh chính sẽ dẫn đến bài toán bùng nổ tham số mà chúng ta sẽ mổ xẻ ở Slide 08!
+Đầu ra thu được là vector phẳng $\mathbf{g}^{(i)}$ có `Shape: (B, H * p)`. Chính sự xuất hiện của ma trận đường tắt này cộng với ma trận nhánh chính sẽ dẫn đến bài toán bùng nổ tham số mà chúng ta sẽ mổ xẻ ở Slide 08!
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ vào phương trình khối cuối: khoanh tròn vào số hạng $\mathbf{W}_{\text{skip}}^{(n_d)} \mathbf{v}^{(n_d-1)}$ để anh em thấy rõ sự xuất hiện của ma trận chiếu đường tắt.
+  * Chỉ vào phương trình khối cuối trên slide: khoanh tròn vào số hạng $\mathbf{W}_{\text{skip}}^{(n_d)} \mathbf{v}^{(n_d-1)}$ để anh em thấy rõ sự xuất hiện của ma trận chiếu đường tắt.
 
 ---
 
 ### 🟢 SLIDE 05 / 10 — VAI TRÒ RESHAPE (UNFLATTEN) & Ý NGHĨA VECTOR $\mathbf{d}_t^{(i)}$
 
 * **Ảnh slide:** `slide_05_reshape_va_y_nghia_dt.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-05--10-vai-trò-thao-tác-reshape-unflatten--ý-nghĩa-vector-mathbfd_ti))
-* **Thời lượng dự kiến:** 60 – 70 giây.
-* **Mục tiêu slide:** Giải thích chuẩn xác theo đúng công thức toán học và mã nguồn của bài báo gốc: Phép Reshape tạo ra ma trận $\mathbf{D}^{(i)} \in \mathbb{R}^{p \times H}$ với Shape: $(B, p, H)$, bản chất chi phí $O(1)$ và ý nghĩa vật lý của từng vector cột $\mathbf{d}_t^{(i)}$.
+* **Thời lượng dự kiến:** 55 – 65 giây.
+* **Mục tiêu slide:** Giải thích chuẩn xác theo đúng công thức và mã nguồn của bài báo gốc: Phép Reshape tạo ra ma trận $\mathbf{D}^{(i)} \in \mathbb{R}^{p \times H}$ với Shape: $(B, p, H)$, bản chất chi phí $O(1)$ và cách ghép ngoại sinh ở tầng kế tiếp.
 
 ![Slide 05: Reshape và Ý nghĩa d_t](./images/slide_05_reshape_va_y_nghia_dt.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Sau khi tầng cuối cho ra vector phẳng $\mathbf{g}^{(i)}$ có kích thước $H \cdot p$, Slide 05 giải phẫu thao tác toán học tiếp theo: **`Reshape` (hay `Unflatten`)** để bóc tách thông tin cho từng bước tương lai.
+Sau khi tầng cuối cho ra vector phẳng $\mathbf{g}^{(i)}$ kích thước $H \cdot p$, Slide 05 giải phẫu thao tác **`Reshape` (hay `Unflatten`)** để tách thông tin cho từng bước tương lai, bám sát 100% theo đúng bài báo gốc và mã nguồn TensorFlow:
 
-Nhóm mình bám sát 100% theo đúng cách tác giả trình bày trong bài báo gốc và mã nguồn TensorFlow:
+**1. Về cấu trúc ma trận trên slide:**
+* Như công thức ở trên màn hình, tác giả định hình lại vector phẳng thành ma trận $\mathbf{D}^{(i)}$ kích thước $p \times H$. Trong đại số tuyến tính, một chuỗi thời gian gồm $H$ bước được biểu diễn chuẩn mực dưới dạng một ma trận gồm **$H$ cột**, trong đó **mỗi cột thứ $t$ chính là vector bối cảnh $\mathbf{d}_t^{(i)}$ dài $p$**.
 
-**1. Về mặt toán học (Mục 4.2, Trang 6 bài báo gốc):**
+**2. Trong mã nguồn chính thức (`models.py#L210-L211`):**
+* Tác giả thực hiện đúng y như công thức toán: `tf.reshape(decoder_out, [bsize, -1, self.pred_len])` để cho ra tensor có `Shape: (B, p, H)`, tức chiều thời gian $H$ nằm ở trục cuối cùng.
+* Và trả lời luôn câu hỏi ở Slide 02 về việc **tầng kế tiếp ghép ngoại sinh cụ thể như thế nào**: Ngay ở dòng 211, tác giả ghép ma trận `(B, p, H)` này với ngoại sinh tương lai `enc_fut` có shape `(B, r_tilde, H)` dọc theo trục đặc trưng `axis=1`, tạo thành tensor `(B, p + r_tilde, H)` (ví dụ $8 + 4 = 12$ chiều đặc trưng cho mỗi bước $t$), rồi mới đưa sang `Temporal Decoder` để dự báo phi tuyến!
 
-Tác giả định nghĩa phương trình:
-
-$$
-\mathbf{D}^{(i)} = \mathrm{Reshape}\big(\mathbf{g}^{(i)}\big) \in \mathbb{R}^{p \times H}
-$$
-
-Trong đại số tuyến tính, một chuỗi thời gian gồm $H$ bước được biểu diễn chuẩn mực dưới dạng một ma trận gồm **$H$ cột**:
-
-$$
-\mathbf{D}^{(i)} = \begin{bmatrix} \mathbf{d}_1^{(i)} & \mathbf{d}_2^{(i)} & \dots & \mathbf{d}_H^{(i)} \end{bmatrix} \in \mathbb{R}^{p \times H}
-$$
-
-Trong đó, **vector cột thứ $t$ chính là $\mathbf{d}_t^{(i)} \in \mathbb{R}^p$**.
-
-**2. Trong mã nguồn chính thức (`models.py#L210`):**
-
-Tác giả thực hiện đúng y như công thức toán:
-`decoder_out = tf.reshape(decoder_out, [bsize, -1, self.pred_len])` $\to$ cho ra tensor có `Shape: (B, p, H)`.
-Chiều thời gian $H$ nằm ở trục cuối cùng. Sau đó ở dòng 211, tác giả ghép với ngoại sinh tương lai `enc_fut` dọc theo trục đặc trưng `axis=1` để tạo thành tensor `(B, p + r_tilde, H)`, rồi mới chuyển trục đưa vào `Temporal Decoder`.
-
-**3. Về chi phí và ý nghĩa của vector $\mathbf{d}_t^{(i)}$:**
-* Phép `reshape` này có **chi phí tính toán và bộ nhớ bằng 0 ($O(1)$)**, nó không copy hay cấp phát thêm ô nhớ nào mà chỉ thay đổi metadata bước nhảy (stride) của mảng liên tục.
-* Ý nghĩa của mỗi vector cột $\mathbf{d}_t^{(i)}$ (có chiều dài $p$): Nó không phải là con số dự báo thô, mà là một **vector bối cảnh mang đặc trưng quá khứ dành riêng cho thời điểm tương lai $t$**, sẵn sàng ghép nối với ngoại sinh ở bước tiếp theo!
+**3. Về chi phí và ý nghĩa:**
+* Phép `reshape` này có **chi phí tính toán và bộ nhớ bằng 0 ($O(1)$)**, chỉ thay đổi thông số bước nhảy (stride) chứ không copy dữ liệu.
+* Ý nghĩa của mỗi vector cột $\mathbf{d}_t^{(i)}$ là đóng vai trò một **vector bối cảnh quá khứ dành riêng cho thời điểm tương lai $t$**.
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ vào công thức ma trận $\mathbf{D}^{(i)} \in \mathbb{R}^{p \times H}$: nhấn mạnh đây là ma trận gồm $H$ cột, mỗi cột là vector $\mathbf{d}_t^{(i)}$ dài $p$.
+  * Chỉ vào công thức ma trận $\mathbf{D}^{(i)}$ trên slide: nhấn mạnh đây là ma trận gồm $H$ cột, mỗi cột là vector $\mathbf{d}_t^{(i)}$ dài $p$.
   * Nhấn mạnh: *"Làm đúng chuẩn bài báo: Reshape ra `(B, p, H)` với chi phí $O(1)$"*.
 
 ---
@@ -318,10 +216,10 @@ Bây giờ chúng ta cùng soi mã nguồn thực tế ở Slide 06. Để anh e
   Khối Dense Decoder nhận đầu vào là vector ẩn $\mathbf{e}$ từ Encoder truyền lên, với shape chuẩn `(B, d_h)`.
 * **Bước 4 — Chạy qua các tầng MLPResidual:**
   Tensor $\mathbf{e}$ đi tuần tự qua các khối trung gian (giữ nguyên $d_h$), rồi tới khối cuối cùng, nhân với ma trận chiếu chính và ma trận đường tắt $\mathbf{W}_{\text{skip}}$ để xuất ra vector phẳng `decoder_out` có shape `(B, H * p)`.
-* **Bước 5 — Tái cấu trúc không gian (Unflatten - Dòng 210 TF / Dòng 217 PyTorch):**
-  Trong code PyTorch của nhóm mình: `D = g.view(-1, self.H, self.p)`. Tensor lập tức được chuyển thành ma trận 3 chiều có shape `(B, H, p)`.
-* **Bước 6 — Bàn giao cho Temporal Decoder:**
-  Tensor `D` sau khi tách ra $H$ bước sẽ được ghép nối tiếp với ngoại sinh tương lai `enc_fut` ở chiều cuối cùng `torch.cat([D, enc_fut], dim=-1)` để tiến hành dự báo phi tuyến.
+* **Bước 5 — Tái cấu trúc không gian (Unflatten - Dòng 210 `models.py`):**
+  Tác giả dùng `tf.reshape(decoder_out, [bsize, -1, self.pred_len])` để chuyển ngay vector phẳng thành tensor 3 chiều có đúng shape của bài báo là `(B, p, H)`.
+* **Bước 6 — Bàn giao cho Temporal Decoder (Dòng 211 `models.py`):**
+  Tensor `D` có shape `(B, p, H)` sau đó được ghép nối tiếp với ngoại sinh tương lai `enc_fut` có shape `(B, r_tilde, H)` dọc theo trục đặc trưng `axis=1`, tạo thành tensor `(B, p + r_tilde, H)` rồi mới chuyển trục đưa vào `Temporal Decoder` để dự báo phi tuyến.
 
 Như vậy toàn bộ quy trình từ khởi tạo, chiếu phẳng, reshape đến ghép nối ngoại sinh diễn ra hoàn toàn liền mạch!
 
@@ -403,13 +301,7 @@ Mình xin làm rõ tường minh 3 luận điểm:
   * Nếu $p = 8$ (chuẩn Electricity): $H \cdot p = 720 \times 8 = 5{,}760$.
   * Nếu $p = 32$ (như Table 8 chọn cho ETTh2): $H \cdot p = 720 \times 32 = \mathbf{23{,}040}$ — tức **số chiều ngõ ra nhảy vọt gấp 8 lần**!
   * Tầng cuối gồm 2 ma trận: ma trận Linear chính `lin_b` và ma trận đường tắt `lin_res`. Mỗi ma trận có kích thước $d_h \times (H \cdot p)$.
-  * Với $d_h = 1024, p = 8$ trên `Electricity`, tổng tham số của riêng 2 ma trận này là:
-
-$$
-\text{Params}_{\text{last}} = 2 \times (1{,}024 \times 5{,}760) = 11{,}796{,}480 \approx 11.8\text{ triệu tham số!}
-$$
-
-  * Còn nếu lấy $p = 32$ với $d_h = 512$ trên `ETTh2`: $2 \times (512 \times 23{,}040) \approx 23.6\text{ triệu tham số}$! (Nếu $d_h = 1024$ thì lên tới **47.2 triệu**).
+  * Với $d_h = 1024, p = 8$ trên `Electricity`, như phép tính trên slide, tổng tham số của riêng 2 ma trận cuối này đã lên tới **~11.8 triệu tham số**! Còn nếu lấy $p = 32$ với $d_h = 512$ trên `ETTh2`, con số nhảy lên **~23.6 triệu tham số** (nếu $d_h = 1024$ thì tới **47.2 triệu**).
 * **Cơ sở 3 — Chính lời thừa nhận của tác giả tại Mục 6 Conclusion (Trang 11):**
   Tác giả viết nguyên văn: *"transformers are generally more parameter efficient than MLPs while being much more memory and compute intensive. This could be a limitation..."* — tức tác giả chính thức thừa nhận nhược điểm tốn tham số của kiến trúc MLP của mình khi mô hình mở rộng!
 
@@ -439,22 +331,13 @@ Chính vì tác giả bỏ ngỏ việc khảo sát độ nhạy của $p$, nhó
 
 **1. Nguồn gốc học thuật vững chắc:**
 
-Ý tưởng này kế thừa trực tiếp từ bài báo kinh điển **LoRA của Hu et al. (ICLR 2022)** và nghiên cứu nền tảng về **Low-Rank Factorization cho mạng sâu của Sainath et al. (ICASSP 2013)**. 
-Thay vì học một ma trận trọng số khổng lồ $\mathbf{W} \in \mathbb{R}^{(H \cdot p) \times d_h}$ nối trực tiếp từ $d_h$ sang $H \cdot p$, ta **phân rã nó thành tích của hai ma trận hạng thấp qua một nút thắt $r$**:
-
-$$
-\mathbf{W} \approx \mathbf{A} \cdot \mathbf{B}, \quad \text{với } \mathbf{B} \in \mathbb{R}^{r \times d_h},\; \mathbf{A} \in \mathbb{R}^{(H \cdot p) \times r} \quad (r \ll \min(d_h, H \cdot p))
-$$
+Ý tưởng này kế thừa trực tiếp từ bài báo kinh điển **LoRA của Hu et al. (ICLR 2022)** và nghiên cứu nền tảng về **Low-Rank Factorization cho mạng sâu của Sainath et al. (ICASSP 2013)**.
+Thay vì học một ma trận trọng số khổng lồ nối trực tiếp từ $d_h$ sang $H \cdot p$, ta phân rã nó thành tích của hai ma trận hạng thấp đi qua một nút thắt hạng $r$ như công thức và sơ đồ trên slide!
 
 **2. Vì sao đây là phương án TỐT NHẤT cho khối Dense Decoder của nhóm mình?**
 
-* **Giảm sốc tới 92.6% tham số:** Nếu ta chọn hạng $r = 64$ trên cấu hình `Electricity` ($d_h = 1024, H \cdot p = 5760$), số tham số của 2 ma trận chiếu cuối giảm từ 11.8 triệu xuống chỉ còn:
-
-$$
-\text{Params}_{\text{Low-Rank}} = 2 \times (1{,}024 \times 64 + 64 \times 5{,}760) \approx 0.87\text{ triệu tham số!}
-$$
-
-* **Giảm FLOPs tính toán hơn 13 lần:** Thay vì $5760 \times 1024 \approx 5.9 \times 10^6$ phép nhân, ta chỉ tốn $(64 \times 1024) + (5760 \times 64) \approx 4.3 \times 10^5$ phép tính.
+* **Giảm sốc tới 92.6% tham số:** Như phép tính trên màn hình với hạng $r = 64$ trên cấu hình `Electricity`, số tham số của 2 ma trận chiếu cuối giảm từ **11.8 triệu xuống chỉ còn ~0.87 triệu tham số**!
+* **Giảm FLOPs tính toán hơn 13 lần:** Số phép tính nhân ma trận giảm từ ~5.9 triệu xuống chỉ còn ~0.43 triệu phép tính.
 * **Bảo toàn 100% tính chất One-Shot $O(1)$:** Mô hình vẫn chiếu toàn bộ horizon trong 1 lần forward duy nhất, không thêm vòng lặp tuần tự nào, tốc độ GPU giữ nguyên tuyệt đối.
 * **Đóng vai trò điều chuẩn chống Overfitting (Implicit Regularization):** Việc ép thông tin qua cổ chai hạng $r$ buộc mạng chỉ giữ lại các thành phần dao động chính, loại bỏ việc ghi nhớ các điểm nhiễu ngẫu nhiên trong chuỗi dài.
 
@@ -498,12 +381,11 @@ Mình đã chuẩn bị sẵn tài liệu hướng dẫn dùng trình duyệt Br
 
 Dưới đây là các câu hỏi mà thành viên trong nhóm rất dễ thắc mắc khi cùng đọc code Dense Decoder và chuẩn bị chạy thực nghiệm:
 
-### ❓ Câu hỏi 1: *"Ủa tại sao trong code PyTorch dùng `g.view(-1, H, p)` mà trong code TensorFlow của Google lại là `[bsize, -1, pred_len]`?"*
+### ❓ Câu hỏi 1: *"Tại sao trong bài báo gốc và `models.py` tác giả lại reshape ma trận $\mathbf{D}^{(i)}$ thành shape `(B, p, H)` mà không phải ngược lại?"*
 
 **Giải thích cho bạn:**
-Đó là do sự khác biệt về quy ước thứ tự trục giữa hai framework:
-* Trong PyTorch, quy ước phổ biến cho dữ liệu chuỗi là `(Batch, Time, Feature)`, tức `(B, H, p)`. Nhóm mình để chiều thời gian $H$ ở giữa để các bước sau ghép với ngoại sinh tương lai `enc_fut` rất tự nhiên.
-* Còn trong TensorFlow của bài báo gốc, tác giả lại gom chiều đặc trưng ra trước và để chiều thời gian ở cuối, tức `(B, p, H)`. Cả hai bản chất đều lưu đúng $H \cdot p$ phần tử liên tục trong bộ nhớ, chỉ khác nhau góc nhìn trục khi lập trình thôi!
+* Về mặt đại số tuyến tính (Mục 4.2, Trang 6 bài báo gốc), mỗi bước thời gian $t$ được biểu diễn bằng một vector cột $\mathbf{d}_t^{(i)} \in \mathbb{R}^p$. Ghép $H$ bước thời gian liên tiếp thành một ma trận gồm $H$ cột sẽ tự nhiên cho ra kích thước $\mathbf{D}^{(i)} \in \mathbb{R}^{p \times H}$, tương ứng với batch shape `(B, p, H)`.
+* Nhờ để chiều đặc trưng $p$ ở trục giữa (`axis=1`) và chiều thời gian $H$ ở trục cuối (`axis=2`), ở bước ngay sau đó trong `models.py#L211`, tác giả dễ dàng ghép nối tiếp tensor `D` với ngoại sinh tương lai `enc_fut` (cũng có shape `(B, r_tilde, H)`) dọc theo trục đặc trưng `axis=1` để tạo thành `(B, p + r_tilde, H)` trước khi đưa vào `Temporal Decoder`.
 
 ### ❓ Câu hỏi 2: *"Phép Low-Rank Factorization $\mathbf{W} \approx \mathbf{A} \cdot \mathbf{B}$ có làm chậm tốc độ suy luận của mô hình không?"*
 
