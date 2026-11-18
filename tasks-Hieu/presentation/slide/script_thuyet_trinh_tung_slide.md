@@ -135,20 +135,30 @@ Slide 05 này trả lời câu hỏi quan trọng nhất để hiểu bản ch�
 
 **Thẻ trái (xanh lá) — Độc lập lúc tính toán (Tốc độ GPU):**
 
-* **Phần 1 — Công thức Toán học:** Ma trận chiếu tầng cuối $\mathbf{W}$ được tách thành $H$ mảng con $\mathbf{W}_1, \dots, \mathbf{W}_H$. Bước thứ $t$ chỉ lấy biểu diễn ẩn $\mathbf{v}^{(n_d-1)}$ nhân với mảng $\mathbf{W}_t$ của riêng nó để ra $\mathbf{d}_t^{(i)}$. Vì thế đạo hàm chéo $\partial \mathbf{d}_t^{(i)} / \partial \mathbf{d}_s^{(i)} = \mathbf{0}$ — tức bước $t$ (ngày kia) không hề lấy kết quả của bước $s$ (ngày mai) làm đầu vào, hai ngày hoàn toàn không dính vào nhau lúc tính.
-* **Phần 2 — Code nguyên văn (`models.py#L133-L137`, `#L207-L208`):** Vì không bước nào chờ bước nào, tác giả bỏ hẳn vòng lặp `for t in range(H)`, chỉ khởi tạo đúng 1 tầng `self.decoder` xuất ra tích `decoder_output_dim * self.pred_len` (bằng $p \cdot H$ chiều). Khi chạy chỉ cần đúng 1 lệnh `decoder_out = self.decoder(encoding)` tính hết cả $H$ bước cùng lúc, rồi dùng `tf.reshape` ở dòng 208 chặt ra thành $H$ lát cắt riêng.
+* **Phần 1 — Công thức Toán học:** Ma trận chiếu tầng cuối $W$ được tách thành $H$ mảng con độc lập từ bước $1$ đến bước $H$. Mỗi bước $t$ chỉ lấy đúng biểu diễn ẩn từ Encoder nhân với mảng trọng số của riêng nó, nên đạo hàm chéo giữa bước $t$ và bước $s$ khác nhau luôn bằng $0$:
+
+$$
+\frac{\partial \mathbf{d}_t^{(i)}}{\partial \mathbf{d}_s^{(i)}} = \mathbf{0} \quad (\forall t \neq s)
+$$
+
+* **Phần 2 — Code nguyên văn (`models.py#L133-L137`, `#L207-L208`):** Vì ngày kia không lấy kết quả ngày mai làm đầu vào, tác giả bỏ hẳn vòng lặp `for t in range(H)`, chỉ khởi tạo đúng 1 tầng `self.decoder` xuất ra tích `decoder_output_dim * self.pred_len` (bằng $p \cdot H$ chiều). Khi chạy chỉ cần đúng 1 lệnh `decoder_out = self.decoder(encoding)` tính hết cả $H$ bước cùng lúc, rồi dùng `tf.reshape` ở dòng 208 chặt ra thành $H$ lát cắt riêng.
 * **Phần 3 — Nhận xét:** Toàn bộ $H$ bước chạy gọn trong một phép nhân ma trận GPU duy nhất ($O(1)$ song song) và **triệt tiêu hoàn toàn lỗi tích lũy sai số dây chuyền**.
 
 **Thẻ phải (xanh dương) — Tương quan lúc biểu diễn (Giữ mạch chuỗi thời gian):**
 
 *Nếu ngày 1 và ngày 2 tính độc lập, sao ngày 1 đoán 30°C mà ngày 2 không tự nhiên vọt về 0°C vô lý?* Câu trả lời nằm ở 3 sợi dây nối ngầm trong thẻ phải:
 
-* **Phần 1 — Công thức Toán học:** Nếu giữ cố định gốc $\mathbf{e}$ ($\mathrm{Cov}(\mathbf{d}_t, \mathbf{d}_s \mid \mathbf{e}) = 0$) thì phép nhân tách rời nhau; nhưng trên toàn bộ phân phối dữ liệu, mọi bước dùng **chung một ma trận gốc** $\Sigma_{\mathbf{e}}$ nên hiệp phương sai biên $\mathrm{Cov}(\mathbf{d}_t, \mathbf{d}_s) \neq \mathbf{0}$. Giống như 2 bạn học sinh không nhìn bài nhau trong phòng thi (độc lập lúc tính), nhưng cùng ôn từ một bộ đề cương chung $\mathbf{e}$ nên đáp án vẫn nhất quán cùng logic. Ngoài ra, lúc huấn luyện, gradient sai số $\nabla_{\mathbf{e}} \mathcal{L}$ của tất cả $H$ ngày cùng cộng dồn ngược về $\mathbf{e}$, kết hợp với nhánh tuyến tính $\hat{y}_{\mathrm{res},t}$ nối thẳng từ quá khứ sang từng bước tương lai.
+* **Phần 1 — Công thức Toán học:** Nếu giữ cố định gốc $e$ thì phép tính hai bước tách rời nhau, nhưng trên toàn bộ phân phối dữ liệu, mọi bước dùng **chung một ma trận gốc** $\Sigma_{\mathbf{e}}$ nên hiệp phương sai biên khác $0$ ($\mathrm{Cov} \neq 0$). Giống như 2 học sinh không chép bài nhau trong phòng thi (độc lập lúc làm bài), nhưng cùng ôn từ một bộ đề cương chung $e$ nên đáp án vẫn nhất quán cùng logic. Lúc huấn luyện, gradient sai số của tất cả $H$ ngày cùng dồn ngược về sửa chung cho $e$, kết hợp với nhánh tuyến tính nối thẳng từ quá khứ sang từng bước tương lai:
+
+$$
+\mathrm{Cov}(\mathbf{d}_t^{(i)}, \mathbf{d}_s^{(i)}) = \mathbf{W}_t \Sigma_{\mathbf{e}} \mathbf{W}_s^\top \neq \mathbf{0}, \qquad \nabla_{\mathbf{e}^{(i)}} \mathcal{L} = \sum_{t=1}^{H} \mathbf{W}_t^\top \nabla_{\mathbf{d}_t^{(i)}} \mathcal{L}
+$$
+
 * **Phần 2 — Code nguyên văn (`models.py#L203-L214`, `#L225`):** Cả 3 cơ chế nối kết đó thể hiện nguyên văn trong code: dòng 206 tạo chung một tensor `encoding = self.encoder(...)` cấp cho mọi bước; dòng 203 và 214 cộng thẳng nhánh tắt `residual_out = self.linear(past_ts)` qua `out += residual_out`; và dòng 225 chấm chung một hàm `loss = train_loss(ytrue, all_preds)` cho cả $H$ ngày.
-* **Phần 3 — Nhận xét:** TiDE rất khéo léo: **tính toán độc lập khi chạy** (để đạt tốc độ $O(1)$) nhưng **liên kết chặt chẽ khi học** (nhờ chung `encoding`, chung `loss` và nhánh `linear`). Tuy nhiên, cái giá phải trả là lớp chiếu cuối có kích thước cứng $(H \cdot p) \times d_h$ gây phình tham số ở $H=720$ — đây chính là nút thắt mở đường cho giải pháp Low-Rank ở Phần 3.
+* **Phần 3 — Nhận xét:** TiDE rất khéo léo: **tính toán độc lập khi chạy** (để đạt tốc độ $O(1)$) nhưng **liên kết chặt chẽ khi học** (nhờ chung `encoding`, chung `loss` và nhánh `linear`). Tuy nhiên, cái giá phải trả là lớp chiếu cuối có kích thước cứng `(H * p, d_h)` gây phình tham số ở $H=720$ — đây chính là nút thắt mở đường cho giải pháp Low-Rank ở Phần 3.
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ sang thẻ trái: nhấn mạnh công thức đạo hàm bằng $0$ dẫn thẳng tới việc **không cần vòng lặp `for t`**, chỉ 1 lệnh `self.decoder` + `tf.reshape`.
+  * Chỉ sang thẻ trái: nhấn mạnh đạo hàm bằng $0$ dẫn thẳng tới việc **không cần vòng lặp `for t`**, chỉ 1 lệnh `self.decoder` + `tf.reshape`.
   * Chỉ sang thẻ phải: nhấn mạnh ba mắt xích nối chung trong code gồm `encoding`, `self.linear(past_ts)`, và `train_loss(ytrue, all_preds)`.
 
 ---
