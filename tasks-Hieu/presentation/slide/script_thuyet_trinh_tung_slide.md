@@ -24,38 +24,31 @@ flowchart LR
 
 ---
 
-### 🟢 SLIDE 01 / 10 — THUẬT NGỮ CỐT LÕI CHO DENSE DECODER (NỀN TẢNG)
+### 🟢 SLIDE 01 / 10 — THUẬT NGỮ NỀN TẢNG CỐT LÕI (`MLPResidual`, `Unflatten`, `Information Bottleneck`)
 
-* **Ảnh slide:** `slide_01_bang_thuat_ngu_dense_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-01--10-thuật-ngữ-cốt-lõi-cho-dense-decoder-nền-tảng))
-* **Thời lượng dự kiến:** 60 – 70 giây.
-* **Mục tiêu slide:** Thống nhất với cả nhóm 5 khái niệm xương sống; **giải thích cặn kẽ các ký hiệu $B, H, p$ và con số cụ thể của $d_h = \text{hiddenSize}$** để anh em nắm chắc ngay từ giây đầu tiên.
+* **Ảnh slide:** `slide_01_bang_thuat_ngu_dense_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-01--10-thuật-ngữ-nền-tảng-cốt-lõi-mlpresidual-unflatten-information-bottleneck))
+* **Thời lượng dự kiến:** 50 – 60 giây.
+* **Mục tiêu slide:** Thống nhất với cả nhóm 3 khái niệm nền tảng (`MLPResidual`, `Unflatten`, `Information Bottleneck`) cùng các ký hiệu $B, H, p, d_h$ trước khi bước vào sơ đồ kiến trúc ở Slide 02.
 
-![Slide 01: Thuật ngữ cốt lõi](./images/slide_01_bang_thuat_ngu_dense_decoder.png)
+![Slide 01: Thuật ngữ nền tảng cốt lõi](./images/slide_01_bang_thuat_ngu_dense_decoder.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-> "Chào mọi người, trong kiến trúc TiDE, sau khi `Dense Encoder` nén toàn bộ dữ liệu lịch sử thì trọng trách giải mã tương lai thuộc về khối **`Dense Decoder`**. 
-> 
-> Trước khi đi vào sơ đồ, anh em nhìn vào bảng ở **Slide 01**, mình muốn giải thích cặn kẽ từng ký hiệu và con số để nhóm mình không ai bị mơ hồ:
-> 
+> "Chào mọi người! Trước khi bước vào sơ đồ kiến trúc chi tiết từ Slide 02 trở đi, anh em nhìn nhanh qua **Slide 01** để thống nhất 3 thuật ngữ nền tảng cốt lõi và bộ ký hiệu $B, H, p, d_h$ sẽ dùng xuyên suốt buổi chia sẻ hôm nay:
+>
 > * **Đầu tiên, $B, H, p$ và $d_h$ là cái gì?**
->   * **$B$ là `Batch Size`:** Số lượng mẫu chuỗi thời gian đưa vào huấn luyện cùng một lúc. Trong bài báo, tác giả **cố định $B = 512$** cho toàn bộ 7 bộ dữ liệu.
->   * **$H$ là `Horizon`:** Tầm dự báo tương lai mà mô hình cần đoán trước. Tác giả thí nghiệm ở 4 mốc chuẩn: **$96, 192, 336$ và dài nhất là $720$ bước**.
->   * **$p$ là `decoderOutputDim`:** Số chiều đặc trưng của vector bối cảnh tại mỗi bước thời gian. Khi dự báo một bước $t$, ta không chỉ nén thành 1 con số thô, mà giữ lại một vector gồm $p$ thuộc tính (thường chọn $p = 8, 16$ hoặc $32$) để chứa bối cảnh lịch sử.
->   * **Còn $d_h = \text{hiddenSize}$ là bao nhiêu?** Trong bài báo (Bảng 7 Phụ lục), tác giả khảo sát không gian $\{256, 512, 1024\}$. Với các tập dữ liệu lớn như `Electricity` và `Traffic`, **$d_h$ được chọn tối đa là $1024$**; còn các tập trạm biến áp `ETT` nhỏ hơn thì chọn $d_h = 256$ hoặc $512$.
-> 
-> * **Từ các ký hiệu đó, 5 khái niệm trên slide gắn kết với nhau như sau:**
->   1. **`MLPResidual`:** Khối cơ sở lặp lại gồm Linear $\to$ ReLU $\to$ Linear $\to$ Dropout $\oplus$ Skip Connection $\to$ LayerNorm.
->   2. **Vector ẩn $\mathbf{e}^{(i)}$:** Đầu vào của Decoder, có `Shape: (B, d_h)` — tức $(512, 1024)$ trên Electricity — nén trọn quá khứ.
->   3. **Khối `Dense Decoder`:** Xếp chồng $n_d$ khối `MLPResidual`, từ chiều ẩn $d_h$ chiếu một phát ra vector phẳng $\mathbf{g}^{(i)}$ có kích thước $H \cdot p$.
->   4. **Thao tác `Reshape` (hay `Unflatten`):** Biến đổi mảng phẳng $(B, H \cdot p)$ thành ma trận 2D $(B, H, p)$ mà không tốn một byte bộ nhớ copy nào!
->   5. **Vector bối cảnh $\mathbf{d}_t^{(i)}$:** Từng lát cắt thứ $t$ trích từ ma trận trên, có `Shape: (B, p)`.
-> 
-> Nắm chắc các con số này rồi, giờ chúng ta xem vị trí của Dense Decoder trên kiến trúc tổng thể ở Slide 02 nhé!"
+>   * $B$ là `Batch Size` (cố định $B = 512$ trong bài báo), $H$ là `Horizon` ($96, 192, 336, 720$ bước tương lai).
+>   * $p$ là `decoderOutputDim` (số chiều biểu diễn cho mỗi mốc thời gian, thường $8, 16, 32$) và $d_h = \text{hiddenSize} \in \{256, 512, 1024\}$.
+>
+> * **3 thuật ngữ cốt lõi ở Slide 01:**
+>   1. **`MLPResidual` (Residual Block):** Đơn vị xử lý cơ sở xếp thành chuỗi tầng trong TiDE, gồm nhánh chính `Dense(ReLU)` $\to$ `Dense(Linear)` + `Dropout` cộng song song với nhánh tắt tuyến tính `lin_res` và `LayerNorm` giúp ổn định gradient khi giữ nguyên hoặc đổi số chiều.
+>   2. **`Unflatten` (Thao tác Reshape):** Phép biến đổi hình học khôi phục lại trục thời gian $H$ từ vector phẳng `Shape: (B, H * p)` thành ma trận 2 chiều `Shape: (B, H, p)` trong PyTorch (`view(-1, H, p)`), chỉ cập nhật metadata stride bộ nhớ với chi phí $O(1)$ không tốn copy dữ liệu.
+>   3. **`Information Bottleneck` (Nghẽn cổ chai thông tin):** Hiện tượng mất mát thông tin khi ép biểu diễn qua không gian chiều $p$ (hoặc hạng $r$) quá nhỏ như $p = 1, 2$ — thiếu dung lượng giữ cả pha chu kỳ lẫn xu hướng; ngược lại $p$ quá lớn ($32, 64$) lại gây bùng nổ tham số và Overfitting.
+>
+> Nắm chắc 3 khái niệm nền tảng và các ký hiệu này rồi, giờ chúng ta đi vào vị trí kiến trúc trên Figure 1 ở Slide 02 nhé!"
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ trực tiếp vào thẻ số 2: *"Nhớ nhé anh em: $B=512$, $d_h = 1024$, $H=96 \to 720$, $p=8 \to 32$"*.
-  * Khoanh vào Thẻ 4 và 5: *"Phép Reshape biến từ tích $H \cdot p$ thành $H$ lát cắt độc lập $\mathbf{d}_t$"*.
+  * Chỉ lần lượt qua 3 thẻ độc lập (không có mũi tên nối): `MLPResidual` $\rightarrow$ `Unflatten` $\rightarrow$ `Information Bottleneck`.
 
 ---
 
@@ -159,26 +152,43 @@ flowchart LR
 
 * **Ảnh slide:** `slide_05_reshape_va_y_nghia_dt.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-05--10-vai-trò-thao-tác-reshape-unflatten--ý-nghĩa-vector-mathbfd_ti))
 * **Thời lượng dự kiến:** 60 – 70 giây.
-* **Mục tiêu slide:** **Giải thích rõ vì sao PyTorch nhóm mình dùng `(B, H, p)` thay vì theo bài báo gốc `(B, p, H)`**; phân tích tính tối ưu $O(1)$ và ý nghĩa vật lý của $\mathbf{d}_t^{(i)}$.
+* **Mục tiêu slide:** Giải thích chuẩn xác theo đúng công thức toán học và mã nguồn của bài báo gốc: Phép Reshape tạo ra ma trận $\mathbf{D}^{(i)} \in \mathbb{R}^{p \times H}$ với Shape: $(B, p, H)$, bản chất chi phí $O(1)$ và ý nghĩa vật lý của từng vector cột $\mathbf{d}_t^{(i)}$.
 
 ![Slide 05: Reshape và Ý nghĩa d_t](./images/slide_05_reshape_va_y_nghia_dt.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-> "Sau khi tầng cuối cho ra vector phẳng $\mathbf{g}^{(i)}$ `Shape: (B, H \cdot p)`, Slide 05 giải thích thao tác `Reshape (Unflatten)` để tách ra các vector bối cảnh $\mathbf{d}_t^{(i)}$.
+> "Sau khi tầng cuối cho ra vector phẳng $\mathbf{g}^{(i)}$ có kích thước $H \cdot p$, Slide 05 giải phẫu thao tác toán học tiếp theo: **`Reshape` (hay `Unflatten`)** để bóc tách thông tin cho từng bước tương lai.
 > 
-> **Ở đây có một câu hỏi lập trình cực hay: 'Tại sao nhóm mình không làm y hệt bài báo cho ra Shape `(B, p, H)` mà lại đổi thành `(B, H, p)`?'**
+> Nhóm mình bám sát 100% theo đúng cách tác giả trình bày trong bài báo gốc và mã nguồn TensorFlow:
 > 
-> Mình xin giải thích cặn kẽ lý do đằng sau quyết định này của nhóm mình:
-> 1. **Trong bài báo gốc (TensorFlow):** Tác giả viết `tf.reshape(decoder_out, [bsize, -1, self.pred_len])`, chiều thời gian $H$ nằm ở cuối cùng nên shape là `(B, p, H)`. Nhưng anh em để ý xem: Ngay ở dòng code tiếp theo (`models.py#L212`), để đưa dữ liệu vào tầng Dense của Temporal Decoder, tác giả **lại phải mất công gọi thêm lệnh `tf.transpose(final_in, (0, 2, 1))`** để đảo trục đưa $H$ ra giữa và $p$ về cuối!
-> 2. **Trong PyTorch của nhóm mình:** Quy ước chuẩn mực của Time-Series và NLP trong PyTorch luôn là `(Batch, Time, Feature)`. Bằng cách dùng lệnh `g.view(-1, H, p)` ngay từ đầu:
->    * Dữ liệu đã ở đúng dạng chuẩn `(B, H, p)`.
->    * Ở tầng sau, khi ghép với ngoại sinh tương lai `enc_fut` (cũng có shape `(B, H, r_tilde)`), ta chỉ việc gọi `torch.cat(..., dim=-1)` là chạy thẳng được luôn, **tiết kiệm được 1 thao tác transpose thừa thãi**, bộ nhớ liên tục hơn và code sạch hơn hẳn!
+> **1. Về mặt toán học (Mục 4.2, Trang 6 bài báo gốc):**
+> Tác giả định nghĩa phương trình:
 > 
-> Về chi phí, lệnh `view` hay `reshape` này có **chi phí bằng 0 ($O(1)$)**, nó không copy mảng dữ liệu mà chỉ thay đổi metadata bước nhảy (stride). Mỗi lát cắt $\mathbf{d}_t^{(i)}$ lấy ra có kích thước $p$ chứa trọn bối cảnh quá khứ cho thời điểm $t$!"
+> $$
+> \mathbf{D}^{(i)} = \mathrm{Reshape}\big(\mathbf{g}^{(i)}\big) \in \mathbb{R}^{p \times H}
+> $$
+> 
+> Trong đại số tuyến tính, một chuỗi thời gian gồm $H$ bước thường được biểu diễn chuẩn mực dưới dạng một ma trận có $H$ cột:
+> 
+> $$
+> \mathbf{D}^{(i)} = \begin{bmatrix} \mathbf{d}_1^{(i)} & \mathbf{d}_2^{(i)} & \dots & \mathbf{d}_H^{(i)} \end{bmatrix} \in \mathbb{R}^{p \times H}
+> $$
+> 
+> Trong đó, **vector cột thứ $t$ chính là $\mathbf{d}_t^{(i)} \in \mathbb{R}^p$**.
+> 
+> **2. Trong mã nguồn chính thức (`models.py#L210`):**
+> Tác giả thực hiện đúng y như công thức toán:
+> `decoder_out = tf.reshape(decoder_out, [bsize, -1, self.pred_len])` $\to$ cho ra tensor có `Shape: (B, p, H)`.
+> Chiều thời gian $H$ nằm ở trục cuối cùng. Sau đó ở dòng 211, tác giả ghép với ngoại sinh tương lai `enc_fut` dọc theo trục đặc trưng `axis=1` để tạo thành tensor `(B, p + r_tilde, H)`, rồi mới chuyển trục đưa vào `Temporal Decoder`.
+> 
+> **3. Về chi phí và ý nghĩa của vector $\mathbf{d}_t^{(i)}$:**
+> * Phép `reshape` này có **chi phí tính toán và bộ nhớ bằng 0 ($O(1)$)**, nó không copy hay cấp phát thêm ô nhớ nào mà chỉ thay đổi metadata bước nhảy (stride) của mảng liên tục.
+> * Ý nghĩa của mỗi vector cột $\mathbf{d}_t^{(i)}$ (có chiều dài $p$): Nó không phải là con số dự báo thô, mà là một **vector bối cảnh mang đặc trưng quá khứ dành riêng cho thời điểm tương lai $t$**, sẵn sàng ghép nối với ngoại sinh ở bước tiếp theo!"
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * So sánh trực tiếp: TensorFlow `(B, p, H)` phải thêm bước transpose $\leftrightarrow$ PyTorch `(B, H, p)` chuẩn `(Batch, Time, Feature)` dùng `torch.cat(dim=-1)` mượt mà.
+  * Chỉ vào công thức ma trận $\mathbf{D}^{(i)} \in \mathbb{R}^{p \times H}$: nhấn mạnh đây là ma trận gồm $H$ cột, mỗi cột là vector $\mathbf{d}_t^{(i)}$ dài $p$.
+  * Nhấn mạnh: *"Làm đúng chuẩn bài báo: Reshape ra `(B, p, H)` với chi phí $O(1)$"*.
 
 ---
 
@@ -253,39 +263,48 @@ flowchart LR
 
 * **Ảnh slide:** `slide_08_phan_tich_p_nd_va_gioi_han.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-08--10-phân-tích-ảnh-hưởng-của-p-n_d--giới-hạn-khi-horizon-h-dài))
 * **Thời lượng dự kiến:** 75 – 85 giây.
-* **Mục tiêu slide:** **Giải thích cặn kẽ với con số cụ thể**: Nghẽn cổ chai khi $p$ nhỏ là nghẽn như thế nào? Số chiều $H \cdot p$ đột biến là đột biến bao nhiêu con số? Vạch trần bài toán bùng nổ 11.8M $\to$ 50M tham số.
+* **Mục tiêu slide:** Chỉ rõ vị trí xuất hiện của $p$ trong bài báo (Mục 4.2 Trang 6, Table 7 Trang 20, Table 8 Trang 21); khẳng định việc tác giả chưa làm ablation riêng cho $p$; giải thích cơ sở toán học và mã nguồn thực tế dẫn đến con số 11.8M $\to$ 23.6M tham số.
 
 ![Slide 08: Phân tích p, n_d và Giới hạn](./images/slide_08_phan_tich_p_nd_va_gioi_han.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-> "Slide 08 này giải quyết trực tiếp 3 thắc mắc sâu sắc nhất về mặt kỹ thuật:
+> "Slide 08 này giải quyết một câu hỏi học thuật cực kỳ sắc bén mà anh em khi đọc bài báo chắc chắn sẽ thắc mắc:
+> **'Tác giả có nói về vấn đề chọn $p$ không, vị trí nó nằm ở đâu trong bài báo, và nếu không thì cơ sở nào để nhóm mình đưa ra các con số này?'**
 > 
-> **1. 'Chọn $p$ nhỏ gây nghẽn thông tin thì cụ thể là nghẽn như thế nào?'**
-> * Hãy thử tưởng tượng anh em đặt $p = 1$ hoặc $p = 2$: Tại mỗi bước tương lai $t$, ta chỉ cho phép mô hình dùng đúng 1 hoặc 2 con số thực để chứa toàn bộ bối cảnh quá khứ! 
-> * Trong khi đó, chuỗi thời gian thực tế có vô số động lực học phức tạp: xu hướng dài hạn, chu kỳ ngày/đêm, chu kỳ tuần, và tương tác tương quan chéo giữa hàng trăm biến phụ tải. Ép tất cả các đặc trưng đó vào 1 hay 2 con số thì giống như **bắt nén một video 4K thành 2 pixel mờ tịt** $\to$ Mất sạch thông tin động lực học, mô hình bị Underfitting và dự báo ra một đường thẳng đơ thiếu sức sống!
+> Mình xin làm rõ tường minh 3 luận điểm:
 > 
-> **2. 'Số chiều ngõ ra $H \cdot p$ đột biến thì cụ thể là đột biến bao nhiêu?'**
-> Hãy nhìn vào các con số thực tế khi dự báo dài hạn $H = 720$:
-> * Với $p = 4$: $H \cdot p = 720 \times 4 = 2{,}880$.
-> * Với $p = 8$ (chuẩn Electricity): $H \cdot p = 720 \times 8 = 5{,}760$.
-> * Nhưng nếu chọn $p = 32$ (như tập `ETTh2`): $H \cdot p = 720 \times 32 = \mathbf{23{,}040}$!
-> * **Số chiều ngõ ra nhảy vọt từ 2,880 lên 23,040 — tức tăng đột biến gấp 8 lần!**
+> **1. Vị trí tác giả đề cập đến $p$ trong bài báo gốc:**
+> * **Mục 4.2 (Trang 6):** Tác giả định nghĩa $p$ là siêu tham số `decoderOutputDim`, quyết định số chiều của vector bối cảnh $\mathbf{d}_t \in \mathbb{R}^p$ và quy định chiều ngõ ra của Dense Decoder là $H \cdot p$.
+> * **Phụ lục B.3 & Table 7 (Trang 20):** Tác giả đưa ra dải quét siêu tham số: `decoderOutputDim` $\in [4, 8, 16, 32]$. Tác giả ghi rõ dùng validation loss để chọn giá trị tối ưu cho từng tập.
+> * **Table 8 (Trang 21):** Công bố kết quả chọn thực tế: 4 tập chọn $p = 8$ (`Electricity`, `ETTm1`, `ETTh1`, `Weather`); 2 tập chọn $p = 16$ (`Traffic`, `ETTm2`); và chỉ đúng 1 tập duy nhất chọn $p = 32$ (`ETTh2`). **Không có bất kỳ tập nào chọn $p = 4$**.
 > 
-> **3. Hậu quả bùng nổ tham số khủng khiếp như thế nào?**
-> * Trên `Electricity` ($d_h = 1024, p = 8, H = 720 \Rightarrow H \cdot p = 5760$): Riêng 2 ma trận `lin_b` và `lin_res` ở tầng cuối đã chiếm:
+> **2. Tác giả có làm Ablation Study phân tích riêng cho $p$ không?**
+> * **Sự thật là KHÔNG!** Trong bài báo gốc, tác giả chỉ làm thí nghiệm Ablation cho Context Size (Hình 4), Temporal Decoder (Hình 3) và Residual (Bảng 5). Tác giả **hoàn toàn không công bố bài phân tích thực nghiệm hay biểu đồ nào về việc thay đổi $p$ sẽ ảnh hưởng ra sao**. Đây là một khoảng trống thực nghiệm rất lớn!
+> 
+> **3. Vậy cơ sở nào để nhóm mình đưa ra nhận định và các con số trên slide?**
+> * **Cơ sở 1 — Về hiện tượng nghẽn thông tin khi $p$ nhỏ:** Chuỗi thời gian thực tế có đa dạng động lực học: xu hướng dài hạn, chu kỳ ngày/đêm, chu kỳ tuần và tương quan chéo đa biến. Việc cả 7/7 tập benchmark đều 'chê' $p=4$ và chọn $p \geq 8$ chứng minh rằng nếu chọn $p$ quá nhỏ, vector $\mathbf{d}_t$ bị nghẽn cổ chai thông tin (Information Bottleneck), không đủ sức chứa bối cảnh quá khứ phức tạp.
+> * **Cơ sở 2 — Phép tính tham số chuẩn xác 100% từ code (`models.py#L40-L47` & dòng 136):**
+>   Tầng cuối cùng mở rộng ra $H \cdot p$. Ở tầm xa $H = 720$:
+>   * Nếu $p = 4$: $H \cdot p = 720 \times 4 = 2{,}880$.
+>   * Nếu $p = 8$ (chuẩn Electricity): $H \cdot p = 720 \times 8 = 5{,}760$.
+>   * Nếu $p = 32$ (như Table 8 chọn cho ETTh2): $H \cdot p = 720 \times 32 = \mathbf{23{,}040}$ — tức **số chiều ngõ ra nhảy vọt gấp 8 lần**!
+>   * Tầng cuối gồm 2 ma trận: ma trận Linear chính `lin_b` và ma trận đường tắt `lin_res`. Mỗi ma trận có kích thước $d_h \times (H \cdot p)$.
+>   * Với $d_h = 1024, p = 8$ trên `Electricity`, tổng tham số của riêng 2 ma trận này là:
 > 
 > $$
-> 2 \times (5{,}760 \times 1{,}024) \approx \mathbf{11.8\text{ triệu tham số!}}
+> 2 \times (1{,}024 \times 5{,}760) = 11{,}796{,}480 \approx \mathbf{11.8\text{ triệu tham số!}}
 > $$
 > 
-> * Còn nếu trên tập `ETTh2` với $p = 32$, con số này nhảy vọt lên tới **gần 50 triệu tham số** cho chỉ riêng 1 tầng chiếu cuối! Trên một tập dữ liệu nhỏ chỉ có vài nghìn dòng, 50 triệu tham số sẽ khiến mô hình lập tức học thuộc lòng nhiễu (Overfitting cực nặng)!
+>   * Còn nếu lấy $p = 32$ với $d_h = 512$ trên `ETTh2`: $2 \times (512 \times 23{,}040) \approx \mathbf{23.6\text{ triệu tham số}}$! (Nếu $d_h = 1024$ thì lên tới **47.2 triệu**).
+> * **Cơ sở 3 — Chính lời thừa nhận của tác giả tại Mục 6 Conclusion (Trang 11):**
+>   Tác giả viết nguyên văn: *'transformers are generally more parameter efficient than MLPs while being much more memory and compute intensive. This could be a limitation...'* — tức tác giả chính thức thừa nhận nhược điểm tốn tham số của kiến trúc MLP của mình khi mô hình mở rộng!
 > 
-> Đây chính là lý do vì sao ở Mục 6 Conclusion (trang 11), tác giả bài báo phải thừa nhận: *'Transformers generally are more parameter efficient than MLPs'*. Và đây chính là điểm đột phá để nhóm mình đề xuất cải tiến ở Phần 3!"
+> Chính vì tác giả bỏ ngỏ việc khảo sát độ nhạy của $p$, nhóm mình mới đưa bài toán quét nhạy cảm $p \in \{2, 8, 16, 32\}$ vào Lộ trình thực nghiệm ở Slide 10!"
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ vào phép so sánh: $p=4$ ($2,880$) $\to p=32$ ($23,040$) tăng vọt 8 lần.
-  * Khoanh vào con số **11.8M** và **50M tham số**: nhấn mạnh đây là tử huyệt về tham số của TiDE gốc.
+  * Chỉ rõ vị trí xuất xứ: Mục 4.2 Trang 6, Table 7 Trang 20, Table 8 Trang 21 và Mục 6 Trang 11.
+  * Chỉ vào phép nhân ma trận $2 \times (d_h \times H \cdot p)$ chứng minh con số 11.8M tham số là phép tính số học chính xác từ code.
 
 ---
 
