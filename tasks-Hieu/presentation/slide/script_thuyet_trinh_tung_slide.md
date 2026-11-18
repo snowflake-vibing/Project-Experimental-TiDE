@@ -297,7 +297,7 @@ Và chính tác giả bài báo cũng thẳng thắn thừa nhận giới hạn 
 
 Để giải quyết triệt để nút thắt 11.8 triệu tham số mà tác giả để lại tại Mục 6 và dòng 136 của `models.py`, ở Slide 11 mình đề xuất phương án tối ưu nhất cho nhóm: **Low-Rank Dense Decoder Projection**.
 
-Ý tưởng này kế thừa từ hai nghiên cứu kinh điển là **LoRA (Hu et al., ICLR 2022)** và **Low-Rank DNN (Sainath et al., ICASSP 2013)**: thay vì học một ma trận trọng số dày đặc kích thước khổng lồ $\mathbf{W}$ nối thẳng từ $d_h$ sang $H \cdot p$, ta **phân rã nó thành tích của hai ma trận hạng thấp $\mathbf{A} \cdot \mathbf{B}$** đi qua một hạng trung gian nhỏ $r$.
+Ý tưởng này kế thừa từ hai nghiên cứu kinh điển là **LoRA (Hu et al., ICLR 2022 — [doi:10.48550/arXiv.2106.09685](https://doi.org/10.48550/arXiv.2106.09685))** và **Low-Rank DNN (Sainath et al., ICASSP 2013 — [doi:10.1109/ICASSP.2013.6638949](https://doi.org/10.1109/ICASSP.2013.6638949))**: thay vì học một ma trận trọng số dày đặc kích thước khổng lồ $\mathbf{W}$ nối thẳng từ $d_h$ sang $H \cdot p$, ta **phân rã thành tích của hai ma trận hạng thấp** $\mathbf{A} \cdot \mathbf{B}$ đi qua một hạng trung gian nhỏ $r$.
 
 Để các bạn mới nghe hình dung thật rõ luồng kiến trúc mới thay đổi ra sao so với bản gốc, mình sẽ đi theo từng bước dữ liệu chạy qua tầng cuối:
 

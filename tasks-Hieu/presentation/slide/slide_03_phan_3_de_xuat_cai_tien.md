@@ -10,7 +10,8 @@
 
 ### 1. Kế thừa trực tiếp từ các bài báo uy tín
 
-- **Hu et al. (ICLR 2022) — LoRA (*Low-Rank Adaptation of Large Language Models*)** và **Sainath et al. (ICASSP 2013) — Low-Rank Matrix Factorization for DNN**.
+- **Hu et al. (ICLR 2022) — LoRA (*Low-Rank Adaptation of Large Language Models*):** [doi:10.48550/arXiv.2106.09685](https://doi.org/10.48550/arXiv.2106.09685)
+- **Sainath et al. (ICASSP 2013) — Low-Rank Matrix Factorization for DNN (*High-dimensional Output Targets*):** [doi:10.1109/ICASSP.2013.6638949](https://doi.org/10.1109/ICASSP.2013.6638949)
 - Cơ sở lý thuyết: Thay vì học trực tiếp ma trận trọng số dày đặc kích thước khổng lồ $\mathbf{W} \in \mathbb{R}^{(H \cdot p) \times d_h}$ nối từ tầng ẩn cuối $d_h$ sang toàn bộ horizon $H \cdot p$, ta phân rã tuyến tính qua một không gian cổ chai hạng thấp $r \ll \min(d_h, H \cdot p)$:
 
 $$
