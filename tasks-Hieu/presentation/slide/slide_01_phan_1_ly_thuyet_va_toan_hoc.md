@@ -30,11 +30,11 @@
 
 ---
 
-## Slide 03 / 10 — Cách Dense Decoder tạo biểu diễn toàn horizon (One-Shot vs Tuần tự)
+## Slide 03A / 10 — Cách Dense Decoder tạo biểu diễn toàn horizon (One-Shot vs Tuần tự)
 
-![Slide 03: One-Shot vs Tuần tự](./images/slide_03_one_shot_vs_tuan_tu.png)
+![Slide 03A: One-Shot vs Tuần tự](./images/slide_03_one_shot_vs_tuan_tu.png)
 
-### 1. So sánh trực diện hai cơ chế giải mã
+### So sánh trực diện hai cơ chế giải mã
 
 1. **Autoregressive truyền thống (RNN / Seq2Seq / Decoder tự hồi quy):** Sinh $\hat{y}_1 \rightarrow$ nạp lại dự đoán đó làm đầu vào đoán $\hat{y}_2 \rightarrow \dots \rightarrow \hat{y}_H$. Độ phức tạp tuần tự $O(H)$ trên GPU và làm **tích lũy sai số (Error Accumulation)** nghiêm trọng khi $H = 336, 720$.
 
@@ -46,7 +46,11 @@ $$
 
 ---
 
-### 2. Hệ thống công thức toán học: Độc lập tính toán vs Tương quan biểu diễn
+## Slide 03B / 10 — Bản chất toán học: Độc lập tính toán vs Tương quan biểu diễn
+
+![Slide 03B: Bản chất toán học](./images/slide_03b_ban_chat_toan_hoc.png)
+
+### Hệ thống công thức toán học chứng minh
 
 #### A. Công thức chứng minh: Độc lập tính toán triệt để ($O(1)$ Hardware Parallelism)
 

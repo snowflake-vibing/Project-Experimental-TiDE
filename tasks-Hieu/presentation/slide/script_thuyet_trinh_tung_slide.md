@@ -94,43 +94,58 @@ Như vậy, vai trò sống còn của Dense Decoder là **tạo sẵn $H$ bộ 
 
 ---
 
-### 🟢 SLIDE 03 / 10 — CÁCH DENSE DECODER TẠO BIỂU DIỄN TOÀN HORIZON (ONE-SHOT VS TUẦN TỰ)
+### 🟢 SLIDE 03A / 10 — CÁCH DENSE DECODER TẠO BIỂU DIỄN TOÀN HORIZON (ONE-SHOT VS TUẦN TỰ)
 
-* **Ảnh slide:** `slide_03_one_shot_vs_tuan_tu.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-03--10-cách-dense-decoder-tạo-biểu-diễn-toàn-horizon-one-shot-vs-tuần-tự))  
-  *(Tùy chọn mở rộng: Anh em có thể tách thành 2 slide **Slide 03A: So sánh One-Shot vs Tuần tự** và **Slide 03B: Hệ thống công thức toán học**, hoặc trình bày liền mạch trên Slide 03)*.
-* **Thời lượng dự kiến:** 85 – 95 giây.
-* **Mục tiêu slide:** **Giải quyết triệt để 2 vấn đề cốt lõi bằng hệ thống công thức toán học tường minh**: (1) Vì sao mô hình cũ phải chạy nhiều bước tuần tự mà TiDE lại làm được One-Shot? (2) Công thức nào chứng minh Dense Decoder **vừa độc lập tính toán ($O(1)$) vừa tương quan biểu diễn sâu sắc (Hiệp phương sai toàn phần)**?
+* **Ảnh slide:** `slide_03_one_shot_vs_tuan_tu.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-03a--10-cách-dense-decoder-tạo-biểu-diễn-toàn-horizon-one-shot-vs-tuần-tự))
+* **Thời lượng dự kiến:** 55 – 65 giây.
+* **Mục tiêu slide:** So sánh trực diện hai cơ chế giải mã: Autoregressive truyền thống (vòng lặp tuần tự $O(H)$, tích lũy sai số) vs Non-autoregressive One-Shot của TiDE (sinh đồng thời toàn bộ $H$ bước, $O(1)$ GPU).
 
-![Slide 03: One-Shot vs Tuần tự](./images/slide_03_one_shot_vs_tuan_tu.png)
+![Slide 03A: One-Shot vs Tuần tự](./images/slide_03_one_shot_vs_tuan_tu.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Slide 03 này làm sáng tỏ triết lý giải mã của TiDE và giải quyết câu hỏi học thuật bản chất nhất: **"Tại sao Dense Decoder vừa độc lập tính toán trên GPU nhưng các bước thời gian vẫn tương quan mật thiết với nhau?"**
+Ở Slide 03A, chúng ta cùng làm sáng tỏ triết lý giải mã của TiDE so với các mô hình dự báo chuỗi truyền thống qua 2 cột đối chiếu trực diện:
 
-Để cả nhóm nắm trọn vẹn, mình xin trình bày thành hai luận điểm toán học rõ ràng:
-
-**Phần 1: Vì sao mô hình cũ phải chạy nhiều bước tuần tự (Autoregressive)?**
-
-Trong các kiến trúc cũ như RNN, LSTM, Seq2Seq hay Transformer Decoder cổ điển (cột bên trái):
-Họ xuất phát từ giả định chuỗi Markov: muốn đoán ngày mai ($y_2$), bắt buộc phải biết kết quả ngày hôm nay ($y_1$). Tức là xác suất đồng thời bị phân rã thành tích chuỗi điều kiện nối đuôi nhau:
+**1. Cột bên trái — Cách truyền thống: Sinh tuần tự (Autoregressive):**
+* Trong các kiến trúc như RNN, LSTM, Seq2Seq hay Transformer Decoder cổ điển: họ xuất phát từ giả định xác suất chuỗi Markov, muốn đoán ngày mai ($y_2$) bắt buộc phải biết kết quả ngày hôm nay ($y_1$). Nghĩa là mỗi bước tương lai phụ thuộc điều kiện vào bước ngay trước nó:
 
 $$
 P(y_1, y_2, \dots, y_H \mid y_{1:L}) = \prod_{t=1}^H P(y_t \mid y_{1:L}, y_1, \dots, y_{t-1})
 $$
 
-Họ bắt buộc phải chạy vòng lặp tuần tự $H$ bước: đoán $\hat{y}_1 \to$ nạp lại đoán $\hat{y}_2 \to \dots \to \hat{y}_H$. Hậu quả là GPU bị trói buộc ở độ phức tạp tuần tự $O(H)$, và nguy hiểm nhất là **tích lũy sai số (Error Accumulation)** — bước đầu lệch 1 ly thì đến bước $H=720$ kết quả bị trôi dạt hoàn toàn!
+* Họ bắt buộc phải chạy theo vòng lặp tuần tự $H$ bước: đoán $\hat{y}_1 \to$ nạp lại đoán $\hat{y}_2 \to \dots \to \hat{y}_H$.
+* Hậu quả là: GPU bị nghẽn ở độ phức tạp tuần tự $O(H)$, và nguy hiểm nhất là **tích lũy sai số (Error Accumulation)** — bước đầu tiên lệch 1 ly thì đến bước $H=720$ kết quả bị trôi dạt hoàn toàn!
+
+**2. Cột bên phải — Dense Decoder (TiDE): Sinh song song One-Shot:**
+* TiDE hoàn toàn từ bỏ cơ chế sinh tự hồi quy tuần tự. Từ vector bối cảnh lịch sử $\mathbf{e}^{(i)}$, tầng cuối của Dense Decoder chiếu thẳng 1 lần duy nhất ra vector phẳng $\mathbf{g}^{(i)}$ chứa trọn vẹn biểu diễn của toàn bộ $H$ bước tương lai.
+* Mọi lát cắt $\mathbf{d}_1, \dots, \mathbf{d}_H$ đều được trích xuất độc lập trực tiếp từ $\mathbf{e}^{(i)}$, không bước nào lấy output của bước trước làm input.
+* Nhờ đó, TiDE **triệt tiêu 100% hiện tượng tích lũy sai số**, đạt độ phức tạp $O(1)$ trên GPU và **chạy nhanh hơn Transformer từ 5 đến 10 lần**!
+
+Vậy câu hỏi học thuật lớn nhất đặt ra là: *"Nếu các bước chạy độc lập như vậy, cơ sở toán học nào chứng minh chúng không bị mất mối tương quan chuỗi thời gian giữa các ngày?"* Chúng ta cùng đi sang Slide 03B để bóc tách hệ thống công thức toán học nhé!
+
+* **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
+  * Chỉ vào cột trái: gạch chéo đỏ vào vòng lặp tuần tự và mũi tên tích lũy sai số.
+  * Chỉ sang cột phải: nhấn mạnh biểu thức nhân ma trận chiếu 1 phát ra toàn bộ $H \cdot p$ phần tử song song.
 
 ---
 
-**Phần 2: Hệ thống công thức chứng minh Dense Decoder vừa Độc lập tính toán vừa Tương quan biểu diễn**
+### 🟢 SLIDE 03B / 10 — BẢN CHẤT TOÁN HỌC: ĐỘC LẬP TÍNH TOÁN VS TƯƠNG QUAN BIỂU DIỄN
 
-Anh em sẽ phản biện ngay: *"Nếu TiDE tính các bước độc lập thì có làm mất mối liên hệ thời gian giữa các ngày không?"*
+* **Ảnh slide:** `slide_03b_ban_chat_toan_hoc.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-03b--10-bản-chất-toán-học--độc-lập-tính-toán-vs-tương-quan-biểu-diễn))
+* **Thời lượng dự kiến:** 65 – 75 giây.
+* **Mục tiêu slide:** Giải quyết triệt để câu hỏi học thuật cốt lõi bằng **hệ thống công thức toán học tường minh**: Chứng minh Dense Decoder **vừa độc lập tính toán ($O(1)$ GPU) vừa tương quan biểu diễn sâu sắc (Hiệp phương sai toàn phần & Liên kết Gradient)**.
 
-Câu trả lời được chứng minh chính xác qua 2 nhóm công thức sau:
+![Slide 03B: Bản chất toán học](./images/slide_03b_ban_chat_toan_hoc.png)
 
-**A. Công thức chứng minh: Độc lập tính toán triệt để (Computational Independence - $O(1)$ GPU):**
+#### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Xét ma trận chiếu ngõ ra tầng cuối cùng $\mathbf{W} \in \mathbb{R}^{(H \cdot p) \times d_h}$ và vector bias $\mathbf{b} \in \mathbb{R}^{H \cdot p}$. Ta bóc tách thành $H$ ma trận con $\mathbf{W}_t \in \mathbb{R}^{p \times d_h}$ xếp chồng theo từng bước thời gian:
+Slide 03B này là vũ khí toán học sắc bén nhất để giải đáp câu hỏi: **"Làm sao Dense Decoder vừa độc lập tính toán trên GPU nhưng các bước thời gian vẫn tương quan mật thiết với nhau?"**
+
+Nhóm mình hãy nhìn vào 2 cột trên màn hình:
+
+**Cột bên trái — Độc lập tính toán triệt để (Computational Independence):**
+
+Xét ma trận chiếu ngõ ra tầng cuối $\mathbf{W} \in \mathbb{R}^{(H \cdot p) \times d_h}$ và vector định thiên $\mathbf{b} \in \mathbb{R}^{H \cdot p}$. Ta bóc tách thành $H$ ma trận con $\mathbf{W}_t \in \mathbb{R}^{p \times d_h}$ xếp chồng theo từng bước thời gian:
 
 $$
 \mathbf{W} = \begin{bmatrix} \mathbf{W}_1 \\ \mathbf{W}_2 \\ \vdots \\ \mathbf{W}_H \end{bmatrix}, \quad \mathbf{b} = \begin{bmatrix} \mathbf{b}_1 \\ \mathbf{b}_2 \\ \vdots \\ \mathbf{b}_H \end{bmatrix}
@@ -148,21 +163,14 @@ $$
 \frac{\partial \mathbf{d}_t^{(i)}}{\partial \mathbf{d}_s^{(i)}} = \mathbf{0}, \quad \forall t \neq s
 $$
 
-Điều này chứng minh trên đồ thị tính toán: **không hề có cạnh nối nào giữa bước $t$ và bước $s$**! Bước $t$ không chờ, không nhận đầu vào từ bước $s$. Phép tính $\mathbf{g}^{(i)} = \mathbf{W}\mathbf{v} + \mathbf{b}$ là đúng 1 toán tử GEMM (nhân ma trận) duy nhất, phân bổ đồng loạt lên hàng nghìn nhân CUDA chạy song song trong thời gian $O(1)$!
+Điều này chứng minh trên đồ thị tính toán: **hoàn toàn không có cạnh nối nào giữa bước $t$ và bước $s$**! Phép tính $\mathbf{g}^{(i)} = \mathbf{W}\mathbf{v} + \mathbf{b}$ là đúng một toán tử GEMM (Single Parallel GEMM Kernel) duy nhất trên GPU, phân bổ song song đồng loạt trên hàng nghìn nhân CUDA với độ sâu $O(1)$.
 
-**B. Công thức chứng minh: Tương quan biểu diễn sâu sắc (Representational Correlation):**
+**Cột bên phải — Tương quan biểu diễn sâu sắc (Representational Correlation):**
 
-Vậy nếu tính toán độc lập thì tương quan giữa các ngày đến từ đâu? Có 3 công thức trả lời cho điều này:
+Vậy nếu tính toán độc lập thì tương quan giữa các ngày đến từ đâu? Có 3 công thức chứng minh bản chất toán học:
 
 **1. Luật Hiệp phương sai toàn phần (Law of Total Covariance):**
-
-Về mặt xác suất, TiDE giả định các bước tương lai độc lập có điều kiện khi đã biết trạng thái toàn cục $\mathbf{e}^{(i)}$:
-
-$$
-P(y_1, y_2, \dots, y_H \mid \mathbf{e}^{(i)}) = \prod_{t=1}^H P(y_t \mid \mathbf{e}^{(i)})
-$$
-
-Điều này có nghĩa là $\mathrm{Cov}(\mathbf{d}_t^{(i)}, \mathbf{d}_s^{(i)} \mid \mathbf{e}^{(i)}) = \mathbf{0}$. Nhưng hiệp phương sai biên giữa hai bước thời gian $t$ và $s$ bất kỳ thì lại khác không:
+Về mặt xác suất, khi biết vector ẩn toàn cục $\mathbf{e}^{(i)}$, các bước tương lai độc lập có điều kiện: $\mathrm{Cov}(\mathbf{d}_t^{(i)}, \mathbf{d}_s^{(i)} \mid \mathbf{e}^{(i)}) = \mathbf{0}$. Nhưng hiệp phương sai biên giữa hai bước bất kỳ $t$ và $s$ thì lại khác không:
 
 $$
 \mathrm{Cov}(\mathbf{d}_t^{(i)}, \mathbf{d}_s^{(i)}) = \mathbb{E}_{\mathbf{e}}\!\left[\mathrm{Cov}(\mathbf{d}_t^{(i)}, \mathbf{d}_s^{(i)} \mid \mathbf{e}^{(i)})\right] + \mathrm{Cov}_{\mathbf{e}}\!\left(\mathbb{E}[\mathbf{d}_t^{(i)} \mid \mathbf{e}^{(i)}], \, \mathbb{E}[\mathbf{d}_s^{(i)} \mid \mathbf{e}^{(i)}]\right)
@@ -172,31 +180,29 @@ $$
 \mathrm{Cov}(\mathbf{d}_t^{(i)}, \mathbf{d}_s^{(i)}) = \mathbf{W}_t \, \mathbf{\Sigma}_{\mathbf{e}} \, \mathbf{W}_s^\top \neq \mathbf{0}
 $$
 
-Với $\mathbf{\Sigma}_{\mathbf{e}} = \mathrm{Cov}(\mathbf{e}^{(i)}) \in \mathbb{R}^{d_h \times d_h}$ là ma trận hiệp phương sai của vector bối cảnh lịch sử. Vì $\mathbf{\Sigma}_{\mathbf{e}}$ chứa đầy đủ thông tin xu hướng và chu kỳ của quá khứ, biểu thức $\mathbf{W}_t \mathbf{\Sigma}_{\mathbf{e}} \mathbf{W}_s^\top$ chứng minh toán học rằng **hai bước $t$ và $s$ luôn tương quan mật thiết nhờ cùng chia sẻ nguồn gốc vector ẩn $\mathbf{e}^{(i)}$**!
+Với $\mathbf{\Sigma}_{\mathbf{e}} = \mathrm{Cov}(\mathbf{e}^{(i)})$ là ma trận hiệp phương sai của vector bối cảnh lịch sử. Biểu thức $\mathbf{W}_t \mathbf{\Sigma}_{\mathbf{e}} \mathbf{W}_s^\top$ chứng minh rằng **hai bước $t$ và $s$ luôn tương quan mật thiết vì cùng được sinh ra từ nguồn thông tin lịch sử chung $\mathbf{e}^{(i)}$**!
 
 **2. Động lực học liên kết Gradient khi Backpropagation:**
-
-Khi huấn luyện với hàm mất mát toàn dải $\mathcal{L} = \sum_{t=1}^H \ell(\hat{y}_t^{(i)}, y_t^{(i)})$, gradient lan truyền ngược về vector $\mathbf{e}^{(i)}$ là tổng đóng góp đồng thời của tất cả các bước:
+Khi huấn luyện với hàm mất mát toàn horizon $\mathcal{L} = \sum_{t=1}^H \ell(\hat{y}_t^{(i)}, y_t^{(i)})$, gradient cập nhật vector ẩn chung $\mathbf{e}^{(i)}$ là tổng đóng góp đồng thời của tất cả các bước:
 
 $$
 \nabla_{\mathbf{e}^{(i)}} \mathcal{L} = \sum_{t=1}^H \mathbf{W}_t^\top \nabla_{\mathbf{d}_t^{(i)}} \mathcal{L}
 $$
 
-Tất cả các bước $t$ cùng đồng thời kéo không gian ẩn $\mathbf{e}^{(i)}$ về nghiệm tối ưu chung, ép các ma trận $\mathbf{W}_t$ phải học được tính trơn tru thời gian (temporal smoothness) và quan hệ chu kỳ liên tục.
+Mọi bước $t$ cùng đồng thời kéo vector $\mathbf{e}^{(i)}$ về nghiệm tối ưu chung, ép các ma trận $\mathbf{W}_t$ phải học được tính trơn tru thời gian (temporal smoothness) nhịp nhàng giữa các bước kế tiếp.
 
 **3. Khóa tương quan trễ tuyến tính qua Global Residual:**
+Đồng thời, nhánh đường tắt $\mathbf{W}_{\mathrm{res}} \in \mathbb{R}^{H \times L}$ liên kết trực tiếp quá khứ sang tương lai:
 
 $$
 \hat{\mathbf{y}}_{\mathrm{res}}^{(i)} = \mathbf{W}_{\mathrm{res}} \mathbf{y}_{1:L}^{(i)} \implies \hat{y}_{\mathrm{res}, t}^{(i)} = \sum_{l=1}^L W_{\mathrm{res}, t, l} \cdot y_l^{(i)}
 $$
 
-Nhánh đường tắt tuyến tính $\mathbf{W}_{\mathrm{res}} \in \mathbb{R}^{H \times L}$ liên kết trực tiếp từng điểm quá khứ $l$ đến từng điểm tương lai $t$, giữ vững nguyên vẹn các tương quan tự hồi quy (như chu kỳ 24h hay 168h).
-
-Nhờ kiến trúc này, TiDE vừa triệt tiêu tích lũy sai số, vừa giữ trọn vẹn tương quan thời gian, và chạy nhanh hơn Transformer từ 5 đến 10 lần!
+Nó bảo toàn nguyên vẹn tính tự hồi quy và các chu kỳ mùa vụ như 24 giờ hay 168 giờ.
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ vào công thức $\frac{\partial \mathbf{d}_t}{\partial \mathbf{d}_s} = \mathbf{0}$: nhấn mạnh *"Đồ thị tính toán không có cạnh nối giữa các bước, GPU tính $O(1)$"*.
-  * Chỉ vào công thức hiệp phương sai $\mathbf{W}_t \mathbf{\Sigma}_{\mathbf{e}} \mathbf{W}_s^\top$: nhấn mạnh *"Tương quan biên khác không nhờ chia sẻ chung vector ẩn $\mathbf{e}$"*.
+  * Chỉ sang cột trái: trỏ vào công thức $\frac{\partial \mathbf{d}_t}{\partial \mathbf{d}_s} = \mathbf{0}$, nhấn mạnh đồ thị tính toán phẳng $O(1)$.
+  * Chỉ sang cột phải: trỏ vào công thức hiệp phương sai $\mathbf{W}_t \mathbf{\Sigma}_{\mathbf{e}} \mathbf{W}_s^\top$ và công thức gradient tổng $\sum \mathbf{W}_t^\top \nabla_{\mathbf{d}_t} \mathcal{L}$.
 
 ---
 
