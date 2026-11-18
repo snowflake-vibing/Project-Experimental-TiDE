@@ -123,24 +123,29 @@ Nghe tới đây, chắc hẳn bạn mới sẽ thắc mắc: *"Ủa, nếu các
 ### 🟢 SLIDE 05 / 13 — TỪ CÔNG THỨC TOÁN HỌC SUY RA CODE (`models.py`)
 
 * **Ảnh slide:** `slide_03b_ban_chat_toan_hoc.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-05--13-từ-công-thức-toán-học-suy-ra-code-modelspy--độc-lập-tính-toán-vs-tương-quan-biểu-diễn))
-* **Thời lượng dự kiến:** 65 – 75 giây.
-* **Mục tiêu slide:** Giúp người nghe hiểu bản chất "vừa độc lập tính toán, vừa tương quan biểu diễn" theo mạch logic: từ bản chất toán học suy thẳng ra cách viết code trong `models.py`.
+* **Thời lượng dự kiến:** 90 – 110 giây.
+* **Mục tiêu slide:** Giải thích rõ ràng, bình dân nhất nghịch lý *"các bước tính độc lập nhau nhưng kết quả dự báo vẫn ăn khớp liên tục với nhau"*, đi theo đúng 3 tầng trên từng thẻ: **(1) Công thức Toán học $\rightarrow$ (2) Nguyên văn code `models.py` $\rightarrow$ (3) Nhận xét**.
 
 ![Slide 05: Từ công thức toán học suy ra code](./images/slide_03b_ban_chat_toan_hoc.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Để trả lời câu hỏi vừa rồi một cách thuyết phục nhất, chúng ta đi theo đúng 3 phần trên từng cột của **Slide 05**: **từ (1) Công thức Toán học $\rightarrow$ (2) Đoạn code nguyên văn trong `models.py` $\rightarrow$ (3) Nhận xét trực tiếp**.
+Slide 05 này trả lời câu hỏi quan trọng nhất để hiểu bản chất `Dense Decoder`: **Làm sao TiDE vừa tính song song độc lập $H$ ngày (không ngày nào chờ ngày nào), mà kết quả các ngày liền kề lại không bị rời rạc vô lý?** Anh em nhìn vào 2 thẻ đối xứng theo đúng 3 bước:
 
-Ở cột trái — **Độc lập tính toán ($O(1)$ trên GPU)**:
-* Mục **1 (Công thức Toán)** chỉ rõ đạo hàm riêng $\partial \mathbf{d}_t / \partial \mathbf{d}_s = \mathbf{0}$ giữa hai bước khác nhau.
-* Bê sang mục **2 (Code nguyên văn `models.py#L133-L137` và `#L207-L208`)**: tác giả chỉ cần định nghĩa đúng một tầng `self.decoder = _make_dnn_residual(... decoder_output_dim * self.pred_len)` rồi gọi `decoder_out = self.decoder(encoding)` và `tf.reshape(decoder_out, [bsize, -1, self.pred_len])`.
-* Từ đó rút ra mục **3 (Nhận xét)**: toàn bộ $H$ bước tính gói gọn trong một phép nhân ma trận GPU ($O(1)$), tuyệt đối không có vòng lặp tuần tự `for t in range(H)` nên vừa nhanh vừa triệt tiêu tích lũy sai số.
+**1. Thẻ trái màu xanh lá — Độc lập lúc tính toán (Tốc độ GPU):**
+* **Ở phần 1 (Công thức Toán học):** Ma trận chiếu tầng cuối $\mathbf{W}$ thực ra có thể coi như ghép từ $H$ mảng con: $\mathbf{W}_1$ lo cho bước $1$, $\mathbf{W}_2$ lo cho bước $2$, ..., $\mathbf{W}_H$ lo cho bước $H$. Bước thứ $t$ chỉ lấy duy nhất biểu diễn gốc $\mathbf{v}^{(n_d-1)}$ nhân với $\mathbf{W}_t$ của riêng nó là ra $\mathbf{d}_t^{(i)}$. Vì thế, công thức đạo hàm riêng bên dưới mới bằng **$0$**: $\partial \mathbf{d}_t / \partial \mathbf{d}_s = \mathbf{0}$ — hiểu đơn giản là **nếu bước $s$ (ngày mai) có thay đổi thế nào đi nữa, công thức tính của bước $t$ (ngày kia) cũng không hề bị ảnh hưởng theo**, vì ngày kia không lấy kết quả ngày mai làm đầu vào!
+* **Bê sang phần 2 (Nguyên văn Code `models.py#L133-L137`, `#L207-L208`):** Chính vì ngày kia không phụ thuộc ngày mai, nên trong code Google hoàn toàn **không có vòng lặp `for t in range(H)`**. Tác giả chỉ cần khởi tạo đúng 1 tầng `self.decoder` xuất ra tích `decoder_output_dim * self.pred_len` (tức $p \cdot H$ con số), chạy 1 lệnh `decoder_out = self.decoder(encoding)` là xong hết cả $H$ bước cùng lúc, rồi gọi `tf.reshape` ở dòng 208 để chặt thành $H$ lát cắt riêng.
+* **Chốt lại ở phần 3 (Nhận xét):** Nhờ tách gọn như vậy, cả $H$ bước chỉ tốn đúng **1 phép nhân ma trận GPU duy nhất** ($O(1)$ song song) và **triệt tiêu 100% lỗi tích lũy sai số dây chuyền**.
 
-Sang cột phải — **Tương quan biểu diễn**:
-* Mục **1 (Công thức Toán)** cho thấy hiệp phương sai biên giữa $\mathbf{d}_t$ và $\mathbf{d}_s$ khác $0$, gradient của cả $H$ bước cùng dội về $\mathbf{e}^{(i)}$, kèm nhánh tuyến tính $\hat{y}_{\mathrm{res},t}$.
-* Chiếu thẳng vào mục **2 (Code nguyên văn `models.py#L203-L214` và `#L225`)**: mọi nhánh đều đọc chung `encoding = self.encoder(encoder_input)`, cộng thêm `residual_out = self.linear(past_ts)` qua dòng `out += residual_out`, và tối ưu chung một hàm `loss = train_loss(ytrue, all_preds)` cho cả $H$ bước.
-* Kết luận ở mục **3 (Nhận xét)**: các bước vẫn giữ đồng bộ chu kỳ & xu hướng toàn cục nhờ chung gốc `encoding` và `loss`, nhưng cái giá phải trả là ma trận chiếu tầng cuối có kích thước cứng $(H \cdot p) \times d_h$ gây phình tham số ở $H=720$ — đây chính là cầu nối sang đề xuất Phần 3!
+**2. Thẻ phải màu xanh dương — Nhưng lại Tương quan lúc biểu diễn (Giữ mạch chuỗi thời gian):**
+Vậy câu hỏi đặt ra là: *Nếu ngày 1 và ngày 2 tính hoàn toàn độc lập, lỡ ngày 1 đoán 30°C còn ngày 2 đoán 0°C rời rạc thì sao?* Câu trả lời nằm ngay ở thẻ phải:
+* **Ở phần 1 (Công thức Toán học):** Để ý hai vế công thức trên cùng — nếu **cố định sẵn gốc $\mathbf{e}$** ($\mathrm{Cov}(\mathbf{d}_t, \mathbf{d}_s \mid \mathbf{e}) = 0$), phép tính giữa 2 ngày đúng là tách rời; nhưng trên thực tế phân phối dữ liệu, chúng chia sẻ **chung một ma trận gốc $\Sigma_{\mathbf{e}}$** nên hiệp phương sai $\mathrm{Cov}(\mathbf{d}_t, \mathbf{d}_s) \neq \mathbf{0}$! Giống như 2 bạn học sinh không chép bài nhau trong phòng thi (độc lập lúc làm bài), nhưng cùng học từ **một bộ đề cương chung** (vector $\mathbf{e}$) nên đáp án vẫn thống nhất cùng một logic. Cộng thêm công thức ở dưới: khi chấm điểm bằng hàm Loss $\mathcal{L}$, sai số của **tất cả $H$ ngày cùng cộng dồn ngược về** ($\sum_{t=1}^H$) để sửa chung cho $\mathbf{e}$, kèm thêm nhánh tuyến tính $\hat{y}_{\mathrm{res},t}$ nối thẳng từ quá khứ sang từng ngày tương lai.
+* **Ánh xạ sang phần 2 (Nguyên văn Code `models.py#L203-L214`, `#L225`):** Trong code thật hiện lên 3 mắt xích nối kết đó rất rõ: dòng 206 tạo chung 1 tensor `encoding = self.encoder(...)` nuôi tất cả $H$ bước; dòng 203 và 214 cộng thẳng nhánh tuyến tính `residual_out = self.linear(past_ts)` qua `out += residual_out`; và dòng 225 tính chung 1 hàm `loss = train_loss(ytrue, all_preds)` để cập nhật đồng thời mọi trọng số.
+* **Chốt lại ở phần 3 (Nhận xét):** Tóm lại, TiDE *độc lập khi chạy* (để nhanh) nhưng *gắn kết khi học* (qua chung `encoding`, chung `loss` và `linear`). Tuy nhiên cái giá phải trả là tầng chiếu cuối $\mathbf{W}$ đang có kích thước cứng $(H \cdot p) \times d_h$, dẫn tới phình tham số khi $H = 720$ — mở đường trực tiếp cho giải pháp Low-Rank ở Phần 3.
+
+* **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
+  * Chỉ thẻ trái: Nhấn mạnh cụm $\partial \mathbf{d}_t / \partial \mathbf{d}_s = \mathbf{0} \implies$ *Không cần vòng lặp `for t`, chỉ 1 lệnh `self.decoder` + `tf.reshape`*.
+  * Chỉ thẻ phải: Nhấn mạnh *"Không nhìn nhau lúc tính, nhưng dùng chung mẹ `encoding`, học chung `loss` và cộng chung `self.linear(past_ts)`"*.
 
 ---
 
