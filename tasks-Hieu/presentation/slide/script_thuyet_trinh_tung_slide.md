@@ -97,31 +97,45 @@ Như vậy, vai trò sống còn của Dense Decoder là **tạo sẵn $H$ bộ 
 ### 🟢 SLIDE 03 / 10 — CÁCH DENSE DECODER TẠO BIỂU DIỄN TOÀN HORIZON (ONE-SHOT VS TUẦN TỰ)
 
 * **Ảnh slide:** `slide_03_one_shot_vs_tuan_tu.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-03--10-cách-dense-decoder-tạo-biểu-diễn-toàn-horizon-one-shot-vs-tuần-tự))
-* **Thời lượng dự kiến:** 70 – 80 giây.
-* **Mục tiêu slide:** **Trả lời sâu sắc 3 câu hỏi cốt lõi**: Vì sao lại trong đúng 1 lần duy nhất? Có phải từ $y_1$ nó đoán $y_H$ luôn không? Và GPU song song hóa ma trận mang lại lợi ích thực tế gì?
+* **Thời lượng dự kiến:** 75 – 85 giây.
+* **Mục tiêu slide:** **Giải quyết 2 câu hỏi bản chất nhất**: (1) Mục đích vì sao mô hình cũ phải chạy nhiều bước tuần tự mà TiDE lại làm được One-Shot? (2) Tại sao trong TiDE các bước tương lai hoạt động độc lập trong tính toán nhưng vẫn liên quan mật thiết với nhau?
 
 ![Slide 03: One-Shot vs Tuần tự](./images/slide_03_one_shot_vs_tuan_tu.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Slide 03 này làm sáng tỏ triết lý giải mã của TiDE so với các mô hình truyền thống:
+Slide 03 này làm sáng tỏ triết lý giải mã của TiDE và giải quyết hai thắc mắc bản chất nhất về mặt toán học và tính toán:
 
-**Câu hỏi 1: 'Có phải mô hình lấy từ dự đoán $y_1$ để đoán luôn $y_H$ không?'**
+**1. Mục đích vì sao các mô hình cũ phải chạy nhiều bước tuần tự (Autoregressive)?**
 
-$\to$ **HOÀN TOÀN KHÔNG!** Đây là điểm mà người mới đọc rất hay hiểu lầm. 
-* Trong các mô hình tự hồi quy cũ (cột bên trái — RNN, Seq2Seq, GPT-style Decoder): Nó mới lấy $\hat{y}_1$ nạp lại để đoán $\hat{y}_2$, lấy $\hat{y}_2$ đoán $\hat{y}_3 \dots$ cho tới $\hat{y}_H$. Cách này làm **tích lũy sai số (Error Accumulation)**: bước đầu đoán lệch 1 ly thì bước $H=720$ đi một dặm!
-* Còn trong TiDE (cột bên phải): **Bước 1 và bước $H$ hoàn toàn độc lập với nhau, không bước nào phụ thuộc vào kết quả của bước nào cả!**
+Trong các kiến trúc truyền thống như RNN, LSTM, Seq2Seq hay Decoder của Transformer cổ điển (cột bên trái):
+* Họ xuất phát từ giả định xác suất chuỗi: muốn đoán ngày mai ($y_2$), bắt buộc phải biết kết quả ngày hôm nay ($y_1$). Tức là mỗi bước tương lai phụ thuộc điều kiện vào bước ngay trước nó:
 
-**Câu hỏi 2: 'Vì sao lại trong đúng một lần duy nhất (One-Shot)?'**
+$$
+P(y_1, y_2, \dots, y_H \mid y_{1:L}) = \prod_{t=1}^H P(y_t \mid y_{1:L}, y_1, \dots, y_{t-1})
+$$
 
-$\to$ Bởi vì về bản chất toán học, đây là **đúng một phép nhân ma trận thuần túy**: Ma trận trọng số tầng cuối $\mathbf{W} \in \mathbb{R}^{(H \cdot p) \times d_h}$ nhân trực tiếp với vector ẩn toàn cục $\mathbf{e} \in \mathbb{R}^{d_h}$. Trong đại số tuyến tính, 1 phép nhân ma trận là tính ra toàn bộ $H \cdot p$ phần tử song song ngay trong 1 chu kỳ tính toán, không cần bất kỳ vòng lặp nào!
+* Vì vậy, họ bắt buộc phải chạy theo vòng lặp tuần tự $H$ bước: đoán $\hat{y}_1 \to$ nạp lại đoán $\hat{y}_2 \to \dots \to \hat{y}_H$.
+* Hậu quả là: GPU bị nghẽn ở độ phức tạp tuần tự $O(H)$, và nguy hiểm nhất là **tích lũy sai số (Error Accumulation)** — bước đầu tiên lệch 1 ly thì đến bước $H=720$ kết quả bị trôi dạt hoàn toàn!
 
-**Câu hỏi 3: 'GPU song song hóa thì có ích gì trong thực tế?'**
+**2. Tại sao TiDE lại làm được One-Shot? Và sao các bước chạy độc lập dù thực tế chúng liên quan mật thiết với nhau?**
 
-$\to$ Cực kỳ có ích cho nhóm mình khi chạy thực nghiệm:
-1. **Vắt kiệt sức mạnh hàng nghìn nhân CUDA:** Card đồ họa như NVIDIA T4 có tới 2,560 nhân CUDA. Nếu chạy vòng lặp tuần tự 720 bước, GPU phải ngồi chờ từng bước một, hiệu suất cực thấp. Còn phép nhân ma trận One-Shot ném toàn bộ $H \cdot p$ phép tính lên hàng nghìn nhân CUDA cùng lúc, tính xong trong tích tắc!
-2. **Tốc độ train và test nhanh gấp 5 đến 10 lần:** Theo Mục 5.3 của bài báo, TiDE chạy nhanh hơn Transformer từ 5 đến 10 lần, train 1 epoch trên Kaggle chỉ mất vài giây thay vì vài phút.
-3. **Bảo toàn chất lượng dự báo dài hạn:** Dù dự báo xa tới $H = 720$, chất lượng bước cuối cùng không bị suy thoái do sai số của các bước trước đè lên.
+Anh em sẽ hỏi ngay: *"Chuỗi thời gian các ngày liên tiếp nhau có tương quan rất mạnh (hôm nay phụ tải cao thì ngày mai thường cũng cao), vậy TiDE cho các bước chạy độc lập thì có làm mất mối tương quan giữa các bước tương lai không?"*
+
+Câu trả lời là: **HOÀN TOÀN KHÔNG MẤT TƯƠNG QUAN!** Nhóm mình cần phân biệt rõ giữa **Độc lập tính toán** và **Tương quan biểu diễn**:
+
+* **Độc lập về mặt tính toán (Computational Independence):**
+  Toàn bộ $H$ bước tương lai được sinh ra đồng thời từ **cùng một vector ẩn toàn cục duy nhất $\mathbf{e}^{(i)}$** qua một phép nhân ma trận $\mathbf{W} \in \mathbb{R}^{(H \cdot p) \times d_h}$. Phép tính của bước 1 không cần đợi và không cần lấy giá trị dự đoán của bước 2. Đồ thị tính toán hoàn toàn độc lập, giúp ném toàn bộ dữ liệu lên hàng nghìn nhân CUDA của GPU để tính song song trong đúng 1 chu kỳ $O(1)$.
+* **Nhưng tương quan mật thiết về mặt biểu diễn (Representational Correlation):**
+  Cả $H$ bước đều được "sinh ra từ cùng một gốc mẹ": vector $\mathbf{e}^{(i)}$ đã được Encoder nén trọn vẹn xu hướng dài hạn, chu kỳ mùa vụ và tương tác đa biến của toàn bộ lịch sử! Về mặt xác suất, TiDE giả định các bước tương lai độc lập có điều kiện khi đã biết trạng thái toàn cục $\mathbf{e}^{(i)}$:
+
+$$
+P(y_1, y_2, \dots, y_H \mid \mathbf{e}^{(i)}) = \prod_{t=1}^H P(y_t \mid \mathbf{e}^{(i)})
+$$
+
+* Ma trận trọng số $\mathbf{W}$ tự học cách phân phối các mẫu hình biến thiên phối hợp (joint temporal patterns) trên toàn dải $H$ bước. Đồng thời, nhánh `Global Residual` bên dưới dùng ma trận $\mathbf{W}_{\text{res}} \in \mathbb{R}^{H \times L}$ nối thẳng từ quá khứ sang tương lai, giữ vững mối tương quan thời gian liên tục.
+
+Nhờ cơ chế One-Shot này, TiDE vừa **triệt tiêu 100% tích lũy sai số**, vừa **nhanh hơn Transformer từ 5 đến 10 lần** trên GPU!
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
   * Chỉ vào cột trái: gạch chéo đỏ vào vòng lặp tuần tự và mũi tên tích lũy sai số.
@@ -254,8 +268,8 @@ Như vậy toàn bộ quy trình từ khởi tạo, chiếu phẳng, reshape đ�
 ### 🟢 SLIDE 07 / 10 — CẤU HÌNH SIÊU THAM SỐ DENSE DECODER TRÊN 7 BENCHMARK DATASETS
 
 * **Ảnh slide:** `slide_07_hyperparameters_dense_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-07--10-cấu-hình-siêu-tham-số-dense-decoder-trên-7-benchmark-datasets-table-7--8))
-* **Thời lượng dự kiến:** 60 – 65 giây.
-* **Mục tiêu slide:** Phân tích bảng cấu hình chính thức từ Bảng 7 và 8 Phụ lục B.3; chỉ ra không gian tìm kiếm và các giá trị tối ưu đã được kiểm chứng trên 7 datasets.
+* **Thời lượng dự kiến:** 75 – 85 giây.
+* **Mục tiêu slide:** Phân tích bảng cấu hình chính thức từ Bảng 7 và 8 Phụ lục B.3; chỉ ra không gian tìm kiếm siêu tham số; **giải thích cặn kẽ cơ sở thực nghiệm vì sao tác giả chọn $n_d = 1$ hoặc $n_d = 2$ cho từng nhóm dữ liệu và lý do tuyệt đối $0/7$ tập chọn $n_d = 3$**.
 
 ![Slide 07: Hyperparameters Dense Decoder](./images/slide_07_hyperparameters_dense_decoder.png)
 
@@ -263,22 +277,33 @@ Như vậy toàn bộ quy trình từ khởi tạo, chiếu phẳng, reshape đ�
 
 Slide 07 là bảng cấu hình siêu tham số chính thức của Dense Decoder trên toàn bộ 7 bộ dữ liệu chuẩn, trích từ Bảng 7 (trang 20) và Bảng 8 (trang 21) ở Phụ lục bài báo.
 
-Khi nhìn vào bảng này, anh em cần nắm được 2 thông tin cốt lõi:
+Khi nhìn vào bảng này, anh em sẽ thấy tác giả đưa ra không gian tìm kiếm (Table 7):
+* Kích thước ẩn `hiddenSize` ($d_h$): Quét trong $\{256, 512, 1024\}$.
+* Số lớp Dense Decoder `numDecoderLayers` ($n_d$): Quét trong $\{1, 2, 3\}$.
+* Số chiều bối cảnh `decoderOutputDim` ($p$): Quét trong $\{4, 8, 16, 32\}$.
 
-**1. Không gian tìm kiếm mà tác giả khảo sát (Table 7):**
-* Kích thước ẩn `hiddenSize` ($d_h$): Quét trong tập $\{256, 512, 1024\}$.
-* Số lớp Dense Decoder `numDecoderLayers` ($n_d$): Quét trong tập $\{1, 2, 3\}$.
-* Số chiều bối cảnh `decoderOutputDim` ($p$): Quét trong tập $\{4, 8, 16, 32\}$.
+Nhưng điều đáng bàn nhất nằm ở kết quả lựa chọn tối ưu trên validation set ở Table 8: **Tại sao tác giả lại chọn số tầng giải mã $n_d$ như vậy?**
 
-**2. Giá trị thực tế được chọn trên 7 Datasets (Table 8):**
-* **Về số lớp $n_d$ — Một phát hiện rất bất ngờ:** Toàn bộ 7/7 tập dữ liệu **chỉ chọn $n_d = 1$ hoặc $n_d = 2$**. Không có bất kỳ tập dữ liệu nào chọn $n_d = 3$! Nhóm `Traffic`, `ETTm1`, `Weather` chỉ cần đúng 1 khối ($n_d = 1$), trong khi `Electricity` và các tập `ETT` còn lại chọn $n_d = 2$.
-* **Về chiều $p$:** Đa số các tập chọn $p = 8$ (`Electricity`, `ETTm1`, `ETTh1`, `Weather`) hoặc $p = 16$ (`Traffic`, `ETTm2`). Riêng biệt duy nhất có tập **`ETTh2` chọn $p = 32$**.
+Nhóm mình hãy bóc tách bản chất thành 3 điểm cốt lõi:
 
-Bây giờ, chúng ta cùng đào sâu vào việc chọn $p$ và $n_d$ sẽ gây ra hiện tượng gì ở Slide 08 nhé!
+**1. Tại sao nhóm `Traffic`, `ETTm1`, `Weather` chỉ cần chọn đúng $n_d = 1$?**
+* **Với tập `Traffic`:** Bộ dữ liệu này có tới **862 chuỗi cảm biến đa biến** chạy song song. Kích thước mô hình trên tập này vốn dĩ đã rất lớn. Việc giữ $n_d = 1$ giúp khống chế lượng tham số, tránh hiện tượng bùng nổ tham số (Parameter Explosion) và tránh tràn bộ nhớ GPU khi Encoder đã làm rất tốt việc trích xuất biểu diễn.
+* **Với `Weather` và `ETTm1` (chu kỳ lấy mẫu ngắn 15 phút):** Đây là các hiện tượng vật lý có chu kỳ tự nhiên lặp đi lặp lại cực kỳ đều đặn (nhịp ngày/đêm của nhiệt độ, áp suất, điện thế biến áp). Tính chất chuỗi thời gian ở đây mang tính tuyến tính và mùa vụ rất mạnh. Vì thế, chỉ cần đúng $1$ tầng giải mã phi tuyến là đã đủ để ánh xạ bối cảnh, bởi vì toàn bộ xu hướng chính đã được đường tắt `Global Residual` gánh trọn vẹn!
+
+**2. Tại sao nhóm `Electricity`, `ETTm2`, `ETTh1`, `ETTh2` lại bắt buộc phải chọn $n_d = 2$?**
+* Các tập dữ liệu này (phụ tải điện lưới và nhiệt độ biến áp theo giờ) bị chi phối nặng nề bởi **hành vi sinh hoạt phức tạp của con người**: phụ tải biến động mạnh giữa giờ cao điểm và thấp điểm, giữa ngày làm việc và cuối tuần, kèm các đợt sốc nhiệt đột ngột.
+* Với $n_d = 2$, khối đầu tiên đóng vai trò xử lý trung gian trong không gian ẩn $(d_h \to d_h)$ để bóc tách các tương tác phi tuyến sâu hơn, sau đó khối thứ hai mới bung ra không gian $H \cdot p$. Hai tầng là cần thiết để mô hình đủ dung lượng học được các mẫu hình phi tuyến gãy khúc phức tạp này.
+
+**3. Phát hiện đặc biệt: Tại sao TUYỆT ĐỐI $0/7$ tập dữ liệu nào chọn $n_d = 3$?**
+* **Bão hòa năng lực phi tuyến (Diminishing Returns):** Trong TiDE, Dense Decoder không hoạt động đơn độc: bên dưới nó đã có `Global Residual` gánh thành phần tuyến tính, phía sau nó còn có `Temporal Decoder` để ráp nối ngoại sinh và tinh chỉnh chi tiết. Việc nhồi thêm tầng thứ 3 trong Dense Decoder không cung cấp thêm thông tin hữu ích nào cho mô hình.
+* **Nguy cơ Overfitting nghiêm trọng:** Các tập dữ liệu chuẩn như ETT có kích thước mẫu khá hạn chế (chỉ vài nghìn đến chục nghìn điểm thời gian). Khi tăng lên $n_d = 3$, số lượng tham số dư thừa sẽ khiến mô hình học vẹt các nhiễu ngẫu nhiên, làm điểm kiểm định (validation loss) kém đi và lập tức bị thuật toán chọn siêu tham số loại bỏ!
+
+Bây giờ, chúng ta cùng đào sâu vào việc chọn $p$ và $n_d$ sẽ gây ra hiện tượng nghẽn tham số cụ thể như thế nào ở Slide 08 nhé!
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Khoanh vào cột $n_d$: *"Cả 7 tập chỉ chọn 1 hoặc 2, không ai chọn 3"*.
-  * Khoanh vào hàng `ETTh2`: *"Tập này chọn $p = 32$, làm kích thước tầng cuối phình to gấp 4 lần"*.
+  * Chỉ vào cột $n_d$: nhấn mạnh sự phân hóa rõ rệt: nhóm vật lý/đa biến lớn chọn 1, nhóm hành vi phức tạp chọn 2.
+  * Gạch chân điểm đặc biệt: **$0/7$ tập chọn $n_d = 3$** do bão hòa phi tuyến và nguy cơ Overfitting.
+  * Khoanh vào hàng `ETTh2`: *"Tập duy nhất chọn $p = 32$, làm kích thước tầng cuối phình to gấp 4 lần"*.
 
 ---
 
