@@ -265,19 +265,19 @@ Khi nhìn vào kết quả tối ưu được chọn ở Table 8:
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Từ bảng cấu hình ở Slide 09, Slide 10 này đào sâu vào ảnh hưởng của chiều $p$, số lớp $n_d$ và chỉ ra **2 giới hạn lớn nhất của kiến trúc Dense Decoder** khi dự báo tầm xa.
+Từ bảng cấu hình ở Slide 09, Slide 10 này đào sâu vào ảnh hưởng của hai siêu tham số $p$, $n_d$ và tổng hợp **toàn bộ các giới hạn cốt lõi của khối Dense Decoder** khi đưa vào thực tế dự báo tầm xa.
 
-**Về ảnh hưởng của $p$ (`decoderOutputDim`):**
-Tác giả định nghĩa $p$ ở Mục 4.2 (Trang 6) và quét trong $\{4, 8, 16, 32\}$ ở Phụ lục B.3. Kết quả thực tế là cả **7/7 tập dữ liệu đều loại bỏ $p=4$** và khoảng cân bằng tốt nhất nằm trong $[8, 16]$. Điều này chứng tỏ nếu chọn $p$ quá nhỏ ($p = 1, 2$ hay $4$), mô hình bị nghẽn cổ chai thông tin, thiếu dung lượng mô tả cả pha chu kỳ lẫn biên độ. Ngược lại, nếu chọn $p$ quá lớn ($32, 64$) sẽ gây bùng nổ tham số tầng cuối, tốn VRAM và dễ Overfitting trên tập nhỏ. Đáng chú ý là **tác giả chưa hề công bố thí nghiệm Ablation riêng cho $p$**, tạo ra một khoảng trống thực nghiệm cho nhóm mình.
+**Trước hết là giới hạn từ việc chọn $p$ (`decoderOutputDim`) và $n_d$:**
+* **Giới hạn khi $p$ quá nhỏ ($p = 1, 2$ hay $4$):** Sẽ gây ra **nghẽn cổ chai thông tin (Information Bottleneck)** — vector $\mathbf{d}_t$ quá hẹp nên thiếu dung lượng mô tả đồng thời cả pha chu kỳ lẫn biên độ dao động. Đó là lý do trong cả 7/7 bộ dữ liệu ở Table 8, không tập nào chọn $p = 4$, mà khoảng cân bằng tốt nhất nằm trong $[8, 16]$.
+* **Giới hạn khi $p$ quá lớn ($p = 32, 64$):** Kích thước tầng cuối $H \cdot p$ phình to cực nhanh, gây tốn VRAM và rất dễ dẫn đến **Overfitting** (học vẹt) trên các tập dữ liệu nhỏ như ETT.
+* **Giới hạn về độ sâu $n_d$:** Khi $n_d \ge 3$, mô hình rơi vào trạng thái **bão hòa** ($0/7$ tập chọn) vì nhánh `Global Linear` đã gánh xu hướng lớn, nên việc xếp thêm tầng không giúp dự báo chính xác hơn mà chỉ gây nặng máy.
+* **Khoảng trống thực nghiệm trong bài báo:** Dù $p$ ảnh hưởng lớn như vậy, nhưng nhóm tác giả Google chưa hề công bố thí nghiệm Ablation riêng để khảo sát độ nhạy của $p$.
 
-**Về ảnh hưởng của $n_d$:**
-Như đã phân tích, $n_d = 1$ giúp vừa lọc phi tuyến vừa mở rộng $d_h \to H \cdot p$ rất nhanh nhẹ; $n_d = 2$ là cấu hình tiêu chuẩn cho dữ liệu phức tạp; còn $n_d \ge 3$ bị bão hòa hoàn toàn ($0/7$ tập chọn) vì nhánh `Global Linear` đã gánh xu hướng lớn.
+**Tiếp theo là hai giới hạn kiến trúc chí mạng của Dense Decoder khi dự báo Horizon $H$ dài:**
+* **Giới hạn 1 — Bị khóa cứng vào độ dài Horizon $H$:** Vì ma trận ngõ ra của khối cuối khóa cứng số hàng bằng đúng $H \cdot p$ ngay từ lúc khởi tạo mạng (`models.py#L136`), nên kiến trúc này **không thể linh hoạt thay đổi tầm dự báo lúc suy luận**. Cụ thể, một mô hình đã train ở $H = 96$ thì hoàn toàn không thể chạy suy luận trực tiếp cho $H = 192$ hay $720$ nếu không train lại từ đầu (khác với các mô hình tự hồi quy có thể chạy thêm vòng lặp).
+* **Giới hạn 2 — Bùng nổ tham số khi $H$ lớn:** Như đã thấy trong `models.py` (dòng 40–47), khối cuối có tới **2 ma trận dày đặc** (`lin_b` ở nhánh chính và `lin_res` ở nhánh tắt) cùng có kích thước `(d_h, H * p)`. Khi dự báo xa $H = 720$: trên `Electricity` ($d_h = 1024, p = 8$), ngõ ra là $5{,}760$, nên chỉ riêng 2 ma trận cuối này đã ngốn mất **~11.8 triệu tham số**! Còn trên `ETTh2` ($d_h = 512, p = 32$), ngõ ra vọt lên $23{,}040$ chiều, tương đương **~23.6 triệu tham số**!
 
-**Từ đó, khối Dense Decoder bộc lộ 2 giới hạn chí mạng:**
-* **Giới hạn 1 — Bị khóa cứng vào Horizon $H$:** Vì ma trận ngõ ra ở khối cuối khóa cứng số hàng bằng $H \cdot p$ ngay từ lúc khởi tạo mô hình, nên một mô hình đã train ở tầm dự báo $H = 96$ **không thể suy luận trực tiếp sang $H = 192$ hay $720$** nếu không train lại từ đầu!
-* **Giới hạn 2 — Bùng nổ tham số khi $H$ lớn:** Như đã thấy ở `models.py` (dòng 40–47), khối cuối có tới **2 ma trận lớn** (`lin_b` ở nhánh chính và `lin_res` ở nhánh tắt) cùng có shape `(d_h, H * p)`. Khi dự báo xa $H = 720$: trên `Electricity` ($d_h = 1024, p = 8$), ngõ ra là $5{,}760$, nên chỉ riêng 2 ma trận cuối này đã ngốn mất **~11.8 triệu tham số**! Còn trên `ETTh2` ($d_h = 512, p = 32$), ngõ ra vọt lên $23{,}040$ chiều, tương đương **~23.6 triệu tham số**!
-
-Chính tác giả cũng thẳng thắn thừa nhận hạn chế này ở **Mục 6 Conclusion (Trang 11)**: *"Transformers hiệu quả về mặt tham số hơn MLPs khi mô hình lớn"*. Và đó chính là động lực trực tiếp để nhóm mình đề xuất giải pháp cải tiến ở Phần 3!
+Và chính tác giả bài báo cũng thẳng thắn thừa nhận giới hạn này tại **Mục 6 Conclusion (Trang 11)**: *"Transformers hiệu quả về mặt tham số hơn MLPs khi mô hình lớn"*. Đây chính là động lực trực tiếp dẫn chúng ta tới giải pháp tối ưu ở Phần 3!
 
 ---
 
