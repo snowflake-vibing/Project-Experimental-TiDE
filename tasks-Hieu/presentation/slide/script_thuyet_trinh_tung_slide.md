@@ -296,9 +296,14 @@ Chính tác giả cũng thẳng thắn thừa nhận hạn chế này ở **Mụ
 
 Ý tưởng này kế thừa từ hai nghiên cứu kinh điển là **LoRA (Hu et al., ICLR 2022)** và **Low-Rank DNN (Sainath et al., ICASSP 2013)**: thay vì học một ma trận trọng số dày đặc kích thước khổng lồ $\mathbf{W}$ nối thẳng từ $d_h$ sang $H \cdot p$, ta **phân rã nó thành tích của hai ma trận hạng thấp $\mathbf{A} \cdot \mathbf{B}$** đi qua một hạng trung gian nhỏ $r$.
 
-Để các bạn mới nghe dễ hình dung sự khác biệt giữa **TiDE gốc** và **Đề xuất mới**:
-* **Ở TiDE gốc:** Vector ẩn $\mathbf{v}^{(n_d-1)}$ có shape `(B, d_h)` đi thẳng một mạch qua lớp chiếu dày đặc `d_h -> H * p`, tốn tới **11.8 triệu tham số** để tạo ra $\mathbf{g}^{(i)}$.
-* **Ở Đề xuất mới:** Vector `(B, d_h)` không nối thẳng nữa mà đi qua **2 bước nhỏ nối tiếp**: đầu tiên đi qua **nút thắt hạng thấp $\mathbf{B}$** để nén xuống chỉ còn `(B, r)` với $r = 64$ — giống như đi qua một trạm trung chuyển nhỏ gọn; sau đó mới đi qua **ma trận mở rộng $\mathbf{A}$** từ $r \to H \cdot p$, rồi `Reshape` ra ma trận $\mathbf{D}^{(i)}$.
+Để các bạn mới nghe hình dung thật rõ luồng kiến trúc mới thay đổi ra sao so với bản gốc, mình sẽ đi theo từng bước dữ liệu chạy qua tầng cuối:
+
+* **Với luồng TiDE gốc:** Sau khi đi qua các tầng trung gian, vector ẩn $\mathbf{v}^{(n_d-1)}$ có kích thước `(B, d_h)` (ví dụ $d_h = 1024$) sẽ đi thẳng một mạch qua một lớp chiếu dày đặc khổng lồ từ $d_h$ sang thẳng $H \cdot p$ (ví dụ $5{,}760$). Chính bước nhảy vọt trực tiếp này khiến riêng tầng cuối tốn tới **11.8 triệu tham số** để tạo ra vector phẳng $\mathbf{g}^{(i)}$.
+* **Với quy trình đề xuất mới (Low-Rank Dense Decoder):** Thay vì để dữ liệu nhảy vọt trực tiếp từ $1{,}024$ lên $5{,}760$, mình tách bước chiếu này thành **4 chặng nối tiếp nhau rất gọn nhẹ** (áp dụng đồng bộ cho cả nhánh chính và nhánh tắt `lin_res` ở tầng cuối):
+  1. **Nhận đầu vào:** Đầu vào vẫn là vector ẩn $\mathbf{v}^{(n_d-1)}$ có kích thước `(B, d_h)` không đổi.
+  2. **Đi qua nút thắt hạng thấp $\mathbf{B}$ (Nén chiều):** Dữ liệu được đưa qua một lớp Linear nhỏ đóng vai trò như một "trạm trung chuyển" có kích thước $r = 64$, ép vector từ `(B, 1024)` thu gọn lại thành một vector nén rất nhỏ có shape `(B, 64)`. Lúc này, mô hình chỉ giữ lại đúng 64 thành phần dao động cốt lõi nhất.
+  3. **Đi qua lớp mở rộng không gian $\mathbf{A}$ (Giải nén ra Horizon):** Từ trạm trung chuyển `(B, 64)` đó, dữ liệu mới đi qua lớp Linear thứ hai để bung từ $r = 64$ ra toàn bộ $H \cdot p = 5{,}760$ phần tử. Nhờ có trạm trung chuyển nhỏ ở giữa, tổng tham số của cả hai bước nén và bung này cộng lại chỉ tốn **0.87 triệu tham số** thay vì 11.8 triệu!
+  4. **Reshape thành ma trận bối cảnh $\mathbf{D}^{(i)}$:** Cuối cùng, dải $H \cdot p$ phần tử này được `Reshape` về lại ma trận chuẩn `(B, p, H)` để sẵn sàng ghép với ngoại sinh tương lai ở `Temporal Decoder` hoàn toàn giống như bản gốc.
 
 **Cách tái cấu trúc đơn giản này mang lại 4 lợi ích cực lớn:**
 1. **Giảm tới ~92.6% tham số tầng chiếu cuối:** Trên cấu hình `Electricity` ở $H = 720, r = 64$, tổng tham số rớt từ **11.8 triệu xuống chỉ còn 0.87 triệu**!
