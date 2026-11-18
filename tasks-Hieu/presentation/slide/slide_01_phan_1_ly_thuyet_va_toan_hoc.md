@@ -8,13 +8,15 @@
 
 ![Slide 01: Thuật ngữ nền tảng cốt lõi](./images/slide_01_bang_thuat_ngu_dense_decoder.png)
 
-### Giải thích chi tiết 3 thuật ngữ nền tảng trước khi đi vào kiến trúc
+### Giải thích chi tiết 5 thuật ngữ nền tảng trước khi đi vào kiến trúc
 
 | STT | Thuật ngữ | Bản chất & Ký hiệu Shape tổng quát |
 | :--- | :--- | :--- |
 | **1** | **MLPResidual (Residual Block)** | Đơn vị xử lý cơ sở xếp thành chuỗi tầng trong TiDE: nhánh chính gồm `Dense(ReLU)` $\rightarrow$ `Dense(Linear)` + Dropout, cộng song song với nhánh tắt tuyến tính `lin_res` và `LayerNorm`. |
 | **2** | **Unflatten (Thao tác Reshape)** | Phép biến đổi hình học khôi phục lại trục thời gian $H$ từ một vector phẳng có Shape: $(B, H \cdot p)$ sang ma trận 2 chiều Shape: $(B, H, p)$ trong PyTorch (hoặc $(B, p, H)$ trong TF), chi phí bộ nhớ $O(1)$. |
 | **3** | **Information Bottleneck (Nghẽn cổ chai thông tin)** | Hiện tượng mất mát thông tin khi ép biểu diễn đi qua không gian có số chiều $p$ (hoặc hạng $r$) quá nhỏ ($p = 1, 2$), thiếu dung lượng mã hóa đồng thời pha chu kỳ và xu hướng; ngược lại $p$ quá lớn ($32, 64$) gây bùng nổ tham số và Overfitting. |
+| **4** | **LayerNorm (Chuẩn hóa theo tầng)** | Chuẩn hóa trên chiều đặc trưng của từng mẫu độc lập ($\hat{\mathbf{x}} = \frac{\mathbf{x} - \mu}{\sqrt{\sigma^2 + \epsilon}} \odot \gamma + \beta$), đặt ở đầu ra sau phép cộng nhánh tắt (`+ lin_res`) giúp ổn định phân phối và gradient; điều chỉnh qua cờ `use_layer_norm` $\in \{\text{True}, \text{False}\}$. |
+| **5** | **Dropout (Điều chuẩn ngẫu nhiên)** | Tắt ngẫu nhiên một tỷ lệ $p_{\mathrm{drop}}$ các nơ-ron nhánh phi tuyến lúc train (nhân bù $\frac{1}{1 - p_{\mathrm{drop}}}$), đặt ngay sau `Dense(Linear)` để chống Overfitting; tỷ lệ `dropout_rate` $\in \{0.0, 0.1, 0.2, 0.3, 0.5\}$ và tự động tắt khi inference. |
 
 ---
 

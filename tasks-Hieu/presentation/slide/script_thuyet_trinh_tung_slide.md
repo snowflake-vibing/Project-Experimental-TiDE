@@ -24,17 +24,17 @@ flowchart LR
 
 ---
 
-### 🟢 SLIDE 01 / 10 — THUẬT NGỮ NỀN TẢNG CỐT LÕI (`MLPResidual`, `Unflatten`, `Information Bottleneck`)
+### 🟢 SLIDE 01 / 10 — THUẬT NGỮ NỀN TẢNG CỐT LÕI (`MLPResidual`, `Unflatten`, `Information Bottleneck`, `LayerNorm`, `Dropout`)
 
-* **Ảnh slide:** `slide_01_bang_thuat_ngu_dense_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-01--10-thuật-ngữ-nền-tảng-cốt-lõi-mlpresidual-unflatten-information-bottleneck))
-* **Thời lượng dự kiến:** 55 – 65 giây.
-* **Mục tiêu slide:** Thống nhất với cả nhóm các khái niệm nền tảng cùng các ký hiệu $B, H, p, d_h$ trước khi bước vào sơ đồ kiến trúc ở Slide 02.
+* **Ảnh slide:** `slide_01_bang_thuat_ngu_dense_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-01--10-thuật-ngữ-nền-tảng-cốt-lõi-mlpresidual-unflatten-information-bottleneck-layernorm-dropout))
+* **Thời lượng dự kiến:** 70 – 80 giây.
+* **Mục tiêu slide:** Thống nhất với cả nhóm 5 khái niệm nền tảng (`MLPResidual`, `Unflatten`, `Information Bottleneck`, `LayerNorm`, `Dropout`) cùng các ký hiệu $B, H, p, d_h$ trước khi bước vào sơ đồ kiến trúc ở Slide 02.
 
 ![Slide 01: Thuật ngữ nền tảng cốt lõi](./images/slide_01_bang_thuat_ngu_dense_decoder.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Chào mọi người! Trong kiến trúc TiDE, sau khi `Dense Encoder` nén toàn bộ dữ liệu lịch sử thì trọng trách giải mã tương lai thuộc về khối **`Dense Decoder`**. Trước khi đi sâu vào sơ đồ từ Slide 02 trở đi, anh em nhìn nhanh qua Slide 01 để mình thống nhất rõ ràng từng ký hiệu và thuật ngữ:
+Chào mọi người! Trong kiến trúc TiDE, sau khi `Dense Encoder` nén toàn bộ dữ liệu lịch sử thì trọng trách giải mã tương lai thuộc về khối **`Dense Decoder`**. Trước khi đi sâu vào sơ đồ từ Slide 02 trở đi, anh em nhìn nhanh qua Slide 01 để mình thống nhất rõ ràng từng ký hiệu và 5 thuật ngữ cốt lõi:
 
 **1. Về bộ ký hiệu $B, H, p$ và $d_h$:**
 * **$B$ là `Batch Size`:** Số lượng mẫu chuỗi nạp vào cùng lúc. Tác giả **cố định $B = 512$** cho toàn bộ 7 benchmark datasets.
@@ -42,16 +42,18 @@ Chào mọi người! Trong kiến trúc TiDE, sau khi `Dense Encoder` nén toà
 * **$p$ là `decoderOutputDim`:** Số chiều đặc trưng của vector bối cảnh cho mỗi bước thời gian (thường chọn $p = 8, 16$ hoặc $32$). Nghĩa là tại mỗi thời điểm $t$, ta giữ lại một vector gồm $p$ thuộc tính để chứa bối cảnh lịch sử.
 * **$d_h = \text{hiddenSize}$ là bao nhiêu?** Trong Bảng 7 Phụ lục, tác giả quét trong tập $\{256, 512, 1024\}$. Với các tập dữ liệu lớn như `Electricity` và `Traffic`, **$d_h$ được chọn tối đa là $1024$**; còn các tập `ETT` nhỏ hơn thì chọn $d_h = 256$ hoặc $512$.
 
-**2. Ba thuật ngữ cốt lõi:**
-* **`MLPResidual` (Residual Block):** Đơn vị xử lý cơ sở lặp $n_d$ lần, gồm nhánh phi tuyến Linear $\to$ ReLU $\to$ Linear $\to$ Dropout, cộng song song với nhánh tắt tuyến tính `lin_res` và `LayerNorm`.
-* **`Unflatten` (Thao tác Reshape):** Phép biến đổi hình học khôi phục lại trục thời gian $H$ từ vector phẳng `Shape: (B, H * p)` thành ma trận 2 chiều `Shape: (B, p, H)` trong TensorFlow (hoặc `(B, H, p)` trong PyTorch), chỉ cập nhật metadata stride bộ nhớ với chi phí $O(1)$ không tốn copy dữ liệu.
-* **`Information Bottleneck` (Nghẽn cổ chai thông tin):** Hiện tượng mất mát thông tin khi ép biểu diễn qua không gian chiều $p$ quá nhỏ (như $p = 1, 2$) — thiếu dung lượng giữ cả pha chu kỳ lẫn xu hướng; ngược lại $p$ quá lớn ($32, 64$) lại gây bùng nổ tham số và Overfitting.
+**2. Năm thuật ngữ cốt lõi (chia 2 hàng trên slide):**
+* **Thẻ 1 — `MLPResidual` (Residual Block):** Đơn vị xử lý cơ sở lặp $n_d$ lần, gồm nhánh phi tuyến Linear $\to$ ReLU $\to$ Linear $\to$ Dropout, cộng song song với nhánh tắt tuyến tính `lin_res` và `LayerNorm`.
+* **Thẻ 2 — `Unflatten` (Thao tác Reshape):** Phép biến đổi hình học khôi phục lại trục thời gian $H$ từ vector phẳng `Shape: (B, H * p)` thành ma trận 2 chiều `Shape: (B, p, H)` trong TensorFlow (hoặc `(B, H, p)` trong PyTorch), chỉ cập nhật metadata stride bộ nhớ với chi phí $O(1)$ không tốn copy dữ liệu.
+* **Thẻ 3 — `Information Bottleneck` (Nghẽn cổ chai thông tin):** Hiện tượng mất mát thông tin khi ép biểu diễn qua không gian chiều $p$ quá nhỏ (như $p = 1, 2$) — thiếu dung lượng giữ cả pha chu kỳ lẫn xu hướng; ngược lại $p$ quá lớn ($32, 64$) lại gây bùng nổ tham số và Overfitting.
+* **Thẻ 4 — `LayerNorm` (Chuẩn hóa theo tầng):** Khác với `BatchNorm`, `LayerNorm` chuẩn hóa trực tiếp trên chiều đặc trưng (feature dimension) của từng mẫu độc lập nên hoàn toàn không phụ thuộc kích thước Batch khi suy luận. Trong khối `MLPResidual`, nó đặt ở cuối cùng sau phép cộng nhánh tắt (`+ lin_res`) giúp giữ ổn định phân phối, tránh bùng nổ hay triệt tiêu gradient, và có thể bật/tắt qua cờ `use_layer_norm`.
+* **Thẻ 5 — `Dropout` (Điều chuẩn ngẫu nhiên):** Tắt ngẫu nhiên một tỷ lệ $p_{\text{drop}}$ các nơ-ron ở nhánh phi tuyến trong lúc huấn luyện (đồng thời nhân bù $\frac{1}{1 - p_{\text{drop}}}$ cho các phần tử giữ lại để bảo toàn kỳ vọng). Tác giả đặt Dropout ngay sau `Dense(Linear)` để ép mạng không phụ thuộc vào vài đặc trưng cố định và chống Overfitting, với `dropout_rate` quét trong $\{0.0, 0.1, 0.2, 0.3, 0.5\}$.
 
-Nắm chắc các con số này rồi, giờ chúng ta đi vào vị trí kiến trúc trên Figure 1 ở Slide 02 nhé!
+Nắm chắc 5 thuật ngữ và các con số này rồi, giờ chúng ta đi vào vị trí kiến trúc trên Figure 1 ở Slide 02 nhé!
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ trực tiếp vào thẻ số 2: *"Nhớ nhé anh em: $B=512$, $d_h = 1024$, $H=96 \to 720$, $p=8 \to 32$"*.
-  * Khoanh vào Thẻ 2 và 3: *"Phép Unflatten giải nén bối cảnh, còn Information Bottleneck là lý do ta phải chọn $p$ cẩn thận"*.
+  * Chỉ trực tiếp vào Thẻ 2: *"Nhớ nhé anh em: $B=512$, $d_h = 1024$, $H=96 \to 720$, $p=8 \to 32$"*.
+  * Khoanh vào Thẻ 4 và 5 ở hàng dưới: *"Cặp đôi LayerNorm và Dropout là hai lớp bảo vệ giúp khối MLPResidual học sâu mà không bị nổ gradient hay học vẹt"*.
 
 ---
 

@@ -6,7 +6,7 @@ Mọi slide bên dưới được xuất tự động ở chuẩn màn hình r�
 
 ## Phần 1: Thuật Ngữ, Kiến Trúc & Toán Học (Slide 01 – 05)
 
-### Slide 01 / 10: Thuật ngữ nền tảng cốt lõi (`MLPResidual`, `Unflatten`, `Information Bottleneck`)
+### Slide 01 / 10: Thuật ngữ nền tảng cốt lõi (`MLPResidual`, `Unflatten`, `Information Bottleneck`, `LayerNorm`, `Dropout`)
 ![Slide 01](./images/slide_01_bang_thuat_ngu_dense_decoder.png)
 
 ### Slide 02 / 10: Vị trí khối Dense Decoder & Unflatten trên Figure 1
