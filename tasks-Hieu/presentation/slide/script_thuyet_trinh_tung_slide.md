@@ -42,12 +42,12 @@ Chào mọi người! Trong kiến trúc TiDE, sau khi `Dense Encoder` nén toà
 * **$p$ là `decoderOutputDim`:** Số chiều đặc trưng của vector bối cảnh cho mỗi bước thời gian (thường chọn $p = 8, 16$ hoặc $32$). Nghĩa là tại mỗi thời điểm $t$, ta giữ lại một vector gồm $p$ thuộc tính để chứa bối cảnh lịch sử.
 * **$d_h = \text{hiddenSize}$ là bao nhiêu?** Trong Bảng 7 Phụ lục, tác giả quét trong tập $\{256, 512, 1024\}$. Với các tập dữ liệu lớn như `Electricity` và `Traffic`, **$d_h$ được chọn tối đa là $1024$**; còn các tập `ETT` nhỏ hơn thì chọn $d_h = 256$ hoặc $512$.
 
-**2. Năm thuật ngữ cốt lõi (chia 2 hàng trên slide):**
-* **Thẻ 1 — `MLPResidual` (Residual Block):** Đơn vị xử lý cơ sở lặp $n_d$ lần, gồm nhánh phi tuyến Linear $\to$ ReLU $\to$ Linear $\to$ Dropout, cộng song song với nhánh tắt tuyến tính `lin_res` và `LayerNorm`.
-* **Thẻ 2 — `Unflatten` (Thao tác Reshape):** Phép biến đổi hình học khôi phục lại trục thời gian $H$ từ vector phẳng `Shape: (B, H * p)` thành ma trận `Shape: (B, p, H)` theo đúng quy ước của bài báo gốc, chỉ cập nhật metadata stride bộ nhớ với chi phí $O(1)$ không tốn copy dữ liệu.
-* **Thẻ 3 — `Information Bottleneck` (Nghẽn cổ chai thông tin):** Hiện tượng mất mát thông tin khi ép biểu diễn qua không gian chiều $p$ quá nhỏ (như $p = 1, 2$) — thiếu dung lượng giữ cả pha chu kỳ lẫn xu hướng; ngược lại $p$ quá lớn ($32, 64$) lại gây bùng nổ tham số và Overfitting.
-* **Thẻ 4 — `LayerNorm` (Chuẩn hóa theo tầng):** Khác với `BatchNorm`, `LayerNorm` chuẩn hóa trực tiếp trên chiều đặc trưng của từng mẫu độc lập theo công thức trên slide nên không phụ thuộc kích thước Batch khi suy luận. Trong `MLPResidual`, nó đặt ở cuối cùng sau phép cộng nhánh tắt (`+ lin_res`) giúp ổn định gradient, và bật/tắt qua cờ `use_layer_norm`.
-* **Thẻ 5 — `Dropout` (Điều chuẩn ngẫu nhiên):** Tắt ngẫu nhiên một tỷ lệ `p_drop` các nơ-ron ở nhánh phi tuyến lúc huấn luyện (và nhân bù hệ số như trên slide để giữ nguyên kỳ vọng). Nó đặt ngay sau `Dense(Linear)` để chống Overfitting, với `dropout_rate` quét trong `{0.0, 0.1, 0.2, 0.3, 0.5}` và tự động tắt khi Inference.
+**2. Năm thuật ngữ cốt lõi (chia 2 hàng trên slide — giải thích ngắn gọn vai trò trong bài báo TiDE):**
+* **Thẻ 1 — `MLPResidual` (Residual Block):** Là khối xử lý phi tuyến nòng cốt được xếp chồng nhiều tầng trong TiDE để trích xuất đặc trưng; đường tắt tuyến tính đi kèm giúp đổi số chiều và truyền gradient ổn định.
+* **Thẻ 2 — `Unflatten` (Thao tác Reshape):** Tách vector phẳng đầu ra thành các vector riêng cho từng mốc thời gian $t = 1 \dots H$, khôi phục lại trục thời gian để tầng sau ghép tương ứng với biến ngoại sinh.
+* **Thẻ 3 — `Information Bottleneck`:** Hiện tượng mất thông tin quá khứ khi ép biểu diễn qua chiều $p$ hoặc hạng $r$ quá hẹp; nên trong TiDE cần chọn kích thước đủ giữ chu kỳ cho $H$ bước mà không làm phình tham số.
+* **Thẻ 4 — `LayerNorm` (Chuẩn hóa theo tầng):** Chuẩn hóa đặc trưng của từng mẫu ngay ở đầu ra mỗi khối `MLPResidual` (sau phép cộng nhánh tắt), giúp phân phối tín hiệu và quá trình huấn luyện ổn định khi xếp chồng nhiều tầng hoặc horizon dài.
+* **Thẻ 5 — `Dropout` (Điều chuẩn ngẫu nhiên):** Tắt ngẫu nhiên một tỷ lệ kết nối trong nhánh phi tuyến của khối `MLPResidual` lúc huấn luyện để giảm Overfitting của các tầng Dense lớn (tự động tắt khi suy luận dự báo).
 
 Nắm chắc 5 thuật ngữ và các con số này rồi, giờ chúng ta đi vào vị trí kiến trúc trên Figure 1 ở Slide 02 nhé!
 
@@ -100,7 +100,7 @@ Nói ngắn gọn, vai trò sống còn của Dense Decoder là **tạo sẵn $H
 * Mọi lát cắt $\mathbf{d}_1, \dots, \mathbf{d}_H$ đều được trích xuất độc lập trực tiếp từ $\mathbf{e}^{(i)}$, không bước nào lấy output của bước trước làm input.
 * Nhờ đó, TiDE **triệt tiêu 100% hiện tượng tích lũy sai số**, đạt độ phức tạp $O(1)$ trên GPU và **chạy nhanh hơn Transformer từ 5 đến 10 lần**!
 
-Vậy câu hỏi học thuật lớn nhất đặt ra là: *"Nếu các bước chạy độc lập như vậy, cơ sở toán học nào chứng minh chúng không bị mất mối tương quan chuỗi thời gian giữa các ngày?"* Chúng ta cùng sang Slide 03B để xem các công thức chứng minh nhé!
+Vậy câu hỏi đặt ra là: *"Nhìn từ góc độ code thực tế, tại sao các bước chạy độc lập trên GPU nhưng vẫn giữ được mối liên kết chặt chẽ với nhau?"* Chúng ta cùng sang Slide 03B để soi thẳng vào luồng code `models.py` nhé!
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
   * Chỉ vào cột trái: gạch chéo đỏ vào vòng lặp tuần tự và mũi tên tích lũy sai số.
@@ -108,33 +108,33 @@ Vậy câu hỏi học thuật lớn nhất đặt ra là: *"Nếu các bước 
 
 ---
 
-### 🟢 SLIDE 03B / 10 — BẢN CHẤT TOÁN HỌC: ĐỘC LẬP TÍNH TOÁN VS TƯƠNG QUAN BIỂU DIỄN
+### 🟢 SLIDE 03B / 10 — BẢN CHẤT TRONG CODE (`models.py`): ĐỘC LẬP TÍNH TOÁN VS TƯƠNG QUAN BIỂU DIỄN
 
-* **Ảnh slide:** `slide_03b_ban_chat_toan_hoc.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-03b--10-bản-chất-toán-học--độc-lập-tính-toán-vs-tương-quan-biểu-diễn))
-* **Thời lượng dự kiến:** 60 – 70 giây.
-* **Mục tiêu slide:** Giải thích trực quan ý nghĩa hệ thống công thức trên slide để chứng minh Dense Decoder **vừa độc lập tính toán ($O(1)$ GPU) vừa tương quan biểu diễn sâu sắc**.
+* **Ảnh slide:** `slide_03b_ban_chat_toan_hoc.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-03b--10-bản-chất-trong-code-modelspy--độc-lập-tính-toán-vs-tương-quan-biểu-diễn))
+* **Thời lượng dự kiến:** 55 – 65 giây.
+* **Mục tiêu slide:** Giải thích trực tiếp bằng luồng chạy thực tế trong code `models.py`: Tại sao tầng cuối `Dense(p * H)` + `tf.reshape` lại giúp tính toán độc lập trên GPU mà vẫn giữ trọn vẹn sự tương quan giữa các bước thời gian.
 
-![Slide 03B: Bản chất toán học](./images/slide_03b_ban_chat_toan_hoc.png)
+![Slide 03B: Bản chất trong code](./images/slide_03b_ban_chat_toan_hoc.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Slide 03B này tổng hợp toàn bộ hệ thống công thức để trả lời câu hỏi: **"Làm sao Dense Decoder vừa độc lập tính toán trên GPU nhưng các bước thời gian vẫn tương quan mật thiết với nhau?"**
+Slide 03B này giải thích thẳng từ góc độ lập trình trong file `models.py` câu hỏi: **"Làm sao Dense Decoder vừa chạy độc lập trên GPU nhưng các bước thời gian vẫn tương quan mật thiết với nhau?"**
 
-Anh em nhìn vào 2 cột công thức trên màn hình:
+Anh em nhìn vào 2 cột trên màn hình:
 
-**Cột bên trái — Độc lập tính toán triệt để (Computational Independence):**
-* **Ở mục 1 trên slide**, ma trận chiếu tầng cuối $\mathbf{W}$ được bóc tách thành $H$ ma trận con tương ứng với từng bước thời gian $t$, nhân trực tiếp với tầng ẩn trước đó để ra lát cắt $\mathbf{d}_t$.
-* **Nhìn vào công thức đạo hàm riêng bằng 0 ở mục 2**: Điều này chứng minh trên đồ thị tính toán **hoàn toàn không có cạnh nối nào giữa bước $t$ và bước $s$**. Bước này không chờ và không lấy đầu vào từ bước kia.
-* **Chốt lại ở mục 3**: Toàn bộ phép tính thu gọn thành đúng một toán tử nhân ma trận (GEMM Kernel) duy nhất trên GPU, chạy song song đồng loạt trên hàng nghìn nhân CUDA với độ sâu $O(1)$.
+**Cột bên trái — Độc lập tính toán (Từ code `Dense` + `Reshape`):**
+* **Thứ nhất, không hề có vòng lặp `for t in range(H)`:** Trong `models.py`, tầng cuối cùng chỉ là **1 lớp `Dense(p * H)` duy nhất**. Nó xuất thẳng ra một tensor phẳng gồm toàn bộ $H \cdot p$ phần tử rồi gọi `tf.reshape` thành `(B, p, H)`.
+* **Thứ hai, không phụ thuộc đầu ra bước trước:** Mọi lát cắt $\mathbf{d}_t$ và $\mathbf{d}_{t-1}$ đều cùng đọc trực tiếp từ một nguồn là tensor `encoded`. Bước sau hoàn toàn không phải chờ kết quả dự đoán `y_pred[t-1]` của bước trước làm input, nên triệt tiêu 100% lỗi tích lũy sai số.
+* **Thứ ba, tối ưu phần cứng GPU:** Toàn bộ lớp `Dense(p * H)` được thực thi bằng đúng 1 phép nhân ma trận trên GPU, cho phép hàng nghìn nhân CUDA tính đồng thời cả $H$ bước trong 1 chu kỳ $O(1)$, nhanh hơn Transformer 5 đến 10 lần.
 
-**Cột bên phải — Tương quan biểu diễn sâu sắc (Representational Correlation):**
-* **Ở mục 1 — Luật Hiệp phương sai toàn phần trên slide:** Dù độc lập có điều kiện khi đã biết $\mathbf{e}^{(i)}$, nhưng công thức hiệp phương sai biên ở dưới vẫn **khác không**! Lý do là vì mọi bước đều cùng chia sẻ nguồn gốc từ vector bối cảnh lịch sử $\mathbf{e}^{(i)}$, tạo nên sự tương quan xuyên suốt toàn horizon.
-* **Ở mục 2 — Công thức Gradient khi Backprop:** Khi huấn luyện, gradient của tất cả $H$ bước đều cộng dồn về để cập nhật chung vector $\mathbf{e}^{(i)}$. Việc cùng kéo $\mathbf{e}^{(i)}$ về một nghiệm tối ưu chung ép các ma trận chiếu phải học được tính trơn tru và nhịp nhàng giữa các ngày liên tiếp.
-* **Ở mục 3 — Nhánh đường tắt Global Residual:** Công thức cuối cùng nối thẳng dữ liệu quá khứ sang tương lai qua ma trận tuyến tính, giúp bảo toàn nguyên vẹn tính tự hồi quy và các chu kỳ mùa vụ (như 24 giờ, 168 giờ).
+**Cột bên phải — Tương quan biểu diễn (Từ luồng dữ liệu trong code):**
+* **Thứ nhất, mọi bước đều sinh ra từ chung 1 tensor gốc `encoded`:** Tensor `encoded` từ Encoder truyền lên đã nén trọn vẹn xu hướng và chu kỳ của toàn bộ quá khứ. Vì cả $H$ cột $\mathbf{d}_t$ đều cắt ra từ chung nguồn thông tin này nên chúng liên kết chặt chẽ với nhau.
+* **Thứ hai, tối ưu chung 1 hàm Loss (MSE) toàn horizon:** Lúc train, hàm MSE tính sai số đồng thời trên cả $H$ bước tương lai. Khi Backprop, gradient từ cả $H$ ngày cùng cập nhật ngược về chung một bộ trọng số `Dense(p * H)` và `encoded`, ép các cột kề nhau tự học tính mượt mà, liên tục.
+* **Thứ ba, nhánh tắt tuyến tính `Global Residual` trong code:** `models.py` cộng thêm một lớp tuyến tính nối thẳng từ toàn bộ cửa sổ quá khứ `past_y` ($L$) sang toàn bộ tương lai ($H$), giữ nguyên các chu kỳ tự hồi quy như 24h hay 168h.
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ sang cột trái: trỏ vào công thức đạo hàm bằng 0 ở mục 2, nhấn mạnh đồ thị tính toán phẳng $O(1)$.
-  * Chỉ sang cột phải: trỏ vào công thức hiệp phương sai khác không ở mục 1 và công thức gradient tổng ở mục 2.
+  * Chỉ sang cột trái: nhấn mạnh *"Không có vòng lặp for, chỉ 1 lớp Dense(p * H) + reshape"*.
+  * Chỉ sang cột phải: nhấn mạnh *"Chung đầu vào encoded, chung Loss toàn horizon, và có nhánh Global Residual nối thẳng L sang H"*.
 
 ---
 
