@@ -94,16 +94,22 @@ Nắm vững 5 khái niệm này rồi, giờ chúng ta nhìn xem khối Dense D
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Slide 03 là sơ đồ kiến trúc tổng thể trích từ trang 5 bài báo gốc. Nhìn vào khung màu vàng ở giữa:
+Slide 03 này là sơ đồ kiến trúc tổng thể Figure 1 trích từ trang 5 bài báo gốc. Để các bạn mới nghe lần đầu nhìn vào là hiểu ngay từng khối trên màn hình, mình sẽ đi từ dưới lên trên theo đúng luồng dữ liệu:
 
-Đầu tiên, `Dense Encoder` ở dưới gom toàn bộ lịch sử quá khứ thành một vector tóm tắt duy nhất gọi là $\mathbf{e}^{(i)}$. Sau đó, vector này được đẩy vào khối **`Dense Decoder`** của chúng ta.
+* **Phía dưới cùng (Đầu vào & Bộ mã hóa):** Mô hình nhận 3 nguồn dữ liệu đầu vào gồm: chuỗi lịch sử (`Lookback`), thuộc tính tĩnh (`Attributes`) và các biến ngoại sinh đã được nén qua bước `Feature Projection` (`Dynamic Covariates`). Sau khi ghép phẳng lại (`Flatten` & `Concat`), toàn bộ đi qua khối `Dense Encoder` ($\times n_e$ tầng) để nén thành một vector tóm tắt duy nhất gọi là $\mathbf{e}^{(i)}$ (được khoanh màu xanh lá).
+* **Nhánh ngoài cùng bên trái (Đường tắt `Residual` toàn cục):** Anh em để ý có một mũi tên chạy thẳng từ chuỗi quá khứ `Lookback` lên tận phép cộng ở đỉnh sơ đồ để tạo `Predictions`. Đường này giúp giữ nguyên phần xu hướng tuyến tính cơ bản từ quá khứ sang tương lai.
 
-`Dense Decoder` chạy qua $n_d$ khối xử lý để bung vector tóm tắt đó thành một dải dài gồm $H \cdot p$ phần tử. Ngay lập tức, phép `Unflatten` xếp dải dài này thành ma trận $\mathbf{D}^{(i)}$ có kích thước `(B, p, H)` — tức là tạo ra **$H$ bộ khung bối cảnh riêng biệt $\mathbf{d}_t$ cho từng ngày tương lai**.
+Bây giờ, trọng tâm phần của mình nằm ở **3 thẻ màu bên phải** (ứng với 3 mũi tên chỉ thẳng vào sơ đồ):
 
-Tóm lại, vai trò của khối này là **chuẩn bị sẵn $H$ bộ khung bối cảnh quá khứ**. Còn việc mỗi bộ khung đó được ráp nối tiếp với các yếu tố tương lai (như thời tiết, ngày lễ) ở khối `Temporal Decoder` phía trên cụ thể như thế nào, mình sẽ giải thích chi tiết ở Slide 07 và Slide 08 nhé!
+1. **Thẻ 1 (Màu xanh lá) — Đầu vào từ Dense Encoder:** Khối của chúng ta nhận đúng vector ẩn duy nhất $\mathbf{e}^{(i)}$ có kích thước `(B, d_h)` (với $d_h$ là `hiddenSize`), chứa toàn bộ ngữ cảnh lịch sử đã được nén lại.
+2. **Thẻ 2 (Màu cam) — Khối Dense Decoder ($\times n_d$ tầng):** Bên trong khối này là $n_d$ khối `Residual Block` xếp chồng nhau. Anh em nhìn vào **hình giải phẫu `Residual Block` ở chính giữa màn hình**: một nhánh chính sẽ đi qua `Dense (ReLU)` $\to$ `Dense (Linear)` $\to$ `Dropout`, rồi cộng với nhánh tắt `Skip Connection`, và cuối cùng đi qua `Layer Norm`. Khối Dense Decoder này giúp giải nén $\mathbf{e}^{(i)}$ thành vector phẳng $\mathbf{g}^{(i)}$ có kích thước `(B, H * p)` — thực thi song song 1 lần cho cả $H$ bước.
+3. **Thẻ 3 (Màu xanh dương) — Unflatten tạo bối cảnh từng bước:** Ngay phía trên là bước `Unflatten` (khung xanh dương), nó gấp vector phẳng $\mathbf{g}^{(i)}$ lại thành ma trận $\mathbf{D}^{(i)}$ (chuẩn bài báo là `(B, p, H)`) để xuất ra $H$ vector bối cảnh $\mathbf{d}_t^{(i)}$ (mỗi vector có `Shape: (B, p)`).
+
+Cuối cùng, các vector bối cảnh này được `Stack` cùng biến ngoại sinh tương lai $\tilde{\mathbf{x}}$ để đi qua `Temporal Decoder` và cộng với nhánh `Residual` ra kết quả `Predictions`. Còn việc ở tầng kế tiếp ghép ngoại sinh cụ thể ra sao, mình sẽ giải thích chi tiết ở Slide 07 và Slide 08 nhé!
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Dùng con trỏ đi theo mũi tên từ `Dense Encoder` $\to$ vùng khoanh vàng `Dense Decoder` $\to$ `Unflatten` $\to$ `Temporal Decoder`.
+  * Chỉ từ 3 đầu vào dưới cùng (`Lookback`, `Attributes`, `Dynamic Covariates`) $\to$ `Dense Encoder` $\to$ đường `Residual` bên trái.
+  * Chỉ lần lượt 3 thẻ bên phải (Xanh lá $\to$ Cam $\to$ Xanh dương) khớp với 3 mũi tên trỏ vào hình, và chỉ vào khung giải phẫu `Residual Block` ở chính giữa màn hình.
 
 ---
 
