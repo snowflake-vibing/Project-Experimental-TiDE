@@ -94,22 +94,15 @@ Nắm vững 5 khái niệm này rồi, giờ chúng ta nhìn xem khối Dense D
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Slide 03 này là sơ đồ kiến trúc tổng thể Figure 1 trích từ trang 5 bài báo gốc. Để các bạn mới nghe lần đầu nhìn vào là hiểu ngay từng khối trên màn hình, mình sẽ đi từ dưới lên trên theo đúng luồng dữ liệu:
+Để anh em dễ hình dung vị trí phần của mình trong kiến trúc tổng thể TiDE, mình sẽ kể lại đúng hành trình đi của dữ liệu từ đầu vào cho tới lúc dự báo nhé:
 
-* **Phía dưới cùng (Đầu vào & Bộ mã hóa):** Mô hình nhận 3 nguồn dữ liệu đầu vào gồm: chuỗi lịch sử (`Lookback`), thuộc tính tĩnh (`Attributes`) và các biến ngoại sinh đã được nén qua bước `Feature Projection` (`Dynamic Covariates`). Sau khi ghép phẳng lại (`Flatten` & `Concat`), toàn bộ đi qua khối `Dense Encoder` ($\times n_e$ tầng) để nén thành một vector tóm tắt duy nhất gọi là $\mathbf{e}^{(i)}$ (được khoanh màu xanh lá).
-* **Nhánh ngoài cùng bên trái (Đường tắt `Residual` toàn cục):** Anh em để ý có một mũi tên chạy thẳng từ chuỗi quá khứ `Lookback` lên tận phép cộng ở đỉnh sơ đồ để tạo `Predictions`. Đường này giúp giữ nguyên phần xu hướng tuyến tính cơ bản từ quá khứ sang tương lai.
+Ban đầu, mô hình tiếp nhận 3 nguồn dữ liệu gồm chuỗi lịch sử `Lookback`, thuộc tính tĩnh `Attributes`, và các biến ngoại sinh `Dynamic Covariates` sau khi đã được nén gọn qua bước `Feature Projection`. Tất cả được gộp phẳng lại rồi đi qua bộ mã hóa `Dense Encoder` gồm $n_e$ tầng để chắt lọc thành một vector tóm tắt duy nhất là $\mathbf{e}^{(i)}$ có kích thước `(B, d_h)`, chứa toàn bộ ngữ cảnh lịch sử.
 
-Bây giờ, trọng tâm phần của mình nằm ở **3 thẻ màu bên phải** (ứng với 3 mũi tên chỉ thẳng vào sơ đồ):
+Song song với nhánh xử lý sâu này, mô hình còn có một đường tắt `Residual` toàn cục nối thẳng từ chuỗi quá khứ `Lookback` lên tận phép cộng cuối cùng để tạo `Predictions`, giúp giữ nguyên vẹn phần xu hướng tuyến tính cơ bản.
 
-1. **Thẻ 1 (Màu xanh lá) — Đầu vào từ Dense Encoder:** Khối của chúng ta nhận đúng vector ẩn duy nhất $\mathbf{e}^{(i)}$ có kích thước `(B, d_h)` (với $d_h$ là `hiddenSize`), chứa toàn bộ ngữ cảnh lịch sử đã được nén lại.
-2. **Thẻ 2 (Màu cam) — Khối Dense Decoder ($\times n_d$ tầng):** Bên trong khối này là $n_d$ khối `Residual Block` xếp chồng nhau. Anh em nhìn vào **hình giải phẫu `Residual Block` ở chính giữa màn hình**: một nhánh chính sẽ đi qua `Dense (ReLU)` $\to$ `Dense (Linear)` $\to$ `Dropout`, rồi cộng với nhánh tắt `Skip Connection`, và cuối cùng đi qua `Layer Norm`. Khối Dense Decoder này giúp giải nén $\mathbf{e}^{(i)}$ thành vector phẳng $\mathbf{g}^{(i)}$ có kích thước `(B, H * p)` — thực thi song song 1 lần cho cả $H$ bước.
-3. **Thẻ 3 (Màu xanh dương) — Unflatten tạo bối cảnh từng bước:** Ngay phía trên là bước `Unflatten` (khung xanh dương), nó gấp vector phẳng $\mathbf{g}^{(i)}$ lại thành ma trận $\mathbf{D}^{(i)}$ (chuẩn bài báo là `(B, p, H)`) để xuất ra $H$ vector bối cảnh $\mathbf{d}_t^{(i)}$ (mỗi vector có `Shape: (B, p)`).
+Quay lại nhánh chính của chúng ta: vector tóm tắt $\mathbf{e}^{(i)}$ sau khi rời bộ mã hóa sẽ đi thẳng vào khối **`Dense Decoder`**. Khối này gồm $n_d$ khối `Residual Block` xếp chồng lên nhau — trong mỗi khối đó, nhánh chính sẽ lần lượt đi qua lớp `Dense (ReLU)`, `Dense (Linear)` và `Dropout`, rồi cộng với nhánh tắt `Skip Connection`, và cuối cùng đi qua `Layer Norm` để ổn định tín hiệu. Qua quá trình này, `Dense Decoder` giải nén $\mathbf{e}^{(i)}$ thành một vector phẳng $\mathbf{g}^{(i)}$ có kích thước `(B, H * p)`, thực thi song song chỉ trong một lần duy nhất cho cả $H$ bước tương lai.
 
-Cuối cùng, các vector bối cảnh này được `Stack` cùng biến ngoại sinh tương lai $\tilde{\mathbf{x}}$ để đi qua `Temporal Decoder` và cộng với nhánh `Residual` ra kết quả `Predictions`. Còn việc ở tầng kế tiếp ghép ngoại sinh cụ thể ra sao, mình sẽ giải thích chi tiết ở Slide 07 và Slide 08 nhé!
-
-* **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ từ 3 đầu vào dưới cùng (`Lookback`, `Attributes`, `Dynamic Covariates`) $\to$ `Dense Encoder` $\to$ đường `Residual` bên trái.
-  * Chỉ lần lượt 3 thẻ bên phải (Xanh lá $\to$ Cam $\to$ Xanh dương) khớp với 3 mũi tên trỏ vào hình, và chỉ vào khung giải phẫu `Residual Block` ở chính giữa màn hình.
+Ngay sau đó, thao tác `Unflatten` sẽ định hình lại vector phẳng $\mathbf{g}^{(i)}$ thành ma trận $\mathbf{D}^{(i)}$ kích thước `(B, p, H)`, tách ra $H$ vector bối cảnh riêng biệt $\mathbf{d}_t^{(i)}$ với mỗi vector có kích thước `(B, p)` đại diện cho từng bước thời gian tương lai. Cuối cùng, các vector bối cảnh này được xếp chồng (`Stack`) cùng biến ngoại sinh tương lai $\tilde{\mathbf{x}}$ để đi qua `Temporal Decoder` và cộng với đường `Residual` thành kết quả dự báo cuối cùng. Còn việc ghép ngoại sinh cụ thể như thế nào, mình sẽ giải thích rõ ở Slide 07 và Slide 08 nhé!
 
 ---
 
