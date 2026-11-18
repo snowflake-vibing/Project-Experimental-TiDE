@@ -43,9 +43,6 @@ Trong khoảng 12 phút tới, mình sẽ đi cùng anh em qua 3 phần rất r�
 
 Bây giờ mình vào ngay **Slide 02** để thống nhất các ký hiệu và thuật ngữ cơ bản nhất nhé!
 
-* **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chiếu Slide Bìa, nói chậm rãi rõ ràng, nhấn mạnh hai ý chính: **"Giải mã One-Shot cực nhanh"** và **"Nút thắt tham số khi dự báo xa"**.
-
 ---
 
 ## 📖 PHẦN 1: THUẬT NGỮ, KIẾN TRÚC & TOÁN HỌC (SLIDES 02 – 07)
@@ -62,25 +59,22 @@ Bây giờ mình vào ngay **Slide 02** để thống nhất các ký hiệu và
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Với các bạn mới đọc TiDE lần đầu, rào cản lớn nhất là các ký hiệu viết tắt. Nên ở Slide 02 này, mình thống nhất nhanh 4 con số kích thước và 5 khái niệm nền tảng để lát nữa nhìn sơ đồ là hiểu ngay:
+Với các bạn mới đọc TiDE lần đầu, rào cản lớn nhất thường là các ký hiệu viết tắt. Nên trước khi vào sơ đồ kiến trúc, mình xin thống nhất nhanh 4 con số kích thước và 5 khái niệm nền tảng để lát nữa nghe là hiểu ngay:
 
-**1. Bốn ký hiệu kích thước bạn sẽ gặp xuyên suốt bài nói:**
-* **$B$ (`Batch Size`):** Số lượng mẫu dữ liệu mô hình xử lý cùng lúc trong 1 lượt (giống như mỗi lần chấm bài thi chấm 1 xấp 512 bài). Bài báo **cố định $B = 512$**.
-* **$H$ (`Horizon`):** Số bước tương lai mình muốn dự báo (thường là 96, 192, 336 hoặc dài nhất là **720 bước**).
-* **$p$ (`decoderOutputDim`):** Số lượng đặc trưng tóm tắt cho mỗi bước tương lai (thường chọn là **8, 16 hoặc 32**). Tức là thay vì đoán ngay 1 con số khô khan cho ngày mai, mô hình tạo ra hẳn một vector gồm $p$ con số mô tả bối cảnh cho ngày mai.
-* **$d_h$ (`hiddenSize`):** Độ rộng (số nơ-ron) của các tầng ẩn bên trong mạng. Tác giả thử 3 mức $\{256, 512, 1024\}$: tập dữ liệu lớn như `Electricity` hay `Traffic` dùng tới **1024**, tập nhỏ hơn thì dùng **256 hoặc 512**.
+Đầu tiên là 4 ký hiệu kích thước bạn sẽ gặp xuyên suốt bài nói:
+* **$B$ là `Batch Size`:** Số lượng mẫu dữ liệu mô hình xử lý cùng lúc trong một lượt — giống như mỗi lần chấm bài thi ta chấm một xấp 512 bài vậy. Bài báo cố định $B = 512$.
+* **$H$ là `Horizon`:** Số bước tương lai mình muốn dự báo (thường là 96, 192, 336 hoặc dài nhất là 720 bước).
+* **$p$ là `decoderOutputDim`:** Số lượng đặc trưng tóm tắt cho mỗi bước tương lai (thường là 8, 16 hoặc 32). Thay vì đoán ngay 1 con số khô khan cho ngày mai, mô hình tạo ra hẳn một vector gồm $p$ con số mô tả bối cảnh cho ngày mai.
+* **$d_h$ là `hiddenSize`:** Độ rộng (số nơ-ron) của các tầng ẩn bên trong mạng. Tác giả thử 3 mức $256, 512, 1024$: tập dữ liệu lớn như `Electricity` hay `Traffic` dùng tới 1024, còn các tập nhỏ hơn thì dùng 256 hoặc 512.
 
-**2. Năm thuật ngữ cốt lõi trên slide:**
-* **Thẻ 1 — `MLPResidual` (Khối xử lý cơ bản):** Là "viên gạch" xây nên toàn bộ TiDE. Nó gồm 1 nhánh chính đi qua 2 lớp tính toán phi tuyến, và 1 **đường tắt (Skip Connection)** đi thẳng từ đầu vào sang đầu ra — giống như chiếc cầu an toàn giúp tín hiệu và gradient truyền qua nhiều tầng mà không bị thất lạc.
-* **Thẻ 2 — `Unflatten` (Thao tác Reshape):** Hiểu đơn giản là "gấp lại". Ngõ ra của Dense Decoder ban đầu là 1 hàng dài gồm $H \cdot p$ con số (ví dụ $96 \times 8 = 768$ số). `Unflatten` sẽ cắt và xếp hàng dài đó thành một bảng gồm $H$ cột tương ứng với $H$ ngày, mỗi cột dài $p$ số.
-* **Thẻ 3 — `Information Bottleneck` (Nghẽn cổ chai):** Nếu ta ép kích thước $p$ quá nhỏ (như 1 hay 2), lượng thông tin quá khứ truyền sang bị mất mát, không đủ chứa cả xu hướng lẫn chu kỳ. Ngược lại chọn $p$ quá lớn thì mô hình phình to và dễ học vẹt.
-* **Thẻ 4 — `LayerNorm` (Chuẩn hóa theo tầng):** Đóng vai trò như "bộ ổn áp" đặt ở cuối mỗi khối `MLPResidual`, giúp các con số đầu ra không bị nhảy vọt quá lớn hay tụt về 0 khi mạng sâu.
-* **Thẻ 5 — `Dropout` (Điều chuẩn ngẫu nhiên):** Trong lúc học, nó tạm tắt ngẫu nhiên một tỷ lệ kết nối — giống như việc "che bớt một số gợi ý lúc ôn bài" để mạng không học tủ, chống hiện tượng Overfitting (và khi đi thi/dự báo thật thì mở lại 100%).
+Tiếp theo là 5 thuật ngữ cốt lõi tạo nên khối Dense Decoder:
+* Thứ nhất là **`MLPResidual` (Khối xử lý cơ bản):** Đây là "viên gạch" xây nên toàn bộ TiDE. Nó gồm một nhánh chính đi qua 2 lớp tính toán phi tuyến, và một **đường tắt (`Skip Connection`)** đi thẳng từ đầu vào sang đầu ra — giống như chiếc cầu an toàn giúp tín hiệu và gradient truyền qua nhiều tầng mà không bị thất lạc.
+* Thứ hai là **`Unflatten` (Thao tác Reshape):** Hiểu đơn giản là "gấp lại". Ngõ ra của Dense Decoder ban đầu là một hàng dài gồm $H \cdot p$ con số (ví dụ $96 \times 8 = 768$ số). `Unflatten` sẽ cắt và xếp hàng dài đó thành một bảng gồm $H$ cột tương ứng với $H$ ngày, mỗi cột dài $p$ số.
+* Thứ ba là **`Information Bottleneck` (Nghẽn cổ chai):** Nếu ta ép kích thước $p$ quá nhỏ (như 1 hay 2), lượng thông tin quá khứ truyền sang bị mất mát, không đủ chứa cả xu hướng lẫn chu kỳ. Ngược lại chọn $p$ quá lớn thì mô hình phình to và dễ học vẹt.
+* Thứ tư là **`LayerNorm` (Chuẩn hóa theo tầng):** Đóng vai trò như "bộ ổn áp" đặt ở cuối mỗi khối `MLPResidual`, giúp các con số đầu ra không bị nhảy vọt quá lớn hay tụt về 0 khi mạng sâu.
+* Cuối cùng là **`Dropout` (Điều chuẩn ngẫu nhiên):** Trong lúc học, nó tạm tắt ngẫu nhiên một tỷ lệ kết nối — giống như việc "che bớt một số gợi ý lúc ôn bài" để mạng không học tủ, chống hiện tượng Overfitting (và khi đi dự báo thật thì mở lại 100%).
 
-Nắm vững 5 khái niệm này rồi, giờ chúng ta nhìn xem khối Dense Decoder nằm ở đâu trong toàn bộ kiến trúc TiDE ở Slide 03 nhé!
-
-* **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ lần lượt qua 3 thẻ hàng trên và 2 thẻ hàng dưới khi giải thích từng thuật ngữ.
+Nắm vững 5 khái niệm này rồi, giờ chúng ta cùng xem hành trình của dữ liệu qua khối Dense Decoder trong kiến trúc tổng thể TiDE nhé!
 
 ---
 
@@ -116,22 +110,13 @@ Ngay sau đó, thao tác `Unflatten` sẽ định hình lại vector phẳng $\m
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Ở Slide 04, để thấy vì sao TiDE lại đột phá về tốc độ, anh em hãy nhìn 2 cột đối chiếu trên màn hình:
+Để thấy vì sao TiDE lại đột phá về tốc độ, chúng ta thử so sánh cách làm truyền thống với cách của TiDE nhé:
 
-**1. Cột bên trái — Cách truyền thống (Sinh tuần tự / Autoregressive):**
-* Các mô hình cũ như RNN, LSTM hay Transformer cổ điển làm việc theo kiểu "cuốn chiếu": muốn đoán ngày mai (bước 2) thì bắt buộc phải đoán xong hôm nay (bước 1) rồi lấy kết quả đó nạp ngược lại vào mô hình để đoán tiếp, cứ thế lặp đi lặp lại $H$ lần.
-* Cách này có 2 nhược điểm chết người: Thứ nhất là **chậm**, GPU phải chạy nối đuôi nhau $H$ lượt chứ không tính song song được. Thứ hai là **tích lũy sai số**: ngày 1 đoán lệch 1 chút $\to$ ngày 2 lấy cái lệch đó đoán tiếp nên lệch nhiều hơn $\to$ đến ngày thứ 720 kết quả bị trôi dạt hoàn toàn!
+Với các mô hình truyền thống như RNN, LSTM hay Transformer cổ điển, chúng làm việc theo kiểu "cuốn chiếu" tuần tự: muốn đoán ngày mai (bước 2) thì bắt buộc phải đoán xong hôm nay (bước 1) rồi lấy kết quả đó nạp ngược lại vào mô hình để đoán tiếp, cứ thế lặp đi lặp lại $H$ lần. Cách này có hai nhược điểm rất lớn: thứ nhất là chậm vì GPU phải chạy nối đuôi nhau từng lượt một, thứ hai là **tích lũy sai số** — ngày 1 đoán lệch một chút thì ngày 2 lấy cái lệch đó đoán tiếp, kéo dài đến ngày thứ 720 là kết quả bị trôi dạt hoàn toàn.
 
-**2. Cột bên phải — Cách của TiDE (Sinh song song / One-Shot):**
-* TiDE bỏ hẳn vòng lặp nối đuôi đó. Từ vector tóm tắt quá khứ $\mathbf{e}^{(i)}$, khối Dense Decoder dùng phép nhân ma trận chiếu **một phát duy nhất** ra biểu diễn của toàn bộ $H$ ngày tương lai cùng lúc.
-* Bước 1 và bước 720 đều trích xuất trực tiếp từ $\mathbf{e}^{(i)}$, không bước nào chờ hay phụ thuộc vào kết quả đoán của bước trước.
-* Nhờ vậy, TiDE **triệt tiêu 100% lỗi tích lũy sai số** và chạy nhanh hơn Transformer tới 5–10 lần!
+Ngược lại, TiDE bỏ hẳn vòng lặp nối đuôi đó. Từ vector tóm tắt quá khứ $\mathbf{e}^{(i)}$, khối Dense Decoder dùng phép nhân ma trận chiếu **một phát duy nhất** ra biểu diễn của toàn bộ $H$ ngày tương lai cùng lúc. Bước 1 và bước 720 đều trích xuất trực tiếp từ $\mathbf{e}^{(i)}$, không bước nào phải chờ hay phụ thuộc vào kết quả đoán của bước trước. Nhờ vậy, TiDE **triệt tiêu 100% lỗi tích lũy sai số** và chạy nhanh hơn Transformer tới 5–10 lần!
 
 Nghe tới đây, chắc hẳn bạn mới sẽ thắc mắc: *"Ủa, nếu các ngày tương lai tính độc lập không chờ nhau, vậy làm sao mô hình biết được ngày hôm nay và ngày mai có liên quan chặt chẽ với nhau?"* Mời anh em sang Slide 05 để giải đáp triệt để nhé!
-
-* **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ vào các mũi tên nối đuôi đỏ ở cột trái để minh họa sai số cộng dồn.
-  * Chỉ sang cột phải, nhấn mạnh cụm từ **"1 lần forward duy nhất"**.
 
 ---
 
@@ -139,30 +124,21 @@ Nghe tới đây, chắc hẳn bạn mới sẽ thắc mắc: *"Ủa, nếu các
 
 * **Ảnh slide:** `slide_03b_ban_chat_toan_hoc.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-05--13-từ-công-thức-toán-học-suy-ra-code-modelspy--độc-lập-tính-toán-vs-tương-quan-biểu-diễn))
 * **Thời lượng dự kiến:** 65 – 75 giây.
-* **Mục tiêu slide:** Giúp người nghe hiểu bản chất "vừa độc lập tính toán, vừa tương quan biểu diễn" theo đúng mạch logic: từ công thức toán ở trên suy thẳng ra cách viết code trong `models.py` ở dưới.
+* **Mục tiêu slide:** Giúp người nghe hiểu bản chất "vừa độc lập tính toán, vừa tương quan biểu diễn" theo mạch logic: từ bản chất toán học suy thẳng ra cách viết code trong `models.py`.
 
 ![Slide 05: Từ công thức toán học suy ra code](./images/slide_03b_ban_chat_toan_hoc.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Slide 05 này giải đáp câu hỏi vừa rồi theo đúng mạch: **Nhìn công thức toán học ở khung trên $\to$ để hiểu cách tác giả viết code trong `models.py` ở khung dưới**. Anh em nhìn theo 2 cột:
+Để trả lời câu hỏi vừa rồi một cách thuyết phục nhất, chúng ta đi theo đúng một mạch logic: **từ bản chất toán học suy thẳng ra cách tác giả viết code trong `models.py`**.
 
-**Cột bên trái — Tại sao nó Độc lập tính toán ($O(1)$ trên GPU)?**
-* **Về Toán học (khung trên):** Như hai công thức trên màn hình, khi tách ma trận chiếu tầng cuối thành từng khối cho mỗi ngày $t$, đạo hàm giữa ngày $t$ và ngày $s$ khác bằng $0$. Nói nôm na là trên sơ đồ tính toán **không có sợi dây nào nối ngang giữa ngày này với ngày kia** — toàn bộ chỉ là một phép nhân ma trận lớn.
-* **Suy ra trong Code `models.py` (khung dưới):** Chính vì không phụ thuộc ngang, tác giả **không cần viết vòng lặp `for t in range(H)`**. Trong code chỉ cần đúng **1 lớp `Dense(p * H)`** duy nhất để GPU tính song song cả $H$ ngày trong 1 nhịp, sau đó gọi `tf.reshape` là ra tensor `(B, p, H)`.
+Trước hết, tại sao nó lại **Độc lập tính toán ($O(1)$ trên GPU)**?
+Về mặt toán học, khi tách ma trận chiếu tầng cuối thành từng khối cho mỗi ngày $t$, đạo hàm giữa ngày $t$ và ngày $s$ khác bằng $0$. Nói nôm na là trên sơ đồ tính toán **không có sợi dây nào nối ngang giữa ngày này với ngày kia** — toàn bộ chỉ là một phép nhân ma trận lớn. Từ đó suy ra trong code `models.py`, tác giả **không cần viết vòng lặp `for t in range(H)`**. Chỉ cần đúng **1 lớp `Dense(p * H)`** duy nhất để GPU tính song song cả $H$ ngày trong một nhịp, sau đó gọi `tf.reshape` là ra tensor `(B, p, H)`.
 
-**Cột bên phải — Nhưng tại sao các ngày vẫn Tương quan chặt chẽ với nhau?**
-* **Về Toán học (khung trên):** Ba công thức ở khung trên chứng minh 3 lý do:
-  1. Tuy tính độc lập, nhưng mọi ngày đều "sinh ra từ một gốc mẹ" là vector tóm tắt quá khứ $\mathbf{e}$, nên xét tổng thể chúng vẫn có hiệp phương sai tương quan với nhau.
-  2. Lúc huấn luyện, gradient sai số của tất cả $H$ ngày cùng dội ngược về cập nhật chung cho vector $\mathbf{e}$, ép các trọng số phải học phối hợp nhịp nhàng, mượt mà theo thời gian.
-  3. Ngoài ra còn có công thức đường tắt `Global Residual` nối thẳng quá khứ sang tương lai.
-* **Suy ra trong Code `models.py` (khung dưới):** Ba điều trên tương ứng với 3 dòng cài đặt thực tế trong code:
-  1. Cả $H$ cột $\mathbf{d}_t$ đều cắt ra từ **chung 1 tensor `encoded`**.
-  2. Toàn bộ mô hình tối ưu **chung 1 hàm Loss `MSE`** chấm điểm đồng thời cả $H$ ngày.
-  3. Code cộng trực tiếp nhánh tắt tuyến tính `+ self.linear_skip(past_y)`.
+Nhưng nếu tính độc lập như vậy, tại sao các ngày vẫn **Tương quan chặt chẽ với nhau**?
+Toán học chỉ ra 3 lý do rất rõ ràng: Thứ nhất, tuy tính song song nhưng mọi ngày đều "sinh ra từ một gốc mẹ" là vector tóm tắt quá khứ $\mathbf{e}$, nên về tổng thể chúng vẫn có hiệp phương sai tương quan với nhau. Thứ hai, lúc huấn luyện, gradient sai số của tất cả $H$ ngày cùng dội ngược về cập nhật chung cho vector $\mathbf{e}$, ép các trọng số phải học phối hợp nhịp nhàng và mượt mà theo thời gian. Thứ ba là có thêm nhánh đường tắt `Global Residual` nối thẳng quá khứ sang tương lai.
 
-* **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ từ khung trên xuống khung dưới của từng cột để anh em thấy mối liên hệ 1-1 giữa Toán và Code.
+Ba điều đó ánh xạ trực tiếp thành 3 dòng cài đặt rất gọn trong `models.py`: cả $H$ cột $\mathbf{d}_t$ đều cắt ra từ **chung một tensor `encoded`**; toàn bộ mô hình tối ưu **chung một hàm Loss `MSE`** chấm điểm đồng thời cả $H$ ngày; và cuối cùng code cộng trực tiếp nhánh tắt tuyến tính `+ self.linear_skip(past_y)`.
 
 ---
 
@@ -176,18 +152,13 @@ Slide 05 này giải đáp câu hỏi vừa rồi theo đúng mạch: **Nhìn c�
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Bây giờ ở Slide 06, chúng ta mở nắp xem bên trong khối Dense Decoder có gì. Nhìn vào hai phương trình trên slide, luồng xử lý bên trong chia làm 2 giai đoạn rất rõ:
+Bây giờ chúng ta mở nắp xem bên trong khối Dense Decoder có gì. Luồng xử lý bên trong chia làm hai giai đoạn rất rõ:
 
-* **Giai đoạn 1 — Các khối trung gian (nếu chọn số lớp $n_d \geq 2$):** Ở các tầng này, dữ liệu đi vào kích thước bao nhiêu thì đi ra kích thước bấy nhiêu (giữ nguyên `Shape: (B, d_h)`), mục đích là tinh chỉnh thông tin phi tuyến sâu hơn.
-* **Giai đoạn 2 — Khối cuối cùng ($l = n_d$):** Đây là tầng chuyển đổi quan trọng nhất theo phương trình thứ hai trên màn hình. Tầng này không giữ kích thước $d_h$ nữa, mà **bung rộng ra kích thước rất lớn là $H \cdot p$**.
+Ở giai đoạn đầu gồm các khối trung gian (nếu ta chọn số lớp $n_d \geq 2$), dữ liệu đi vào kích thước bao nhiêu thì đi ra kích thước bấy nhiêu, giữ nguyên `(B, d_h)`, mục đích là tinh chỉnh thông tin phi tuyến sâu hơn. Còn ở giai đoạn cuối cùng ($l = n_d$), tầng này không giữ kích thước $d_h$ nữa, mà **bung rộng ra kích thước rất lớn là $H \cdot p$**.
 
-Ở đây có một chi tiết kỹ thuật rất hay mà người mới hay thắc mắc:
-Bình thường, nhánh tắt (Skip Connection) chỉ việc lấy đầu vào cộng thẳng với đầu ra. Nhưng ở khối cuối này, **đầu vào chỉ rộng $d_h$ (ví dụ 1024), còn đầu ra lại rộng tới $H \cdot p$ (ví dụ 5760)** — hai vector lệch kích thước nhau nên không thể cộng trực tiếp được! Vì vậy, tác giả **bắt buộc phải đặt thêm một ma trận chiếu $\mathbf{W}_{\text{skip}}$** (như khoanh tròn trên slide) để phóng to vector đầu vào từ $d_h$ lên bằng $H \cdot p$ rồi mới cộng lại.
+Ở đây có một chi tiết kỹ thuật rất hay mà người mới hay thắc mắc: Bình thường, nhánh tắt (`Skip Connection`) chỉ việc lấy đầu vào cộng thẳng với đầu ra. Nhưng ở khối cuối này, **đầu vào chỉ rộng $d_h$ (ví dụ 1024), còn đầu ra lại rộng tới $H \cdot p$ (ví dụ 5760)** — hai vector lệch kích thước nhau nên không thể cộng trực tiếp được! Vì vậy, tác giả **bắt buộc phải đặt thêm một ma trận chiếu $\mathbf{W}_{\text{skip}}$** để phóng to vector đầu vào từ $d_h$ lên bằng $H \cdot p$ rồi mới cộng lại.
 
-Và chính bộ đôi ma trận ở tầng cuối này (nhánh chính + nhánh tắt $\mathbf{W}_{\text{skip}}$) là thủ phạm làm bùng nổ số lượng tham số mà lát nữa chúng ta sẽ thấy ở Slide 10!
-
-* **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Khoanh tròn vào số hạng $\mathbf{W}_{\text{skip}}^{(n_d)}$ ở phương trình dưới để nhấn mạnh vai trò đồng bộ kích thước khi cộng residual.
+Và chính bộ đôi ma trận ở tầng cuối này (gồm ma trận nhánh chính và ma trận đường tắt $\mathbf{W}_{\text{skip}}$) là thủ phạm làm bùng nổ số lượng tham số mà lát nữa chúng ta sẽ thấy ở Slide 10!
 
 ---
 
@@ -201,21 +172,13 @@ Và chính bộ đôi ma trận ở tầng cuối này (nhánh chính + nhánh t
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Sau khi khối cuối bung ra một dải vector phẳng dài $H \cdot p$ phần tử, Slide 07 giải thích thao tác **`Reshape` (hay `Unflatten`)** — bám sát 100% theo đúng bài báo gốc và mã nguồn TensorFlow:
+Sau khi khối cuối bung ra một dải vector phẳng dài $H \cdot p$ phần tử, bước tiếp theo là thao tác **`Reshape` (hay `Unflatten`)** — bám sát 100% theo đúng bài báo gốc và mã nguồn TensorFlow:
 
-**1. Về cấu trúc ma trận $\mathbf{D}^{(i)}$ trên slide:**
-* Bạn hãy tưởng tượng dải vector phẳng dài $768$ số ($H=96, p=8$) giống như một sợi dây dài. Lệnh `Reshape` sẽ gấp sợi dây đó thành một cái bảng $\mathbf{D}^{(i)}$ có **$p = 8$ dòng và $H = 96$ cột**, tương ứng với batch shape **`(B, p, H)`**.
-* Khi đó, **mỗi cột thứ $t$ chính là vector bối cảnh $\mathbf{d}_t$ gồm 8 con số dành riêng cho ngày thứ $t$**.
+Bạn hãy tưởng tượng dải vector phẳng dài $768$ số ($H=96, p=8$) giống như một sợi dây dài. Lệnh `Reshape` sẽ gấp sợi dây đó thành một cái bảng $\mathbf{D}^{(i)}$ có **$p = 8$ dòng và $H = 96$ cột**, tương ứng với batch shape **`(B, p, H)`**. Khi đó, **mỗi cột thứ $t$ chính là vector bối cảnh $\mathbf{d}_t$ gồm 8 con số dành riêng cho ngày thứ $t$**.
 
-**2. Chi tiết ghép ngoại sinh trong code (`models.py#L210-L211`):**
-* Để trả lời cho phần hẹn ở Slide 03 về việc tầng kế tiếp ghép ngoại sinh cụ thể thế nào: Ngay sau khi có ma trận `(B, p, H)` ở dòng 210, sang dòng 211 tác giả đem **ghép nối nó với ma trận ngoại sinh tương lai `enc_fut`** có kích thước `(B, r_tilde, H)` dọc theo trục đặc trưng `axis=1`.
-* Ví dụ: 8 đặc trưng quá khứ + 4 đặc trưng ngoại sinh tương lai (như thứ trong tuần, thời tiết, ngày lễ) $\to$ gộp thành 12 đặc trưng cho mỗi ngày `(B, 12, H)`, rồi đưa vào `Temporal Decoder` để xuất ra con số dự báo cuối cùng.
+Và để trả lời cho phần hẹn ở Slide 03 về việc tầng kế tiếp ghép ngoại sinh cụ thể thế nào: Ngay sau khi có ma trận `(B, p, H)` ở dòng 210 `models.py`, sang dòng 211 tác giả đem **ghép nối nó với ma trận ngoại sinh tương lai `enc_fut`** có kích thước `(B, r_tilde, H)` dọc theo trục đặc trưng `axis=1`. Ví dụ: 8 đặc trưng quá khứ cộng với 4 đặc trưng ngoại sinh tương lai (như thứ trong tuần, thời tiết, ngày lễ) sẽ gộp thành 12 đặc trưng cho mỗi ngày `(B, 12, H)`, rồi đưa vào `Temporal Decoder` để xuất ra con số dự báo cuối cùng.
 
-**3. Chi phí bằng 0 ($O(1)$):**
-* Một điểm cộng cực lớn: Lệnh `tf.reshape` này **không tốn bộ nhớ copy dữ liệu mới** mà chỉ đổi cách đánh số chỉ mục (stride), nên chi phí tính toán coi như bằng 0!
-
-* **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ vào sơ đồ ma trận $p \times H$ trên slide, chỉ từng cột $\mathbf{d}_1, \mathbf{d}_2, \dots, \mathbf{d}_H$.
+Một điểm cộng cực lớn nữa là lệnh `tf.reshape` này **không tốn bộ nhớ copy dữ liệu mới** mà chỉ đổi cách đánh số chỉ mục (stride), nên chi phí tính toán coi như bằng 0 ($O(1)$)!
 
 ---
 
@@ -244,9 +207,6 @@ Sang Phần 2, Slide 08 đưa chúng ta vào thẳng mã nguồn chính thức `
 
 Chỉ gói gọn trong 6 bước như vậy, toàn bộ quá trình giải mã diễn ra liền mạch từ đầu đến cuối!
 
-* **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Trỏ chuột lần lượt theo 3 khung code trên slide tương ứng với lúc Khởi tạo $\to$ Đổi chiều tầng cuối $\to$ Chạy forward & Reshape.
-
 ---
 
 ### 🟢 SLIDE 09 / 13 — CẤU HÌNH SIÊU THAM SỐ DENSE DECODER TRÊN 7 BENCHMARK DATASETS
@@ -261,9 +221,9 @@ Chỉ gói gọn trong 6 bước như vậy, toàn bộ quá trình giải mã d
 
 Slide 09 tổng hợp toàn bộ cấu hình tối ưu mà nhóm tác giả Google đã thử nghiệm trên 7 bộ dữ liệu chuẩn (trích từ Bảng 7 & 8 ở Phụ lục bài báo).
 
-Nhìn vào dải thử nghiệm: kích thước ẩn $d_h$ quét $\{256, 512, 1024\}$; chiều bối cảnh $p$ quét $\{4, 8, 16, 32\}$; và số lớp Dense Decoder $n_d$ quét $\{1, 2, 3\}$.
+Trong quá trình tìm kiếm cấu hình tốt nhất, tác giả quét kích thước ẩn $d_h$ trong $\{256, 512, 1024\}$; chiều bối cảnh $p$ trong $\{4, 8, 16, 32\}$; và số lớp Dense Decoder $n_d$ trong $\{1, 2, 3\}$.
 
-Nhưng khi chọn ra bộ thông số tốt nhất cho từng tập dữ liệu ở bảng dưới, có một **quy luật rất thú vị về số lớp $n_d$** mà mình muốn giải thích rõ cho anh em:
+Khi chọn ra bộ thông số tối ưu cho từng tập dữ liệu, có một **quy luật rất thú vị về số lớp $n_d$** mà mình muốn giải thích rõ cho anh em:
 
 **1. Tại sao `Traffic`, `ETTm1`, `Weather` chỉ cần chọn đúng $n_d = 1$ (1 lớp duy nhất)?**
 * **Tập `Traffic`:** Tập này có tới **862 cảm biến giao thông** chạy song song (số chiều cực lớn). Chỉ cần 1 lớp giải mã là đủ nhẹ để không bị quá tải bộ nhớ GPU.
@@ -275,10 +235,6 @@ Nhưng khi chọn ra bộ thông số tốt nhất cho từng tập dữ liệu 
 **3. Điều đặc biệt nhất: Tại sao KHÔNG CÓ BẤT KỲ tập nào ($0/7$) chọn $n_d = 3$?**
 * Thứ nhất là **bão hòa hiệu năng**: Dense Decoder không phải làm việc một mình mà đã có `Global Residual` và `Temporal Decoder` hỗ trợ, nên thêm lớp thứ 3 cũng không mang lại thêm độ chính xác.
 * Thứ hai là **nguy cơ học vẹt (Overfitting)**: Các tập như ETT có kích thước mẫu khá nhỏ, thêm tầng thứ 3 làm dư thừa tham số, dẫn đến kết quả trên tập kiểm định (validation loss) bị tệ đi nên bị loại ngay lập tức!
-
-* **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ vào cột $n_d$ để anh em thấy sự phân hóa giữa 1 và 2, và gạch chân con số **$0/7$ tập chọn $n_d = 3$**.
-  * Khoanh vào hàng `ETTh2`: *"Riêng tập này chọn $p = 32$ rất lớn"*.
 
 ---
 
@@ -295,20 +251,15 @@ Nhưng khi chọn ra bộ thông số tốt nhất cho từng tập dữ liệu 
 Slide 10 này bóc tách một vấn đề cực kỳ quan trọng khi mô hình phải dự báo tầm xa ($H = 720$): **Cách chọn $p$ ảnh hưởng thế nào, bài báo nói gì về nó, và tại sao tầng cuối lại phình to tới hơn chục triệu tham số?**
 
 **1. Bài báo nói gì về $p$?**
-* Tác giả định nghĩa $p$ (`decoderOutputDim`) ở Mục 4.2 (Trang 6) và quét trong $\{4, 8, 16, 32\}$ ở Phụ lục B.3 (Table 7 & 8). Kết quả thực tế: cả **7/7 tập dữ liệu đều loại bỏ $p=4$** và chỉ chọn từ $8, 16$ đến $32$.
-* **Tuy nhiên, tác giả KHÔNG hề làm thí nghiệm Ablation riêng để phân tích độ nhạy của $p$**! Đây chính là khoảng trống thực nghiệm mà nhóm mình có thể khai thác.
+Tác giả định nghĩa $p$ (`decoderOutputDim`) ở Mục 4.2 (Trang 6) và quét trong $\{4, 8, 16, 32\}$ ở Phụ lục B.3 (Table 7 & 8). Kết quả thực tế là cả **7/7 tập dữ liệu đều loại bỏ $p=4$** và chỉ chọn từ $8, 16$ đến $32$. Tuy nhiên, **tác giả KHÔNG hề làm thí nghiệm Ablation riêng để phân tích độ nhạy của $p$**! Đây chính là khoảng trống thực nghiệm mà nhóm mình có thể khai thác.
 
-**2. Cơ sở dẫn đến các con số nghẽn cổ chai và bùng nổ tham số trên slide:**
-* **Khi $p$ quá nhỏ ($p \le 4$):** Việc cả 7 tập đều "chê" $p=4$ chứng tỏ nếu ép quá nhỏ, vector $\mathbf{d}_t$ bị nghẽn cổ chai thông tin, không đủ chỗ chứa đồng thời xu hướng dài và các chu kỳ ngắn.
-* **Khi $p$ lớn và dự báo xa ($H = 720$):** Tầng cuối phải bung ra kích thước $H \cdot p$. Với $H=720$: nếu $p=8$ thì ngõ ra là $5{,}760$; còn nếu $p=32$ (như tập `ETTh2`) thì ngõ ra nhảy vọt lên **$23{,}040$ chiều** (gấp 8 lần so với $p=4$)!
-* Như chúng ta đã biết ở Slide 06, tầng cuối có tới **2 ma trận lớn** (1 ở nhánh chính và 1 ở nhánh tắt `lin_res`), mỗi ma trận nối từ $d_h$ sang $H \cdot p$.
-* Nhân thử con số thực tế từ code: Trên tập `Electricity` ($d_h = 1024, p = 8, H = 720$), chỉ riêng 2 ma trận ở tầng cuối cùng này đã ngốn mất **~11.8 triệu tham số**! Còn trên `ETTh2` ($d_h = 512, p = 32$) thì vọt lên **~23.6 triệu tham số**!
+**2. Cơ sở dẫn đến hiện tượng nghẽn cổ chai và bùng nổ tham số:**
+* **Khi $p$ quá nhỏ ($p \le 4$):** Việc cả 7 tập đều loại bỏ $p=4$ chứng tỏ nếu ép quá nhỏ, vector $\mathbf{d}_t$ bị nghẽn cổ chai thông tin, không đủ chỗ chứa đồng thời xu hướng dài và các chu kỳ ngắn.
+* **Khi $p$ lớn và dự báo xa ($H = 720$):** Tầng cuối phải bung ra kích thước $H \cdot p$. Với $H=720$: nếu $p=8$ thì ngõ ra là $5{,}760$; còn nếu $p=32$ (như tập `ETTh2`) thì ngõ ra nhảy vọt lên **$23{,}040$ chiều** (gấp 8 lần so với $p=4$).
+* Như chúng ta đã biết ở Slide 06, tầng cuối có tới **2 ma trận lớn** (1 ở nhánh chính và 1 ở nhánh tắt `lin_res`), mỗi ma trận nối từ $d_h$ sang $H \cdot p$. Nhân thử con số thực tế từ code: trên tập `Electricity` ($d_h = 1024, p = 8, H = 720$), chỉ riêng 2 ma trận ở tầng cuối cùng này đã ngốn mất **~11.8 triệu tham số**, còn trên `ETTh2` ($d_h = 512, p = 32$) thì vọt lên **~23.6 triệu tham số**!
 * Và ở phần Kết luận (Mục 6, Trang 11), chính tác giả cũng thẳng thắn thừa nhận điểm yếu của kiến trúc MLP là **kém hiệu quả về mặt số lượng tham số (less parameter efficient)** hơn so với Transformer.
 
 Đây chính là lý do trực tiếp dẫn chúng ta tới giải pháp cải tiến ở Slide 11!
-
-* **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ vào dòng trích dẫn Mục 4.2, Table 7–8, Mục 6 và con số **11.8M $\to$ 23.6M tham số**.
 
 ---
 
@@ -328,20 +279,13 @@ Slide 10 này bóc tách một vấn đề cực kỳ quan trọng khi mô hình
 
 Để giải quyết triệt để nút thắt 11.8 triệu tham số vừa nêu, ở Slide 11 mình đề xuất phương án tối ưu nhất cho nhóm: **Low-Rank Factorized Dense Decoder Projection**.
 
-Để các bạn mới nghe dễ hình dung nhất:
-Hãy tưởng tượng bạn cần nối đường từ $1{,}024$ điểm đầu vào sang $5{,}760$ điểm đầu ra.
-* **Cách gốc của TiDE:** Xây một cây cầu khổng lồ nối thẳng từ $1{,}024$ sang $5{,}760$ $\to$ tốn tới $11.8$ triệu tham số.
-* **Cách Low-Rank (kế thừa từ kỹ thuật LoRA nổi tiếng của Hu et al., 2022):** Thay vì nối thẳng một ma trận khổng lồ, ta **tách đôi nó thành 2 ma trận nhỏ đi qua một "trạm trung chuyển" có kích thước nhỏ $r = 64$**: tức là nén từ $1{,}024 \to 64$, rồi từ $64 \to 5{,}760$.
+Để các bạn mới nghe dễ hình dung nhất: Hãy tưởng tượng bạn cần nối đường từ $1{,}024$ điểm đầu vào sang $5{,}760$ điểm đầu ra. Với cách gốc của TiDE, ta phải xây một cây cầu khổng lồ nối thẳng từ $1{,}024$ sang $5{,}760$, tốn tới $11.8$ triệu tham số. Còn với **cách Low-Rank (kế thừa từ kỹ thuật LoRA nổi tiếng của Hu et al., 2022)**, thay vì nối thẳng một ma trận khổng lồ, ta **tách đôi nó thành 2 ma trận nhỏ đi qua một "trạm trung chuyển" có kích thước nhỏ $r = 64$**: tức là nén từ $1{,}024 \to 64$, rồi từ $64 \to 5{,}760$.
 
 **Cách làm đơn giản này mang lại 4 lợi ích cực lớn:**
-1. **Giảm sốc tới 92.6% tham số:** Trên cấu hình `Electricity`, số tham số của tầng cuối rớt từ **11.8 triệu xuống chỉ còn ~0.87 triệu**!
+1. **Giảm sốc tới 92.6% tham số:** Trên cấu hình `Electricity`, số tham số của tầng cuối rớt từ **11.8 triệu xuống chỉ còn ~0.87 triệu**.
 2. **Giảm phép tính (FLOPs) hơn 13 lần:** Máy tính tính toán nhẹ nhàng hơn rất nhiều.
 3. **Giữ nguyên 100% tốc độ One-Shot $O(1)$:** Mô hình vẫn chạy song song một lèo không thêm vòng lặp nào.
 4. **Chống Overfitting tự nhiên:** Việc ép thông tin đi qua trạm trung chuyển $r = 64$ buộc mô hình chỉ giữ lại những quy luật cốt lõi, tự động gạt bỏ nhiễu ngẫu nhiên của chuỗi dài.
-
-* **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ vào sơ đồ phân rã trên slide: từ $d_h \to$ qua nút thắt $r=64 \to$ bung ra $H \cdot p$.
-  * Nhấn mạnh con số: **11.8M $\to$ 0.87M (giảm 92.6%)**.
 
 ---
 
@@ -357,20 +301,17 @@ Hãy tưởng tượng bạn cần nối đường từ $1{,}024$ điểm đầu
 
 Để khép lại phần trình bày, Slide 12 tóm tắt **3 điểm giải pháp Low-Rank cải thiện trực tiếp cho TiDE** và **kế hoạch thực nghiệm 3 bước của nhóm mình**:
 
-**3 Điểm cải thiện cụ thể:**
+**Về 3 điểm cải thiện cụ thể:**
 1. **Thay thế tầng chiếu cuối tại `models.py#L136`:** Biến phép chiếu phình to đột ngột thành chuỗi $d_h \to r \to H \cdot p$, giảm hơn 85%–92% tham số nhưng vẫn giữ nguyên cấu trúc `MLPResidual`.
 2. **Mở khóa việc tăng $p$ khi $H = 720$:** Nhờ mô hình nhẹ đi rất nhiều, nhóm mình có thể mạnh dạn tăng $p$ lên 16 hoặc 32 trên các tập dữ liệu phức tạp mà không sợ tràn VRAM.
 3. **Lấp đầy khoảng trống Ablation của bài báo:** Nhóm tác giả Google chưa từng công bố bảng quét độ nhạy cho $p$ và $n_d$, nhóm mình sẽ chạy bổ sung trọn vẹn thí nghiệm này.
 
-**Lộ trình thực nghiệm 3 bước:**
+**Về lộ trình thực nghiệm 3 bước:**
 * **Bước 1:** Chạy so sánh TiDE gốc vs TiDE Low-Rank ($r \in \{32, 64, 128\}$) trên 3 tập đại diện (`Electricity`, `ETTh2`, `ETTm1`) ở các tầm xa $H = 336, 720$ với 5 seed độc lập cho khách quan.
 * **Bước 2:** Quét độ nhạy siêu tham số $p \in \{2, 8, 16, 32\}$ và $n_d \in \{1, 2, 3\}$.
 * **Bước 3:** Chốt nghiệm thu nếu giảm được $\geq 85\%$ tham số tầng cuối, giữ nguyên tốc độ $O(1)$ và sai số MSE/MAE bằng hoặc tốt hơn bản gốc.
 
 Mình đã chuẩn bị sẵn hướng dẫn chạy song song 2 tài khoản Kaggle trên Brave trong thư mục `kaggle/` để cả nhóm có 60 giờ GPU miễn phí mỗi tuần. Giờ mời anh em cùng trao đổi và chia task nhé!
-
-* **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ lần lượt vào bảng 3 điểm cải thiện và 3 bước trong Validation Protocol.
 
 ---
 
