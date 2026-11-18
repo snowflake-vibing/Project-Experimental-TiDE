@@ -34,10 +34,78 @@
 
 ![Slide 03: One-Shot vs Tuần tự](./images/slide_03_one_shot_vs_tuan_tu.png)
 
-### So sánh trực diện hai cơ chế giải mã
+### 1. So sánh trực diện hai cơ chế giải mã
 
 1. **Autoregressive truyền thống (RNN / Seq2Seq / Decoder tự hồi quy):** Sinh $\hat{y}_1 \rightarrow$ nạp lại dự đoán đó làm đầu vào đoán $\hat{y}_2 \rightarrow \dots \rightarrow \hat{y}_H$. Độ phức tạp tuần tự $O(H)$ trên GPU và làm **tích lũy sai số (Error Accumulation)** nghiêm trọng khi $H = 336, 720$.
-2. **Dense Decoder (TiDE — Non-autoregressive / One-Shot):** Từ $\mathbf{e}^{(i)}$, khối cuối $n_d$ chiếu 1 phát duy nhất ra vector phẳng $\mathbf{g}^{(i)}$ có Shape: $(B, H \cdot p)$ chứa biểu diễn của toàn bộ $H$ bước tương lai. Không phụ thuộc kết quả dự đoán bước trước, triệt tiêu hoàn toàn tích lũy sai số giữa các bước và đạt độ phức tạp $O(1)$ song song hóa triệt để trên GPU (nhanh hơn Transformer 5–10 lần theo Mục 5.3).
+
+$$
+P(y_1, y_2, \dots, y_H \mid y_{1:L}) = \prod_{t=1}^H P(y_t \mid y_{1:L}, y_1, \dots, y_{t-1})
+$$
+
+2. **Dense Decoder (TiDE — Non-autoregressive / One-Shot):** Từ vector toàn cục $\mathbf{e}^{(i)}$, khối cuối $n_d$ chiếu 1 lần duy nhất ra vector phẳng $\mathbf{g}^{(i)}$ có Shape: $(B, H \cdot p)$ chứa trọn vẹn biểu diễn của toàn bộ $H$ bước tương lai. Không phụ thuộc kết quả dự đoán bước trước, triệt tiêu hoàn toàn tích lũy sai số giữa các bước và đạt độ phức tạp $O(1)$ song song hóa triệt để trên GPU (nhanh hơn Transformer 5–10 lần theo Mục 5.3).
+
+---
+
+### 2. Hệ thống công thức toán học: Độc lập tính toán vs Tương quan biểu diễn
+
+#### A. Công thức chứng minh: Độc lập tính toán triệt để ($O(1)$ Hardware Parallelism)
+
+Xét ma trận chiếu tầng cuối cùng $\mathbf{W} \in \mathbb{R}^{(H \cdot p) \times d_h}$ và vector định thiên $\mathbf{b} \in \mathbb{R}^{H \cdot p}$. Ta phân rã $\mathbf{W}$ và $\mathbf{b}$ thành $H$ khối con xếp chồng theo trục thời gian:
+
+$$
+\mathbf{W} = \begin{bmatrix} \mathbf{W}_1 \\ \mathbf{W}_2 \\ \vdots \\ \mathbf{W}_H \end{bmatrix}, \quad \mathbf{b} = \begin{bmatrix} \mathbf{b}_1 \\ \mathbf{b}_2 \\ \vdots \\ \mathbf{b}_H \end{bmatrix} \quad (\text{với } \mathbf{W}_t \in \mathbb{R}^{p \times d_h},\; \mathbf{b}_t \in \mathbb{R}^p)
+$$
+
+Lát cắt vector bối cảnh tại từng thời điểm $t \in \{1, \dots, H\}$ được tính trực tiếp từ tầng ẩn $\mathbf{v}^{(n_d-1)} \in \mathbb{R}^{d_h}$:
+
+$$
+\mathbf{d}_t^{(i)} = \mathbf{W}_t \mathbf{v}^{(n_d-1)} + \mathbf{b}_t \in \mathbb{R}^p
+$$
+
+Đạo hàm riêng chéo giữa hai thời điểm bất kỳ $t$ và $s$ ($t \neq s$):
+
+$$
+\frac{\partial \mathbf{d}_t^{(i)}}{\partial \mathbf{d}_s^{(i)}} = \mathbf{0}, \quad \forall t \neq s
+$$
+
+> [!NOTE]
+> **Ý nghĩa Độc lập tính toán:** Đồ thị tính toán hoàn toàn không tồn tại cạnh nối giữa bước $t$ và bước $s$. Phép tính $\mathbf{g}^{(i)} = \mathbf{W}\mathbf{v} + \mathbf{b}$ được GPU thực thi như 1 toán tử GEMM (General Matrix Multiply) song song đa luồng duy nhất với độ sâu đồ thị là $O(1)$.
+
+#### B. Công thức chứng minh: Tương quan biểu diễn sâu sắc (Representational Correlation)
+
+Dù độc lập về đồ thị tính toán, các vector bối cảnh $\{\mathbf{d}_t^{(i)}\}_{t=1}^H$ vẫn tương quan chặt chẽ nhờ 3 cơ chế toán học:
+
+**1. Luật Hiệp phương sai toàn phần (Law of Total Covariance / Latent Coupling):**
+
+Theo mô hình biến ẩn, khi đã biết trạng thái toàn cục $\mathbf{e}^{(i)}$, các bước tương lai độc lập có điều kiện: $\mathrm{Cov}(\mathbf{d}_t^{(i)}, \mathbf{d}_s^{(i)} \mid \mathbf{e}^{(i)}) = \mathbf{0}$. Tuy nhiên, hiệp phương sai biên giữa hai bước thời gian bất kỳ $t$ và $s$ ($t \neq s$) được khai triển:
+
+$$
+\mathrm{Cov}(\mathbf{d}_t^{(i)}, \mathbf{d}_s^{(i)}) = \mathbb{E}_{\mathbf{e}}\!\left[\underbrace{\mathrm{Cov}(\mathbf{d}_t^{(i)}, \mathbf{d}_s^{(i)} \mid \mathbf{e}^{(i)})}_{= \mathbf{0}}\right] + \mathrm{Cov}_{\mathbf{e}}\!\left(\mathbb{E}[\mathbf{d}_t^{(i)} \mid \mathbf{e}^{(i)}], \, \mathbb{E}[\mathbf{d}_s^{(i)} \mid \mathbf{e}^{(i)}]\right)
+$$
+
+$$
+\mathrm{Cov}(\mathbf{d}_t^{(i)}, \mathbf{d}_s^{(i)}) = \mathbf{W}_t \, \mathbf{\Sigma}_{\mathbf{e}} \, \mathbf{W}_s^\top \neq \mathbf{0}
+$$
+
+Trong đó $\mathbf{\Sigma}_{\mathbf{e}} = \mathrm{Cov}(\mathbf{e}^{(i)}) \in \mathbb{R}^{d_h \times d_h}$ là ma trận hiệp phương sai của vector bối cảnh toàn cục. Vì $\mathbf{\Sigma}_{\mathbf{e}}$ có các phần tử khác không, ma trận $\mathbf{W}_t \mathbf{\Sigma}_{\mathbf{e}} \mathbf{W}_s^\top$ kích hoạt mối tương quan qua lại liên tục giữa mọi cặp bước thời gian $(t, s)$.
+
+**2. Động lực học liên kết Gradient khi Backpropagation (Joint Optimization):**
+
+Với hàm mất mát toàn horizon $\mathcal{L} = \sum_{t=1}^H \ell(\hat{y}_t^{(i)}, y_t^{(i)})$, gradient cập nhật vector ẩn chung $\mathbf{e}^{(i)}$ nhận thông tin từ toàn bộ $H$ bước đồng thời:
+
+$$
+\nabla_{\mathbf{e}^{(i)}} \mathcal{L} = \sum_{t=1}^H \mathbf{W}_t^\top \nabla_{\mathbf{d}_t^{(i)}} \mathcal{L}
+$$
+
+Mọi bước $t$ cùng đồng thời kéo vector $\mathbf{e}^{(i)}$ về một nghiệm tối ưu trên đa tạp dữ liệu chung, buộc các khối $\mathbf{W}_t$ phải học được tính trơn tru thời gian (temporal smoothness) nhịp nhàng qua từng bước.
+
+**3. Khóa tương quan chuỗi trực tiếp qua Global Residual:**
+
+$$
+\hat{\mathbf{y}}_{\mathrm{res}}^{(i)} = \mathbf{W}_{\mathrm{res}} \mathbf{y}_{1:L}^{(i)} \implies \hat{y}_{\mathrm{res}, t}^{(i)} = \sum_{l=1}^L W_{\mathrm{res}, t, l} \cdot y_l^{(i)}
+$$
+
+Ma trận $\mathbf{W}_{\mathrm{res}} \in \mathbb{R}^{H \times L}$ nối trực tiếp từ lịch sử sang tương lai, bảo đảm mọi tương quan trễ tuyến tính (như chu kỳ 24h, 168h) được truyền dẫn nguyên vẹn sang từng bước dự báo $t$.
 
 ---
 
