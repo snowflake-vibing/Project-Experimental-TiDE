@@ -4,19 +4,20 @@
 
 ---
 
-## Slide 02 / 13 — Vai trò 5 thuật ngữ nền tảng trong bài báo TiDE
+## Slide 02 / 13 — Vai trò 5 thuật ngữ nền tảng & Ký hiệu kích thước ($B, H, p$, hiddenSize)
 
-![Slide 02: Vai trò 5 thuật ngữ nền tảng](./images/slide_01_bang_thuat_ngu_dense_decoder.png)
+![Slide 02: Vai trò 5 thuật ngữ nền tảng & Ký hiệu kích thước](./images/slide_01_bang_thuat_ngu_dense_decoder.png)
 
-### Giải thích ngắn gọn vai trò từng thuật ngữ trong bài báo TiDE
+### Giải thích ngắn gọn vai trò từng thuật ngữ & ký hiệu trong bài báo TiDE
 
-| STT | Thuật ngữ | Vai trò trong bài báo TiDE |
+| STT | Thuật ngữ / Ký hiệu | Vai trò trong bài báo TiDE |
 | :--- | :--- | :--- |
 | **1** | **MLPResidual (Residual Block)** | Khối xử lý phi tuyến nòng cốt được xếp chồng nhiều tầng trong TiDE để trích xuất đặc trưng; dùng thêm đường tắt tuyến tính giúp đổi số chiều và truyền gradient ổn định. |
 | **2** | **Unflatten (Thao tác Reshape)** | Tách vector phẳng đầu ra thành các vector riêng cho từng mốc thời gian $t = 1 \dots H$, khôi phục trục thời gian $H$ để tầng sau ghép tương ứng với biến ngoại sinh. |
 | **3** | **Information Bottleneck** | Hiện tượng mất thông tin quá khứ khi ép biểu diễn qua chiều $p$ hoặc hạng $r$ quá hẹp; TiDE phải chọn kích thước đủ giữ chu kỳ cho $H$ bước mà không làm phình tham số. |
-| **4** | **LayerNorm (Chuẩn hóa theo tầng)** | Chuẩn hóa đặc trưng của từng mẫu ngay ở đầu ra mỗi khối `MLPResidual` (sau phép cộng nhánh tắt), giúp phân phối tín hiệu và quá trình huấn luyện ổn định khi xếp chồng nhiều tầng hoặc horizon dài. |
-| **5** | **Dropout (Điều chuẩn ngẫu nhiên)** | Tắt ngẫu nhiên một tỷ lệ kết nối trong nhánh phi tuyến của khối `MLPResidual` lúc huấn luyện nhằm giảm Overfitting của các tầng Dense lớn (tự động tắt khi suy luận dự báo). |
+| **4** | **LayerNorm (Chuẩn hóa theo tầng)** | Chuẩn hóa đặc trưng của từng mẫu ở đầu ra mỗi khối `MLPResidual` (sau cộng nhánh tắt), giúp ổn định tín hiệu và quá trình huấn luyện khi xếp chồng nhiều tầng hoặc horizon dài. |
+| **5** | **Dropout (Điều chuẩn ngẫu nhiên)** | Tắt ngẫu nhiên một tỷ lệ kết nối ở nhánh phi tuyến của khối `MLPResidual` lúc huấn luyện nhằm giảm Overfitting của các tầng Dense lớn (tự động tắt khi suy luận). |
+| **6** | **Ký hiệu ($B, H, p$, `hiddenSize`)** | $B$: `Batch Size` ($B=512$); $H$: `Horizon` ($96, 192, 336, 720$); $p$: `decoderOutputDim` ($8, 16, 32$); `hiddenSize` ($d_h$): độ rộng tầng ẩn ($256, 512, 1024$). |
 
 ---
 

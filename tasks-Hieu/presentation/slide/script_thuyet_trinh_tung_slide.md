@@ -52,9 +52,9 @@ Bây giờ mình vào ngay **Slide 02** để thống nhất các ký hiệu và
 
 ---
 
-### 🟢 SLIDE 02 / 13 — THUẬT NGỮ NỀN TẢNG CỐT LÕI (`MLPResidual`, `Unflatten`, `Information Bottleneck`, `LayerNorm`, `Dropout`)
+### 🟢 SLIDE 02 / 13 — THUẬT NGỮ NỀN TẢNG & KÝ HIỆU KÍCH THƯỚC (`B`, `H`, `p`, `hiddenSize`)
 
-* **Ảnh slide:** `slide_01_bang_thuat_ngu_dense_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-02--13-thuật-ngữ-nền-tảng-cốt-lõi-mlpresidual-unflatten-information-bottleneck-layernorm-dropout))
+* **Ảnh slide:** `slide_01_bang_thuat_ngu_dense_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-02--13-vai-trò-5-thuật-ngữ-nền-tảng--ký-hiệu-kích-thước-b-h-p-hiddensize))
 * **Thời lượng dự kiến:** 75 – 85 giây.
 * **Mục tiêu slide:** Giúp người mới hiểu ngay ý nghĩa thực tế của các ký hiệu $B, H, p, d_h$ và 5 thuật ngữ cốt lõi trước khi xem sơ đồ.
 
