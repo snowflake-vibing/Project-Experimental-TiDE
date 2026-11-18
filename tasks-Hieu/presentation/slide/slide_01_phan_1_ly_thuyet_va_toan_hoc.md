@@ -4,19 +4,17 @@
 
 ---
 
-## Slide 01 / 10 — Thuật ngữ cốt lõi cho Dense Decoder (Nền tảng)
+## Slide 01 / 10 — Thuật ngữ nền tảng cốt lõi (Nền tảng trước khi vào kiến trúc)
 
-![Slide 01: Thuật ngữ cốt lõi](./images/slide_01_bang_thuat_ngu_dense_decoder.png)
+![Slide 01: Thuật ngữ nền tảng cốt lõi](./images/slide_01_bang_thuat_ngu_dense_decoder.png)
 
-### Giải thích chi tiết 5 khái niệm trước khi đi vào kiến trúc
+### Giải thích chi tiết 3 thuật ngữ nền tảng trước khi đi vào kiến trúc
 
 | STT | Thuật ngữ | Bản chất & Ký hiệu Shape tổng quát |
 | :--- | :--- | :--- |
-| **1** | **MLPResidual (Residual Block)** | Đơn vị cơ sở lặp $n_d$ lần trong Dense Decoder: gồm nhánh phi tuyến ReLU + Linear + Dropout cộng với nhánh tắt `lin_res` và `LayerNorm`. |
-| **2** | **Vector ẩn toàn cục** $\mathbf{e}^{(i)}$ | Đầu ra phẳng duy nhất của Dense Encoder, nén toàn bộ chuỗi quá khứ, ngoại sinh và thuộc tính tĩnh. Shape: $(B, d_h)$ với $d_h = \mathrm{hiddenSize}$. |
-| **3** | **Dense Decoder** | Stack gồm $n_d$ khối `MLPResidual`. Các tầng đầu giữ chiều $d_h$; riêng tầng cuối $n_d$ chiếu từ $d_h$ ra vector phẳng $\mathbf{g}^{(i)}$ chiều $H \cdot p$ trong đúng 1 lần forward. |
-| **4** | **Thao tác Reshape / Unflatten** | Phép tái cấu trúc vector phẳng $\mathbf{g}^{(i)}$ có Shape: $(B, H \cdot p)$ thành ma trận 2 chiều $\mathbf{D}^{(i)}$ có Shape: $(B, H, p)$ ở PyTorch (hoặc $(B, p, H)$ trong TF), chi phí $O(1)$. |
-| **5** | **Vector bối cảnh** $\mathbf{d}_t^{(i)}$ | Lát cắt thứ $t \in [H]$ trích từ $\mathbf{D}^{(i)}$. Shape mỗi bước: $(B, p)$. Chứa thông tin tóm tắt bối cảnh quá khứ dành riêng cho thời điểm tương lai $t$. |
+| **1** | **MLPResidual (Residual Block)** | Đơn vị xử lý cơ sở xếp thành chuỗi tầng trong TiDE: nhánh chính gồm `Dense(ReLU)` $\rightarrow$ `Dense(Linear)` + Dropout, cộng song song với nhánh tắt tuyến tính `lin_res` và `LayerNorm`. |
+| **2** | **Unflatten (Thao tác Reshape)** | Phép biến đổi hình học khôi phục lại trục thời gian $H$ từ một vector phẳng có Shape: $(B, H \cdot p)$ sang ma trận 2 chiều Shape: $(B, H, p)$ trong PyTorch (hoặc $(B, p, H)$ trong TF), chi phí bộ nhớ $O(1)$. |
+| **3** | **Information Bottleneck (Nghẽn cổ chai thông tin)** | Hiện tượng mất mát thông tin khi ép biểu diễn đi qua không gian có số chiều $p$ (hoặc hạng $r$) quá nhỏ ($p = 1, 2$), thiếu dung lượng mã hóa đồng thời pha chu kỳ và xu hướng; ngược lại $p$ quá lớn ($32, 64$) gây bùng nổ tham số và Overfitting. |
 
 ---
 
