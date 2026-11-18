@@ -51,30 +51,31 @@ Bây giờ mình vào ngay **Slide 02** để thống nhất các ký hiệu và
 
 ### 🟢 SLIDE 02 / 13 — THUẬT NGỮ NỀN TẢNG & KÝ HIỆU KÍCH THƯỚC (`B`, `H`, `p`, `hiddenSize`)
 
-* **Ảnh slide:** `slide_01_bang_thuat_ngu_dense_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-02--13-vai-trò-5-thuật-ngữ-nền-tảng--ký-hiệu-kích-thước-b-h-p-hiddensize))
-* **Thời lượng dự kiến:** 75 – 85 giây.
-* **Mục tiêu slide:** Giúp người mới hiểu ngay ý nghĩa thực tế của các ký hiệu $B, H, p, d_h$ và 5 thuật ngữ cốt lõi trước khi xem sơ đồ.
+* **Ảnh slide:** `slide_01_bang_thuat_ngu_dense_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-02--13-vai-trò-4-thuật-ngữ-nền-tảng--ký-hiệu-kích-thước-b-h-p-hiddensize))
+* **Thời lượng dự kiến:** 65 – 75 giây.
+* **Mục tiêu slide:** Giúp người mới hiểu ngay ý nghĩa thực tế của 4 thuật ngữ cốt lõi (`MLPResidual`, `Unflatten`, `LayerNorm`, `Dropout`) và 4 ký hiệu $B, H, p, d_h$ (`hiddenSize`) trước khi xem sơ đồ.
 
 ![Slide 02: Thuật ngữ nền tảng cốt lõi](./images/slide_01_bang_thuat_ngu_dense_decoder.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Với các bạn mới đọc TiDE lần đầu, rào cản lớn nhất thường là các ký hiệu viết tắt. Nên trước khi vào sơ đồ kiến trúc, mình xin thống nhất nhanh 4 con số kích thước và 5 khái niệm nền tảng để lát nữa nghe là hiểu ngay:
+Với các bạn mới đọc TiDE lần đầu, rào cản lớn nhất thường là các thuật ngữ và ký hiệu viết tắt. Nên trước khi vào sơ đồ kiến trúc, mình xin thống nhất nhanh 4 thuật ngữ cốt lõi và 4 ký hiệu kích thước ở Slide 02 để lát nữa nghe là hiểu ngay:
 
-Đầu tiên là 4 ký hiệu kích thước bạn sẽ gặp xuyên suốt bài nói:
-* **$B$ là `Batch Size`:** Số lượng mẫu dữ liệu mô hình xử lý cùng lúc trong một lượt — giống như mỗi lần chấm bài thi ta chấm một xấp 512 bài vậy. Bài báo cố định $B = 512$.
-* **$H$ là `Horizon`:** Số bước tương lai mình muốn dự báo (thường là 96, 192, 336 hoặc dài nhất là 720 bước).
-* **$p$ là `decoderOutputDim`:** Số lượng đặc trưng tóm tắt cho mỗi bước tương lai (thường là 8, 16 hoặc 32). Thay vì đoán ngay 1 con số khô khan cho ngày mai, mô hình tạo ra hẳn một vector gồm $p$ con số mô tả bối cảnh cho ngày mai.
-* **$d_h$ là `hiddenSize`:** Độ rộng (số nơ-ron) của các tầng ẩn bên trong mạng. Tác giả thử 3 mức $256, 512, 1024$: tập dữ liệu lớn như `Electricity` hay `Traffic` dùng tới 1024, còn các tập nhỏ hơn thì dùng 256 hoặc 512.
+Đầu tiên là 4 thuật ngữ cốt lõi tạo nên khối Dense Decoder:
 
-Tiếp theo là 5 thuật ngữ cốt lõi tạo nên khối Dense Decoder:
-* Thứ nhất là **`MLPResidual` (Khối xử lý cơ bản):** Đây là "viên gạch" xây nên toàn bộ TiDE. Nó gồm một nhánh chính đi qua 2 lớp tính toán phi tuyến, và một **đường tắt (`Skip Connection`)** đi thẳng từ đầu vào sang đầu ra — giống như chiếc cầu an toàn giúp tín hiệu và gradient truyền qua nhiều tầng mà không bị thất lạc.
-* Thứ hai là **`Unflatten` (Thao tác Reshape):** Hiểu đơn giản là "gấp lại". Ngõ ra của Dense Decoder ban đầu là một hàng dài gồm $H \cdot p$ con số (ví dụ $96 \times 8 = 768$ số). `Unflatten` sẽ cắt và xếp hàng dài đó thành một bảng gồm $H$ cột tương ứng với $H$ ngày, mỗi cột dài $p$ số.
-* Thứ ba là **`Information Bottleneck` (Nghẽn cổ chai):** Nếu ta ép kích thước $p$ quá nhỏ (như 1 hay 2), lượng thông tin quá khứ truyền sang bị mất mát, không đủ chứa cả xu hướng lẫn chu kỳ. Ngược lại chọn $p$ quá lớn thì mô hình phình to và dễ học vẹt.
-* Thứ tư là **`LayerNorm` (Chuẩn hóa theo tầng):** Đóng vai trò như "bộ ổn áp" đặt ở cuối mỗi khối `MLPResidual`, giúp các con số đầu ra không bị nhảy vọt quá lớn hay tụt về 0 khi mạng sâu.
-* Cuối cùng là **`Dropout` (Điều chuẩn ngẫu nhiên):** Trong lúc học, nó tạm tắt ngẫu nhiên một tỷ lệ kết nối — giống như việc "che bớt một số gợi ý lúc ôn bài" để mạng không học tủ, chống hiện tượng Overfitting (và khi đi dự báo thật thì mở lại 100%).
+* Thứ nhất là **`MLPResidual` (Khối xử lý cơ bản):** Đây là "viên gạch" xây nên toàn bộ TiDE. Nó gồm một nhánh chính đi qua 2 lớp tính toán phi tuyến, và một **đường tắt (`Skip Connection`)** đi thẳng từ đầu vào sang đầu ra — giúp đổi số chiều và truyền gradient ổn định.
+* Thứ hai là **`Unflatten` (Thao tác Reshape):** Hiểu đơn giản là "gấp lại" — tách vector phẳng đầu ra thành các vector riêng cho từng mốc thời gian tương lai $t = 1 \dots H$, khôi phục lại trục thời gian $H$ để tầng tiếp theo ghép tương ứng với biến ngoại sinh.
+* Thứ ba là **`LayerNorm` (Chuẩn hóa theo tầng):** Đóng vai trò như "bộ ổn áp" đặt ở cuối mỗi khối `MLPResidual` (sau cộng nhánh tắt), giúp phân phối tín hiệu và quá trình huấn luyện ổn định khi xếp chồng nhiều tầng hoặc horizon dài.
+* Thứ tư là **`Dropout` (Điều chuẩn ngẫu nhiên):** Trong lúc học, nó tạm tắt ngẫu nhiên một tỷ lệ kết nối ở nhánh phi tuyến — giống như "che bớt một số gợi ý lúc ôn bài" để giảm Overfitting của các tầng Dense lớn (tự động tắt khi suy luận).
 
-Nắm vững 5 khái niệm này rồi, giờ chúng ta cùng xem hành trình của dữ liệu qua khối Dense Decoder trong kiến trúc tổng thể TiDE nhé!
+Cuối cùng là thẻ số 5 — 4 ký hiệu kích thước bạn sẽ gặp xuyên suốt bài nói:
+
+* $B$ (**`Batch Size`**): Số lượng mẫu dữ liệu mô hình xử lý cùng lúc trong một lượt (bài báo cố định $B = 512$).
+* $H$ (**`Horizon`**): Số bước tương lai mình muốn dự báo (thường là $96, 192, 336$ hoặc dài nhất là $720$ bước).
+* $p$ (**`decoderOutputDim`**): Số chiều biểu diễn tóm tắt cho mỗi bước tương lai (thường chọn là $8, 16$ hoặc $32$).
+* **`hiddenSize`** ($d_h$): Độ rộng (số nơ-ron) của các tầng ẩn bên trong mạng ($256, 512$ hoặc $1024$).
+
+Nắm vững 5 thẻ này rồi, giờ chúng ta cùng xem hành trình của dữ liệu qua khối Dense Decoder trong kiến trúc tổng thể TiDE ở Slide 03 nhé!
 
 ---
 
