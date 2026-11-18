@@ -1,12 +1,12 @@
-# PHẦN 1: Thuật Ngữ, Kiến Trúc & Toán Học Khối Dense Decoder (Slide 01 – 05)
+# PHẦN 1: Thuật Ngữ, Kiến Trúc & Toán Học Khối Dense Decoder (Slide 02 – 07)
 
 > **Phạm vi:** 5 Slide đầu tiên xây dựng nền tảng từ điển thuật ngữ, định vị khối Dense Decoder trên kiến trúc tổng thể TiDE, làm rõ cơ chế One-Shot Non-autoregressive, công thức toán học qua $n_d$ khối Residual Block và phép `Reshape (Unflatten)` sinh ra các vector bối cảnh từng bước $\mathbf{d}_t^{(i)}$.
 
 ---
 
-## Slide 01 / 10 — Vai trò 5 thuật ngữ nền tảng trong bài báo TiDE
+## Slide 02 / 13 — Vai trò 5 thuật ngữ nền tảng trong bài báo TiDE
 
-![Slide 01: Vai trò 5 thuật ngữ nền tảng](./images/slide_01_bang_thuat_ngu_dense_decoder.png)
+![Slide 02: Vai trò 5 thuật ngữ nền tảng](./images/slide_01_bang_thuat_ngu_dense_decoder.png)
 
 ### Giải thích ngắn gọn vai trò từng thuật ngữ trong bài báo TiDE
 
@@ -20,9 +20,9 @@
 
 ---
 
-## Slide 02 / 10 — Vị trí khối Dense Decoder & Unflatten trên Kiến trúc TiDE
+## Slide 03 / 13 — Vị trí khối Dense Decoder & Unflatten trên Kiến trúc TiDE
 
-![Slide 02: Vị trí Dense Decoder](./images/slide_02_vi_tri_dense_decoder.png)
+![Slide 03: Vị trí Dense Decoder](./images/slide_02_vi_tri_dense_decoder.png)
 
 ### Điểm nhấn trên Figure 1 (Trang 5 Bài báo gốc)
 
@@ -32,9 +32,9 @@
 
 ---
 
-## Slide 03A / 10 — Cách Dense Decoder tạo biểu diễn toàn horizon (One-Shot vs Tuần tự)
+## Slide 04 / 13 — Cách Dense Decoder tạo biểu diễn toàn horizon (One-Shot vs Tuần tự)
 
-![Slide 03A: One-Shot vs Tuần tự](./images/slide_03_one_shot_vs_tuan_tu.png)
+![Slide 04: One-Shot vs Tuần tự](./images/slide_03_one_shot_vs_tuan_tu.png)
 
 ### So sánh trực diện hai cơ chế giải mã
 
@@ -48,9 +48,9 @@ $$
 
 ---
 
-## Slide 03B / 10 — Từ Công thức Toán học suy ra Code (`models.py`): Độc lập tính toán vs Tương quan biểu diễn
+## Slide 05 / 13 — Từ Công thức Toán học suy ra Code (`models.py`): Độc lập tính toán vs Tương quan biểu diễn
 
-![Slide 03B: Từ công thức toán học suy ra code](./images/slide_03b_ban_chat_toan_hoc.png)
+![Slide 05: Từ công thức toán học suy ra code](./images/slide_03b_ban_chat_toan_hoc.png)
 
 ### Liên kết từ Công thức Toán học sang cài đặt `models.py`
 
@@ -80,9 +80,9 @@ Việc chia sẻ chung vector ẩn $\mathbf{e}^{(i)}$ tạo ra hiệp phương s
 
 ---
 
-## Slide 04 / 10 — Kiến trúc $n_d$ Residual Blocks & Chuyển $\mathbf{e}^{(i)}$ thành $\mathbf{g}^{(i)}$
+## Slide 06 / 13 — Kiến trúc $n_d$ Residual Blocks & Chuyển $\mathbf{e}^{(i)}$ thành $\mathbf{g}^{(i)}$
 
-![Slide 04: Kiến trúc n_d Residual Blocks](./images/slide_04_kien_truc_nd_residual_blocks.png)
+![Slide 06: Kiến trúc n_d Residual Blocks](./images/slide_04_kien_truc_nd_residual_blocks.png)
 
 ### Hệ phương trình biến đổi qua từng tầng
 
@@ -112,9 +112,9 @@ flowchart LR
 
 ---
 
-## Slide 05 / 10 — Vai trò Reshape (Unflatten) & Ý nghĩa vector $\mathbf{d}_t^{(i)}$
+## Slide 07 / 13 — Vai trò Reshape (Unflatten) & Ý nghĩa vector $\mathbf{d}_t^{(i)}$
 
-![Slide 05: Reshape và Ý nghĩa d_t](./images/slide_05_reshape_va_y_nghia_dt.png)
+![Slide 07: Reshape và Ý nghĩa d_t](./images/slide_05_reshape_va_y_nghia_dt.png)
 
 ### Giải phẫu thao tác tách chiều thời gian
 

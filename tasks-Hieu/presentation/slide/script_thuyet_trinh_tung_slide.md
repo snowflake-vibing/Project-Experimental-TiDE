@@ -6,24 +6,27 @@
 > * **Đối tượng người nghe:** Toàn bộ thành viên trong nhóm đồ án / nhóm nghiên cứu TiDE.
 > * **Mục tiêu bài nói:** **Giúp tất cả thành viên trong nhóm hiểu cặn kẽ, sâu sắc từng con số, từng ký hiệu, cơ chế ghép ngoại sinh, quy trình luồng code, và bản chất tại sao chọn One-Shot thay vì tuần tự**, giải quyết dứt điểm các câu hỏi phản biện kỹ thuật để nhóm tự tin code và bảo vệ đồ án.
 > * **Phong cách trình bày:** Gần gũi, cởi mở, đậm chất trao đổi kỹ thuật (Tech-talk / Code-walkthrough), xưng hô "mình" và "anh em / các bạn trong nhóm". Đi thẳng vào bản chất, bóc tách từng dòng code và giải thích chi tiết các bẫy shape tensor.
-> * **Tài liệu tham chiếu:** Khớp chính xác 1-đối-1 theo đúng thứ tự **10 Slide** trong [`slide_images_gallery.md`](./slide_images_gallery.md) (từ **Slide 01 / 10** đến **Slide 10 / 10**) và tuân thủ chuẩn mực [`rule_slide.md`](./rule_slide.md) cùng [`RULE.md`](../../../RULE.md).
+> * **Tài liệu tham chiếu:** Khớp chính xác 1-đối-1 theo đúng thứ tự **13 Slide** trong [`slide_images_gallery.md`](./slide_images_gallery.md) (từ **Slide 02 / 13** đến **Slide 12 / 13**) và tuân thủ chuẩn mực [`rule_slide.md`](./rule_slide.md) cùng [`RULE.md`](../../../RULE.md).
 
 ---
 
-## ⏱️ PHÂN BỔ THỜI GIAN TOÀN BỘ BÀI NÓI (10 SLIDES)
+## ⏱️ PHÂN BỔ THỜI GIAN TOÀN BỘ BÀI NÓI (13 SLIDES)
 
 ```mermaid
 flowchart LR
-    P1["Phần 1: Thuật Ngữ, Kiến Trúc & Toán<br/>(Slides 01 - 05)<br/>⏱️ ~4.5 Phút<br/>Hiểu rõ B, H, p, d_h & Bản chất One-Shot"] --> P2["Phần 2: Quy Trình Code & Phân Tích Giới Hạn<br/>(Slides 06 - 08)<br/>⏱️ ~4.0 Phút<br/>Luồng chạy 6 bước & Bùng nổ 11.8M params"]
-    P2 --> P3["Phần 3: Đề Xuất Low-Rank & Roadmap<br/>(Slides 09 - 10)<br/>⏱️ ~3.0 Phút<br/>Phân rã r=64 giảm 92.6% & Kế hoạch Kaggle"]
+    P1["Phần 1: Thuật Ngữ, Kiến Trúc & Toán<br/>(Slides 02 - 07)<br/>⏱️ ~4.5 Phút<br/>Hiểu rõ B, H, p, d_h & Bản chất One-Shot"] --> P2["Phần 2: Quy Trình Code & Phân Tích Giới Hạn<br/>(Slides 08 - 10)<br/>⏱️ ~4.0 Phút<br/>Luồng chạy 6 bước & Bùng nổ 11.8M params"]
+    P2 --> P3["Phần 3: Đề Xuất Low-Rank & Roadmap<br/>(Slides 11 - 12)<br/>⏱️ ~3.0 Phút<br/>Phân rã r=64 giảm 92.6% & Kế hoạch Kaggle"]
 ```
 
 ---
 
-### 🟢 SLIDE INTRO — MỞ ĐẦU: TỔNG QUAN CHUYÊN ĐỀ DENSE DECODER TRONG TiDE
+### 🟢 SLIDE 01 / 13 — INTRO: TỔNG QUAN CHUYÊN ĐỀ DENSE DECODER TRONG TiDE
 
+* **Ảnh slide:** `slide_00_intro.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-01--13-intro--tide-dense-decoder-presenter-le-thanh-hieu))
 * **Thời lượng dự kiến:** 45 – 55 giây.
 * **Mục tiêu slide:** Chào hỏi nhóm, nêu bật vai trò sống còn của khối `Dense Decoder` trong TiDE, giới thiệu mục tiêu buổi tech-talk và lộ trình 3 phần của bài trình bày.
+
+![Slide 01: Intro](./images/slide_00_intro.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
@@ -32,11 +35,11 @@ Chào cả nhóm! Hôm nay mình sẽ phụ trách chia sẻ chuyên sâu về *
 Trong bức tranh tổng thể của TiDE, nếu `Dense Encoder` đóng vai trò nén toàn bộ dữ liệu quá khứ, thì **`Dense Decoder` chính là "trái tim giải mã"**: nó quyết định cách mô hình sinh ra toàn bộ dự báo tương lai chỉ trong **một lần chạy duy nhất (One-Shot)**, nhanh hơn Transformer 5 đến 10 lần. Tuy nhiên, chính khối này cũng chứa **nút thắt phình to tham số lớn nhất** khi chúng ta dự báo tầm xa lên tới $H = 720$ bước.
 
 Mục tiêu của mình trong khoảng 10–12 phút tới là giúp anh em trong nhóm nắm trọn vẹn 3 phần:
-1. **Phần 1 (Slides 01 – 05):** Thống nhất bộ thuật ngữ, vị trí kiến trúc, hiểu tận gốc bản chất *vừa độc lập tính toán vừa tương quan biểu diễn* và phép Reshape.
-2. **Phần 2 (Slides 06 – 08):** Soi luồng chạy code thực tế trong `models.py`, xem cấu hình siêu tham số trên 7 tập dữ liệu chuẩn và chỉ ra nguyên nhân bùng nổ tham số ở tầng cuối.
-3. **Phần 3 (Slides 09 – 10):** Đề xuất giải pháp **Low-Rank Projection** giảm tới 92.6% tham số cùng lộ trình phân công chạy thực nghiệm trên Kaggle.
+1. **Phần 1 (Slides 02 – 07):** Thống nhất bộ thuật ngữ, vị trí kiến trúc, hiểu tận gốc bản chất *vừa độc lập tính toán vừa tương quan biểu diễn* và phép Reshape.
+2. **Phần 2 (Slides 08 – 10):** Soi luồng chạy code thực tế trong `models.py`, xem cấu hình siêu tham số trên 7 tập dữ liệu chuẩn và chỉ ra nguyên nhân bùng nổ tham số ở tầng cuối.
+3. **Phần 3 (Slides 11 – 12):** Đề xuất giải pháp **Low-Rank Projection** giảm tới 92.6% tham số cùng lộ trình phân công chạy thực nghiệm trên Kaggle.
 
-Không để anh em đợi lâu, mình bước ngay vào **Slide 01** để thống nhất bộ ký hiệu và 5 thuật ngữ nền tảng trước nhé!
+Không để anh em đợi lâu, mình bước ngay vào **Slide 02** để thống nhất bộ ký hiệu và 5 thuật ngữ nền tảng trước nhé!
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
   * Chiếu Slide Tiêu đề / Bìa chuyên đề, nhìn bao quát cả nhóm, nhấn mạnh cụm từ **"Trái tim giải mã One-Shot"** và **"Nút thắt tham số khi H=720"**.
@@ -47,17 +50,17 @@ Không để anh em đợi lâu, mình bước ngay vào **Slide 01** để th�
 
 ---
 
-### 🟢 SLIDE 01 / 10 — THUẬT NGỮ NỀN TẢNG CỐT LÕI (`MLPResidual`, `Unflatten`, `Information Bottleneck`, `LayerNorm`, `Dropout`)
+### 🟢 SLIDE 02 / 13 — THUẬT NGỮ NỀN TẢNG CỐT LÕI (`MLPResidual`, `Unflatten`, `Information Bottleneck`, `LayerNorm`, `Dropout`)
 
-* **Ảnh slide:** `slide_01_bang_thuat_ngu_dense_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-01--10-thuật-ngữ-nền-tảng-cốt-lõi-mlpresidual-unflatten-information-bottleneck-layernorm-dropout))
+* **Ảnh slide:** `slide_01_bang_thuat_ngu_dense_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-02--13-thuật-ngữ-nền-tảng-cốt-lõi-mlpresidual-unflatten-information-bottleneck-layernorm-dropout))
 * **Thời lượng dự kiến:** 70 – 80 giây.
-* **Mục tiêu slide:** Thống nhất với cả nhóm 5 khái niệm nền tảng (`MLPResidual`, `Unflatten`, `Information Bottleneck`, `LayerNorm`, `Dropout`) cùng các ký hiệu $B, H, p, d_h$ trước khi bước vào sơ đồ kiến trúc ở Slide 02.
+* **Mục tiêu slide:** Thống nhất với cả nhóm 5 khái niệm nền tảng (`MLPResidual`, `Unflatten`, `Information Bottleneck`, `LayerNorm`, `Dropout`) cùng các ký hiệu $B, H, p, d_h$ trước khi bước vào sơ đồ kiến trúc ở Slide 03.
 
-![Slide 01: Thuật ngữ nền tảng cốt lõi](./images/slide_01_bang_thuat_ngu_dense_decoder.png)
+![Slide 02: Thuật ngữ nền tảng cốt lõi](./images/slide_01_bang_thuat_ngu_dense_decoder.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Chào mọi người! Trong kiến trúc TiDE, sau khi `Dense Encoder` nén toàn bộ dữ liệu lịch sử thì trọng trách giải mã tương lai thuộc về khối **`Dense Decoder`**. Trước khi đi sâu vào sơ đồ từ Slide 02 trở đi, anh em nhìn nhanh qua Slide 01 để mình thống nhất rõ ràng từng ký hiệu và 5 thuật ngữ cốt lõi:
+Chào mọi người! Trong kiến trúc TiDE, sau khi `Dense Encoder` nén toàn bộ dữ liệu lịch sử thì trọng trách giải mã tương lai thuộc về khối **`Dense Decoder`**. Trước khi đi sâu vào sơ đồ từ Slide 03 trở đi, anh em nhìn nhanh qua Slide 02 để mình thống nhất rõ ràng từng ký hiệu và 5 thuật ngữ cốt lõi:
 
 **1. Về bộ ký hiệu $B, H, p$ và $d_h$:**
 * **$B$ là `Batch Size`:** Số lượng mẫu chuỗi nạp vào cùng lúc. Tác giả **cố định $B = 512$** cho toàn bộ 7 benchmark datasets.
@@ -72,7 +75,7 @@ Chào mọi người! Trong kiến trúc TiDE, sau khi `Dense Encoder` nén toà
 * **Thẻ 4 — `LayerNorm` (Chuẩn hóa theo tầng):** Chuẩn hóa đặc trưng của từng mẫu ngay ở đầu ra mỗi khối `MLPResidual` (sau phép cộng nhánh tắt), giúp phân phối tín hiệu và quá trình huấn luyện ổn định khi xếp chồng nhiều tầng hoặc horizon dài.
 * **Thẻ 5 — `Dropout` (Điều chuẩn ngẫu nhiên):** Tắt ngẫu nhiên một tỷ lệ kết nối trong nhánh phi tuyến của khối `MLPResidual` lúc huấn luyện để giảm Overfitting của các tầng Dense lớn (tự động tắt khi suy luận dự báo).
 
-Nắm chắc 5 thuật ngữ và các con số này rồi, giờ chúng ta đi vào vị trí kiến trúc trên Figure 1 ở Slide 02 nhé!
+Nắm chắc 5 thuật ngữ và các con số này rồi, giờ chúng ta đi vào vị trí kiến trúc trên Figure 1 ở Slide 03 nhé!
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
   * Chỉ trực tiếp vào Thẻ 2: *"Nhớ nhé anh em: $B=512$, $d_h = 1024$, $H=96 \to 720$, $p=8 \to 32$"*.
@@ -80,44 +83,44 @@ Nắm chắc 5 thuật ngữ và các con số này rồi, giờ chúng ta đi v
 
 ---
 
-### 🟢 SLIDE 02 / 10 — VỊ TRÍ KHỐI DENSE DECODER & UNFLATTEN TRÊN FIGURE 1
+### 🟢 SLIDE 03 / 13 — VỊ TRÍ KHỐI DENSE DECODER & UNFLATTEN TRÊN FIGURE 1
 
-* **Ảnh slide:** `slide_02_vi_tri_dense_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-02--10-vị-trí-khối-dense-decoder--unflatten-trên-figure-1))
+* **Ảnh slide:** `slide_02_vi_tri_dense_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-03--13-vị-trí-khối-dense-decoder--unflatten-trên-figure-1))
 * **Thời lượng dự kiến:** 40 – 45 giây.
-* **Mục tiêu slide:** Định vị chính xác vị trí khối Dense Decoder và Unflatten trên Figure 1; giới thiệu vai trò cầu nối chuyển sang `Temporal Decoder` (chi tiết cách ghép ngoại sinh sẽ được giải thích cụ thể ở Slide 05 và Slide 06).
+* **Mục tiêu slide:** Định vị chính xác vị trí khối Dense Decoder và Unflatten trên Figure 1; giới thiệu vai trò cầu nối chuyển sang `Temporal Decoder` (chi tiết cách ghép ngoại sinh sẽ được giải thích cụ thể ở Slide 07 và Slide 08).
 
-![Slide 02: Vị trí Dense Decoder](./images/slide_02_vi_tri_dense_decoder.png)
+![Slide 03: Vị trí Dense Decoder](./images/slide_02_vi_tri_dense_decoder.png)
 
 > [!NOTE]
-> **📌 Card độc lập — Giải nghĩa nhanh 3 đại lượng $B, H, p$ trên Slide 02:**
+> **📌 Card độc lập — Giải nghĩa nhanh 3 đại lượng $B, H, p$ trên Slide 03:**
 > * **$B$ (`Batch Size`):** Số lượng mẫu chuỗi thời gian được xử lý song song trong một lần chạy (bài báo cố định $B = 512$ trên 7 bộ benchmark).
 > * **$H$ (`Horizon`):** Tầm dự báo tương lai — số bước thời gian cần dự đoán tiếp theo (thường $H \in \{96, 192, 336, 720\}$).
 > * **$p$ (`decoderOutputDim`):** Số chiều đặc trưng của mỗi vector bối cảnh $\mathbf{d}_t^{(i)}$ cho từng bước thời gian tương lai $t = 1 \dots H$ (thường $p \in \{8, 16, 32\}$).
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Nhìn lên Figure 1 trích từ trang 5 của bài báo gốc ở Slide 02:
+Nhìn lên Figure 1 trích từ trang 5 của bài báo gốc ở Slide 03:
 
 Khối `Dense Decoder` (được khoanh vàng ở giữa) nhận vector ẩn toàn cục $\mathbf{e}^{(i)}$ từ `Dense Encoder` truyền lên, xử lý qua $n_d$ khối để bung ra vector phẳng $\mathbf{g}^{(i)}$ có `Shape: (B, H * p)`. Ngay sau đó, phép `Unflatten` định hình lại thành ma trận $\mathbf{D}^{(i)}$ kích thước `(B, p, H)` để tách ra $H$ vector bối cảnh $\mathbf{d}_t^{(i)}$ tương ứng với từng bước thời gian tương lai.
 
-Nói ngắn gọn, vai trò sống còn của Dense Decoder là **tạo sẵn $H$ bộ khung bối cảnh quá khứ $\mathbf{d}_t$ cho từng ngày**. Còn việc từng khung $\mathbf{d}_t$ này sẽ ghép nối với biến ngoại sinh tương lai ở tầng kế tiếp (`Temporal Decoder`) cụ thể như thế nào, mình sẽ giải thích chi tiết ở phần Reshape (Slide 05) và quy trình Code (Slide 06) ngay sau đây nhé!
+Nói ngắn gọn, vai trò sống còn của Dense Decoder là **tạo sẵn $H$ bộ khung bối cảnh quá khứ $\mathbf{d}_t$ cho từng ngày**. Còn việc từng khung $\mathbf{d}_t$ này sẽ ghép nối với biến ngoại sinh tương lai ở tầng kế tiếp (`Temporal Decoder`) cụ thể như thế nào, mình sẽ giải thích chi tiết ở phần Reshape (Slide 07) và quy trình Code (Slide 08) ngay sau đây nhé!
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
   * Dùng tay chỉ luồng trên Figure 1: $\mathbf{e}^{(i)}$ đi vào `Dense Decoder` $\to$ `Unflatten` ra các lát cắt $\mathbf{d}_t$ $\to$ chuyển lên `Temporal Decoder`.
 
 ---
 
-### 🟢 SLIDE 03A / 10 — CÁCH DENSE DECODER TẠO BIỂU DIỄN TOÀN HORIZON (ONE-SHOT VS TUẦN TỰ)
+### 🟢 SLIDE 04 / 13 — CÁCH DENSE DECODER TẠO BIỂU DIỄN TOÀN HORIZON (ONE-SHOT VS TUẦN TỰ)
 
-* **Ảnh slide:** `slide_03_one_shot_vs_tuan_tu.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-03a--10-cách-dense-decoder-tạo-biểu-diễn-toàn-horizon-one-shot-vs-tuần-tự))
+* **Ảnh slide:** `slide_03_one_shot_vs_tuan_tu.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-04--13-cách-dense-decoder-tạo-biểu-diễn-toàn-horizon-one-shot-vs-tuần-tự))
 * **Thời lượng dự kiến:** 50 – 60 giây.
 * **Mục tiêu slide:** So sánh trực diện hai cơ chế giải mã: Autoregressive truyền thống (vòng lặp tuần tự $O(H)$, tích lũy sai số) vs Non-autoregressive One-Shot của TiDE (sinh đồng thời toàn bộ $H$ bước, $O(1)$ GPU).
 
-![Slide 03A: One-Shot vs Tuần tự](./images/slide_03_one_shot_vs_tuan_tu.png)
+![Slide 04: One-Shot vs Tuần tự](./images/slide_03_one_shot_vs_tuan_tu.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Ở Slide 03A, chúng ta cùng làm sáng tỏ triết lý giải mã của TiDE so với các mô hình dự báo chuỗi truyền thống qua 2 cột đối chiếu trực diện:
+Ở Slide 04, chúng ta cùng làm sáng tỏ triết lý giải mã của TiDE so với các mô hình dự báo chuỗi truyền thống qua 2 cột đối chiếu trực diện:
 
 **1. Cột bên trái — Cách truyền thống: Sinh tuần tự (Autoregressive):**
 * Trong các kiến trúc như RNN, LSTM, Seq2Seq hay Transformer Decoder cổ điển: họ xuất phát từ giả định chuỗi Markov, tức là muốn đoán ngày mai bắt buộc phải biết kết quả ngày hôm nay.
@@ -129,7 +132,7 @@ Nói ngắn gọn, vai trò sống còn của Dense Decoder là **tạo sẵn $H
 * Mọi lát cắt $\mathbf{d}_1, \dots, \mathbf{d}_H$ đều được trích xuất độc lập trực tiếp từ $\mathbf{e}^{(i)}$, không bước nào lấy output của bước trước làm input.
 * Nhờ đó, TiDE **triệt tiêu 100% hiện tượng tích lũy sai số**, đạt độ phức tạp $O(1)$ trên GPU và **chạy nhanh hơn Transformer từ 5 đến 10 lần**!
 
-Vậy câu hỏi đặt ra là: *"Từ bản chất toán học đến cài đặt code thực tế trong `models.py`, làm sao các bước vừa chạy độc lập trên GPU nhưng vẫn giữ được mối liên kết chặt chẽ với nhau?"* Chúng ta cùng sang Slide 03B để xem cả hai vế nhé!
+Vậy câu hỏi đặt ra là: *"Từ bản chất toán học đến cài đặt code thực tế trong `models.py`, làm sao các bước vừa chạy độc lập trên GPU nhưng vẫn giữ được mối liên kết chặt chẽ với nhau?"* Chúng ta cùng sang Slide 05 để xem cả hai vế nhé!
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
   * Chỉ vào cột trái: gạch chéo đỏ vào vòng lặp tuần tự và mũi tên tích lũy sai số.
@@ -137,17 +140,17 @@ Vậy câu hỏi đặt ra là: *"Từ bản chất toán học đến cài đ�
 
 ---
 
-### 🟢 SLIDE 03B / 10 — TỪ CÔNG THỨC TOÁN HỌC SUY RA CODE (`models.py`)
+### 🟢 SLIDE 05 / 13 — TỪ CÔNG THỨC TOÁN HỌC SUY RA CODE (`models.py`)
 
-* **Ảnh slide:** `slide_03b_ban_chat_toan_hoc.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-03b--10-từ-công-thức-toán-học-suy-ra-code-modelspy--độc-lập-tính-toán-vs-tương-quan-biểu-diễn))
+* **Ảnh slide:** `slide_03b_ban_chat_toan_hoc.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-05--13-từ-công-thức-toán-học-suy-ra-code-modelspy--độc-lập-tính-toán-vs-tương-quan-biểu-diễn))
 * **Thời lượng dự kiến:** 60 – 70 giây.
 * **Mục tiêu slide:** Đi từ hệ thống công thức toán học ở trên để suy ra trực tiếp cách tác giả cài đặt trong `models.py` ở dưới (vừa độc lập tính toán $O(1)$ trên GPU, vừa giữ trọn vẹn tương quan biểu diễn).
 
-![Slide 03B: Từ công thức toán học suy ra code](./images/slide_03b_ban_chat_toan_hoc.png)
+![Slide 05: Từ công thức toán học suy ra code](./images/slide_03b_ban_chat_toan_hoc.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Slide 03B này đi theo đúng một mạch rất logic: **từ Công thức Toán học ở khung trên $\to$ suy thẳng ra cách viết Code trong `models.py` ở khung dưới**. Anh em nhìn vào 2 cột trên màn hình:
+Slide 05 này đi theo đúng một mạch rất logic: **từ Công thức Toán học ở khung trên $\to$ suy thẳng ra cách viết Code trong `models.py` ở khung dưới**. Anh em nhìn vào 2 cột trên màn hình:
 
 **Cột bên trái — Độc lập tính toán ($O(1)$ GPU Parallelism):**
 * **Về Toán học (khung trên):** Như hai công thức trên slide, khi tách ma trận chiếu tầng cuối thành $H$ khối con, đạo hàm riêng giữa hai bước thời gian bất kỳ $t$ và $s$ bằng $0$. Điều đó chứng minh đồ thị tính toán hoàn toàn không có cạnh nối giữa các bước, toàn bộ phép tính chỉ là 1 phép nhân ma trận duy nhất.
@@ -165,17 +168,17 @@ Slide 03B này đi theo đúng một mạch rất logic: **từ Công thức To�
 
 ---
 
-### 🟢 SLIDE 04 / 10 — KIẾN TRÚC $n_d$ RESIDUAL BLOCKS & CHUYỂN $\mathbf{e}^{(i)}$ THÀNH $\mathbf{g}^{(i)}$
+### 🟢 SLIDE 06 / 13 — KIẾN TRÚC $n_d$ RESIDUAL BLOCKS & CHUYỂN $\mathbf{e}^{(i)}$ THÀNH $\mathbf{g}^{(i)}$
 
-* **Ảnh slide:** `slide_04_kien_truc_nd_residual_blocks.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-04--10-kiến-trúc-n_d-residual-blocks--chuyển-mathbfei-thành-mathbfgi))
+* **Ảnh slide:** `slide_04_kien_truc_nd_residual_blocks.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-06--13-kiến-trúc-n_d-residual-blocks--chuyển-mathbfei-thành-mathbfgi))
 * **Thời lượng dự kiến:** 50 – 60 giây.
 * **Mục tiêu slide:** Bóc tách luồng biến đổi qua từng tầng theo hai phương trình trên slide; giải thích vai trò bắt buộc của ma trận chiếu đường tắt $\mathbf{W}_{\text{skip}}^{(n_d)}$ ở khối cuối cùng.
 
-![Slide 04: Kiến trúc n_d Residual Blocks](./images/slide_04_kien_truc_nd_residual_blocks.png)
+![Slide 06: Kiến trúc n_d Residual Blocks](./images/slide_04_kien_truc_nd_residual_blocks.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Slide 04 đi sâu vào cấu trúc bên trong khối Dense Decoder khi nhận vector $\mathbf{e}^{(i)}$ từ Encoder truyền lên. Nhìn vào hai phương trình trên slide, Dense Decoder chia làm 2 giai đoạn biến đổi rất rõ ràng:
+Slide 06 đi sâu vào cấu trúc bên trong khối Dense Decoder khi nhận vector $\mathbf{e}^{(i)}$ từ Encoder truyền lên. Nhìn vào hai phương trình trên slide, Dense Decoder chia làm 2 giai đoạn biến đổi rất rõ ràng:
 
 * **Giai đoạn 1 — Các khối trung gian (từ tầng $1$ đến $n_d - 1$, nếu chọn $n_d \geq 2$):** Như phương trình phía trên trên màn hình, ở các tầng này chiều vào và chiều ra đều giữ cố định là `(B, d_h)` để tinh chỉnh biểu diễn phi tuyến.
 * **Giai đoạn 2 — Khối cuối cùng ($l = n_d$):** Đây là tầng đặc biệt nhất theo phương trình thứ hai trên slide. Chiều đầu ra không còn là $d_h$, mà được bung rộng ra kích thước $H \cdot p$!
@@ -183,31 +186,31 @@ Slide 04 đi sâu vào cấu trúc bên trong khối Dense Decoder khi nhận ve
 Anh em lưu ý chi tiết kỹ thuật rất quan trọng ở khối cuối này:
 Vì số chiều đầu vào là $d_h$ còn đầu ra là $H \cdot p$ (hai số này lệch nhau rất lớn, ví dụ $1024$ vs $5760$), nhánh tắt Skip Connection không thể cộng trực tiếp phần tử với phần tử được. Do đó, tác giả **bắt buộc phải đặt thêm một ma trận chiếu đường tắt $\mathbf{W}_{\text{skip}}$ có kích thước $(H \cdot p) \times d_h$** như mình khoanh tròn trên slide để đồng bộ kích thước rồi mới cộng residual!
 
-Đầu ra thu được là vector phẳng $\mathbf{g}^{(i)}$ có `Shape: (B, H * p)`. Chính sự xuất hiện của ma trận đường tắt này cộng với ma trận nhánh chính sẽ dẫn đến bài toán bùng nổ tham số mà chúng ta sẽ mổ xẻ ở Slide 08!
+Đầu ra thu được là vector phẳng $\mathbf{g}^{(i)}$ có `Shape: (B, H * p)`. Chính sự xuất hiện của ma trận đường tắt này cộng với ma trận nhánh chính sẽ dẫn đến bài toán bùng nổ tham số mà chúng ta sẽ mổ xẻ ở Slide 10!
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
   * Chỉ vào phương trình khối cuối trên slide: khoanh tròn vào số hạng $\mathbf{W}_{\text{skip}}^{(n_d)} \mathbf{v}^{(n_d-1)}$ để anh em thấy rõ sự xuất hiện của ma trận chiếu đường tắt.
 
 ---
 
-### 🟢 SLIDE 05 / 10 — VAI TRÒ RESHAPE (UNFLATTEN) & Ý NGHĨA VECTOR $\mathbf{d}_t^{(i)}$
+### 🟢 SLIDE 07 / 13 — VAI TRÒ RESHAPE (UNFLATTEN) & Ý NGHĨA VECTOR $\mathbf{d}_t^{(i)}$
 
-* **Ảnh slide:** `slide_05_reshape_va_y_nghia_dt.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-05--10-vai-trò-thao-tác-reshape-unflatten--ý-nghĩa-vector-mathbfd_ti))
+* **Ảnh slide:** `slide_05_reshape_va_y_nghia_dt.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-07--13-vai-trò-thao-tác-reshape-unflatten--ý-nghĩa-vector-mathbfd_ti))
 * **Thời lượng dự kiến:** 55 – 65 giây.
 * **Mục tiêu slide:** Giải thích chuẩn xác theo đúng công thức và mã nguồn của bài báo gốc: Phép Reshape tạo ra ma trận $\mathbf{D}^{(i)} \in \mathbb{R}^{p \times H}$ với Shape: $(B, p, H)$, bản chất chi phí $O(1)$ và cách ghép ngoại sinh ở tầng kế tiếp.
 
-![Slide 05: Reshape và Ý nghĩa d_t](./images/slide_05_reshape_va_y_nghia_dt.png)
+![Slide 07: Reshape và Ý nghĩa d_t](./images/slide_05_reshape_va_y_nghia_dt.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Sau khi tầng cuối cho ra vector phẳng $\mathbf{g}^{(i)}$ kích thước $H \cdot p$, Slide 05 giải phẫu thao tác **`Reshape` (hay `Unflatten`)** để tách thông tin cho từng bước tương lai, bám sát 100% theo đúng bài báo gốc và mã nguồn TensorFlow:
+Sau khi tầng cuối cho ra vector phẳng $\mathbf{g}^{(i)}$ kích thước $H \cdot p$, Slide 07 giải phẫu thao tác **`Reshape` (hay `Unflatten`)** để tách thông tin cho từng bước tương lai, bám sát 100% theo đúng bài báo gốc và mã nguồn TensorFlow:
 
 **1. Về cấu trúc ma trận trên slide:**
 * Như công thức ở trên màn hình, tác giả định hình lại vector phẳng thành ma trận $\mathbf{D}^{(i)}$ kích thước $p \times H$. Trong đại số tuyến tính, một chuỗi thời gian gồm $H$ bước được biểu diễn chuẩn mực dưới dạng một ma trận gồm **$H$ cột**, trong đó **mỗi cột thứ $t$ chính là vector bối cảnh $\mathbf{d}_t^{(i)}$ dài $p$**.
 
 **2. Trong mã nguồn chính thức (`models.py#L210-L211`):**
 * Tác giả thực hiện đúng y như công thức toán: `tf.reshape(decoder_out, [bsize, -1, self.pred_len])` để cho ra tensor có `Shape: (B, p, H)`, tức chiều thời gian $H$ nằm ở trục cuối cùng.
-* Và trả lời luôn câu hỏi ở Slide 02 về việc **tầng kế tiếp ghép ngoại sinh cụ thể như thế nào**: Ngay ở dòng 211, tác giả ghép ma trận `(B, p, H)` này với ngoại sinh tương lai `enc_fut` có shape `(B, r_tilde, H)` dọc theo trục đặc trưng `axis=1`, tạo thành tensor `(B, p + r_tilde, H)` (ví dụ $8 + 4 = 12$ chiều đặc trưng cho mỗi bước $t$), rồi mới đưa sang `Temporal Decoder` để dự báo phi tuyến!
+* Và trả lời luôn câu hỏi ở Slide 03 về việc **tầng kế tiếp ghép ngoại sinh cụ thể như thế nào**: Ngay ở dòng 211, tác giả ghép ma trận `(B, p, H)` này với ngoại sinh tương lai `enc_fut` có shape `(B, r_tilde, H)` dọc theo trục đặc trưng `axis=1`, tạo thành tensor `(B, p + r_tilde, H)` (ví dụ $8 + 4 = 12$ chiều đặc trưng cho mỗi bước $t$), rồi mới đưa sang `Temporal Decoder` để dự báo phi tuyến!
 
 **3. Về chi phí và ý nghĩa:**
 * Phép `reshape` này có **chi phí tính toán và bộ nhớ bằng 0 ($O(1)$)**, chỉ thay đổi thông số bước nhảy (stride) chứ không copy dữ liệu.
@@ -219,21 +222,21 @@ Sau khi tầng cuối cho ra vector phẳng $\mathbf{g}^{(i)}$ kích thước $H
 
 ---
 
-## 💻 PHẦN 2: QUY TRÌNH CODE, HYPERPARAMETERS & GIỚI HẠN (SLIDES 06 – 08)
+## 💻 PHẦN 2: QUY TRÌNH CODE, HYPERPARAMETERS & GIỚI HẠN (SLIDES 08 – 10)
 
 ---
 
-### 🟢 SLIDE 06 / 10 — SOURCE CODE CHÍNH THỨC (`models.py`) & ĐỐI CHIẾU PYTORCH
+### 🟢 SLIDE 08 / 13 — SOURCE CODE CHÍNH THỨC (`models.py`) & ĐỐI CHIẾU PYTORCH
 
-* **Ảnh slide:** `slide_06_source_code_dense_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-06--10-source-code-chính-thức-modelspy--pytorch))
+* **Ảnh slide:** `slide_06_source_code_dense_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-08--13-source-code-chính-thức-modelspy--pytorch))
 * **Thời lượng dự kiến:** 70 – 80 giây.
 * **Mục tiêu slide:** **Giải thích cặn kẽ, rõ ràng quy trình chạy code 6 bước từ đầu đến cuối**, chỉ rõ luồng dữ liệu biến đổi qua từng dòng code trong `models.py` và `simulate_forward_pass.py`.
 
-![Slide 06: Source Code Dense Decoder](./images/slide_06_source_code_dense_decoder.png)
+![Slide 08: Source Code Dense Decoder](./images/slide_06_source_code_dense_decoder.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Bây giờ chúng ta cùng soi mã nguồn thực tế ở Slide 06. Để anh em nắm chắc quy trình, mình sẽ đi theo **luồng chạy 6 bước thực tế khi forward pass qua Dense Decoder**:
+Bây giờ chúng ta cùng soi mã nguồn thực tế ở Slide 08. Để anh em nắm chắc quy trình, mình sẽ đi theo **luồng chạy 6 bước thực tế khi forward pass qua Dense Decoder**:
 
 * **Bước 1 — Khởi tạo danh sách tầng (`__init__` - Dòng 64–81 trong `models.py`):**
   Hàm `_make_dnn_residual` dùng vòng lặp tạo ra một danh sách gồm $n_d$ khối `MLPResidual`. Mọi tầng ẩn trung gian đều có kích thước $d_h$.
@@ -255,17 +258,17 @@ Như vậy toàn bộ quy trình từ khởi tạo, chiếu phẳng, reshape đ�
 
 ---
 
-### 🟢 SLIDE 07 / 10 — CẤU HÌNH SIÊU THAM SỐ DENSE DECODER TRÊN 7 BENCHMARK DATASETS
+### 🟢 SLIDE 09 / 13 — CẤU HÌNH SIÊU THAM SỐ DENSE DECODER TRÊN 7 BENCHMARK DATASETS
 
-* **Ảnh slide:** `slide_07_hyperparameters_dense_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-07--10-cấu-hình-siêu-tham-số-dense-decoder-trên-7-benchmark-datasets-table-7--8))
+* **Ảnh slide:** `slide_07_hyperparameters_dense_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-09--13-cấu-hình-siêu-tham-số-dense-decoder-trên-7-benchmark-datasets-table-7--8))
 * **Thời lượng dự kiến:** 75 – 85 giây.
 * **Mục tiêu slide:** Phân tích bảng cấu hình chính thức từ Bảng 7 và 8 Phụ lục B.3; chỉ ra không gian tìm kiếm siêu tham số; **giải thích cặn kẽ cơ sở thực nghiệm vì sao tác giả chọn $n_d = 1$ hoặc $n_d = 2$ cho từng nhóm dữ liệu và lý do tuyệt đối $0/7$ tập chọn $n_d = 3$**.
 
-![Slide 07: Hyperparameters Dense Decoder](./images/slide_07_hyperparameters_dense_decoder.png)
+![Slide 09: Hyperparameters Dense Decoder](./images/slide_07_hyperparameters_dense_decoder.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Slide 07 là bảng cấu hình siêu tham số chính thức của Dense Decoder trên toàn bộ 7 bộ dữ liệu chuẩn, trích từ Bảng 7 (trang 20) và Bảng 8 (trang 21) ở Phụ lục bài báo.
+Slide 09 là bảng cấu hình siêu tham số chính thức của Dense Decoder trên toàn bộ 7 bộ dữ liệu chuẩn, trích từ Bảng 7 (trang 20) và Bảng 8 (trang 21) ở Phụ lục bài báo.
 
 Khi nhìn vào bảng này, anh em sẽ thấy tác giả đưa ra không gian tìm kiếm (Table 7):
 * Kích thước ẩn `hiddenSize` ($d_h$): Quét trong $\{256, 512, 1024\}$.
@@ -288,7 +291,7 @@ Nhóm mình hãy bóc tách bản chất thành 3 điểm cốt lõi:
 * **Bão hòa năng lực phi tuyến (Diminishing Returns):** Trong TiDE, Dense Decoder không hoạt động đơn độc: bên dưới nó đã có `Global Residual` gánh thành phần tuyến tính, phía sau nó còn có `Temporal Decoder` để ráp nối ngoại sinh và tinh chỉnh chi tiết. Việc nhồi thêm tầng thứ 3 trong Dense Decoder không cung cấp thêm thông tin hữu ích nào cho mô hình.
 * **Nguy cơ Overfitting nghiêm trọng:** Các tập dữ liệu chuẩn như ETT có kích thước mẫu khá hạn chế (chỉ vài nghìn đến chục nghìn điểm thời gian). Khi tăng lên $n_d = 3$, số lượng tham số dư thừa sẽ khiến mô hình học vẹt các nhiễu ngẫu nhiên, làm điểm kiểm định (validation loss) kém đi và lập tức bị thuật toán chọn siêu tham số loại bỏ!
 
-Bây giờ, chúng ta cùng đào sâu vào việc chọn $p$ và $n_d$ sẽ gây ra hiện tượng nghẽn tham số cụ thể như thế nào ở Slide 08 nhé!
+Bây giờ, chúng ta cùng đào sâu vào việc chọn $p$ và $n_d$ sẽ gây ra hiện tượng nghẽn tham số cụ thể như thế nào ở Slide 10 nhé!
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
   * Chỉ vào cột $n_d$: nhấn mạnh sự phân hóa rõ rệt: nhóm vật lý/đa biến lớn chọn 1, nhóm hành vi phức tạp chọn 2.
@@ -297,17 +300,17 @@ Bây giờ, chúng ta cùng đào sâu vào việc chọn $p$ và $n_d$ sẽ gâ
 
 ---
 
-### 🟢 SLIDE 08 / 10 — PHÂN TÍCH ẢNH HƯỞNG CỦA $p, n_d$ & GIỚI HẠN KHI HORIZON $H$ DÀI
+### 🟢 SLIDE 10 / 13 — PHÂN TÍCH ẢNH HƯỞNG CỦA $p, n_d$ & GIỚI HẠN KHI HORIZON $H$ DÀI
 
-* **Ảnh slide:** `slide_08_phan_tich_p_nd_va_gioi_han.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-08--10-phân-tích-ảnh-hưởng-của-p-n_d--giới-hạn-khi-horizon-h-dài))
+* **Ảnh slide:** `slide_08_phan_tich_p_nd_va_gioi_han.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-10--13-phân-tích-ảnh-hưởng-của-p-n_d--giới-hạn-khi-horizon-h-dài))
 * **Thời lượng dự kiến:** 75 – 85 giây.
 * **Mục tiêu slide:** Chỉ rõ vị trí xuất hiện của $p$ trong bài báo (Mục 4.2 Trang 6, Table 7 Trang 20, Table 8 Trang 21); khẳng định việc tác giả chưa làm ablation riêng cho $p$; giải thích cơ sở toán học và mã nguồn thực tế dẫn đến con số 11.8M $\to$ 23.6M tham số.
 
-![Slide 08: Phân tích p, n_d và Giới hạn](./images/slide_08_phan_tich_p_nd_va_gioi_han.png)
+![Slide 10: Phân tích p, n_d và Giới hạn](./images/slide_08_phan_tich_p_nd_va_gioi_han.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Slide 08 này giải quyết một câu hỏi học thuật cực kỳ sắc bén mà anh em khi đọc bài báo chắc chắn sẽ thắc mắc:
+Slide 10 này giải quyết một câu hỏi học thuật cực kỳ sắc bén mà anh em khi đọc bài báo chắc chắn sẽ thắc mắc:
 **'Tác giả có nói về vấn đề chọn $p$ không, vị trí nó nằm ở đâu trong bài báo, và nếu không thì cơ sở nào để nhóm mình đưa ra các con số này?'**
 
 Mình xin làm rõ tường minh 3 luận điểm:
@@ -332,7 +335,7 @@ Mình xin làm rõ tường minh 3 luận điểm:
 * **Cơ sở 3 — Chính lời thừa nhận của tác giả tại Mục 6 Conclusion (Trang 11):**
   Tác giả viết nguyên văn: *"transformers are generally more parameter efficient than MLPs while being much more memory and compute intensive. This could be a limitation..."* — tức tác giả chính thức thừa nhận nhược điểm tốn tham số của kiến trúc MLP của mình khi mô hình mở rộng!
 
-Chính vì tác giả bỏ ngỏ việc khảo sát độ nhạy của $p$, nhóm mình mới đưa bài toán quét nhạy cảm $p \in \{2, 8, 16, 32\}$ vào Lộ trình thực nghiệm ở Slide 10!
+Chính vì tác giả bỏ ngỏ việc khảo sát độ nhạy của $p$, nhóm mình mới đưa bài toán quét nhạy cảm $p \in \{2, 8, 16, 32\}$ vào Lộ trình thực nghiệm ở Slide 12!
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
   * Chỉ rõ vị trí xuất xứ: Mục 4.2 Trang 6, Table 7 Trang 20, Table 8 Trang 21 và Mục 6 Trang 11.
@@ -340,21 +343,21 @@ Chính vì tác giả bỏ ngỏ việc khảo sát độ nhạy của $p$, nhó
 
 ---
 
-## 💡 PHẦN 3: ĐỀ XUẤT TỐI ƯU & LỘ TRÌNH THỰC NGHIỆM (SLIDES 09 – 10)
+## 💡 PHẦN 3: ĐỀ XUẤT TỐI ƯU & LỘ TRÌNH THỰC NGHIỆM (SLIDES 11 – 12)
 
 ---
 
-### 🟢 SLIDE 09 / 10 — ĐỀ XUẤT TỐT NHẤT: LOW-RANK DENSE DECODER PROJECTION
+### 🟢 SLIDE 11 / 13 — ĐỀ XUẤT TỐT NHẤT: LOW-RANK DENSE DECODER PROJECTION
 
-* **Ảnh slide:** `slide_09_de_xuat_low_rank_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-09--10-đề-xuất-tốt-nhất--low-rank-dense-decoder-projection))
+* **Ảnh slide:** `slide_09_de_xuat_low_rank_decoder.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-11--13-đề-xuất-tốt-nhất--low-rank-dense-decoder-projection))
 * **Thời lượng dự kiến:** 75 – 85 giây.
 * **Mục tiêu slide:** Trình bày giải pháp Low-Rank Factorized Projection; giải thích nguồn gốc (LoRA & Sainath et al.), chứng minh giảm 92.6% tham số, giảm FLOPs hơn 13 lần và giữ nguyên tính chất One-Shot $O(1)$.
 
-![Slide 09: Đề xuất Low-Rank Projection](./images/slide_09_de_xuat_low_rank_decoder.png)
+![Slide 11: Đề xuất Low-Rank Projection](./images/slide_09_de_xuat_low_rank_decoder.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Để giải quyết triệt để nút thắt 11.8 triệu tham số mà tác giả bài báo để lại, ở Slide 09, mình xin đề xuất phương án tối ưu nhất cho nhóm mình: **Low-Rank Factorized Dense Decoder Projection**.
+Để giải quyết triệt để nút thắt 11.8 triệu tham số mà tác giả bài báo để lại, ở Slide 11, mình xin đề xuất phương án tối ưu nhất cho nhóm mình: **Low-Rank Factorized Dense Decoder Projection**.
 
 **1. Nguồn gốc học thuật vững chắc:**
 
@@ -374,17 +377,17 @@ Thay vì học một ma trận trọng số khổng lồ nối trực tiếp t�
 
 ---
 
-### 🟢 SLIDE 10 / 10 — ĐIỂM CẢI THIỆN CỤ THỂ TRONG TiDE & LỘ TRÌNH THỰC NGHIỆM
+### 🟢 SLIDE 12 / 13 — ĐIỂM CẢI THIỆN CỤ THỂ TRONG TiDE & LỘ TRÌNH THỰC NGHIỆM
 
-* **Ảnh slide:** `slide_10_diem_cai_thien_va_roadmap.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-10--10-điểm-cải-thiện-cụ-thể-trong-tide--validation-protocol))
+* **Ảnh slide:** `slide_10_diem_cai_thien_va_roadmap.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-12--13-điểm-cải-thiện-cụ-thể-trong-tide--validation-protocol))
 * **Thời lượng dự kiến:** 65 – 75 giây.
 * **Mục tiêu slide:** Chỉ rõ 3 điểm yếu cụ thể trong TiDE mà giải pháp này cải thiện; trình bày lộ trình kiểm chứng thực nghiệm 3 bước và kêu gọi nhóm phân công chạy trên Kaggle.
 
-![Slide 10: Điểm cải thiện cụ thể trong TiDE và lộ trình kiểm chứng](./images/slide_10_diem_cai_thien_va_roadmap.png)
+![Slide 12: Điểm cải thiện cụ thể trong TiDE và lộ trình kiểm chứng](./images/slide_10_diem_cai_thien_va_roadmap.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Để khép lại bài thuyết trình, Slide 10 chỉ rõ **đề xuất này cải thiện trực tiếp ở 3 điểm nào trong TiDE** và lộ trình thực nghiệm cụ thể của nhóm mình:
+Để khép lại bài thuyết trình, Slide 12 chỉ rõ **đề xuất này cải thiện trực tiếp ở 3 điểm nào trong TiDE** và lộ trình thực nghiệm cụ thể của nhóm mình:
 
 **3 Điểm cải thiện cụ thể:**
 1. **Khắc phục tầng chiếu cuối tại `models.py#L136`:** Thay vì mở rộng đột ngột $d_h \to H \cdot p$, ta tách thành chuỗi $d_h \to r \to H \cdot p$, giảm hơn 85%–92% tham số nhưng giữ nguyên luồng forward của `MLPResidual`.
@@ -401,6 +404,15 @@ Mình đã chuẩn bị sẵn tài liệu hướng dẫn dùng trình duyệt Br
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
   * Chỉ vào bảng 3 điểm cải thiện và 3 bước trong Validation Protocol.
   * Mở nụ cười, chuyển sang màn hình code / thảo luận để cả nhóm cùng bắt đầu.
+
+---
+
+### 🟢 SLIDE 13 / 13 — OUTRO: THANKS FOR LISTENING! & Q&A
+
+* **Ảnh slide:** `slide_11_outro.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-13--13-outro--thanks-for-listening))
+* **Lời chào kết thúc:** Cảm ơn thầy/cô và các bạn đã lắng nghe phần trình bày chuyên đề `TiDE: Dense Decoder` — chuyển sang phiên hỏi đáp **Q & A Session**.
+
+![Slide 13: Outro](./images/slide_11_outro.png)
 
 ---
 

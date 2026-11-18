@@ -14,7 +14,7 @@
 
 👉 [**`present_dense_decoder.md`**](./present_dense_decoder.md): **Báo cáo chuyên sâu giải phẫu toàn diện khối Dense Decoder**
 
-👉 [**`slide/`**](./slide/README.md): **Thư mục 3 Phần Slide Thuyết Trình (Khối Dense Decoder)** — gồm 10 Slide PNG độ phân giải cao (auto-fit theo `rule_slide.md`), sơ đồ Mermaid, đối chiếu source code chính thức `models.py`, cấu hình Table 7/8 trên 7 benchmark datasets, và kịch bản lời nói cho từng slide.
+👉 [**`slide/`**](./slide/README.md): **Thư mục 3 Phần Slide Thuyết Trình (Khối Dense Decoder)** — gồm 13 Slide PNG độ phân giải cao (auto-fit theo `rule_slide.md`), sơ đồ Mermaid, đối chiếu source code chính thức `models.py`, cấu hình Table 7/8 trên 7 benchmark datasets, và kịch bản lời nói cho từng slide.
 
 Tài liệu được biên soạn tinh gọn, không lan man, tập trung 100% vào đúng 6 gạch đầu dòng nhiệm vụ của scope:
 1. **Kiến trúc Dense Decoder gồm $n_d$ Residual Blocks:** Cấu tạo các khối trung gian và khối ngõ ra đặc biệt.

@@ -1,12 +1,12 @@
-# PHẦN 2: Source Code Chính Thức, Hyperparameter & Phân Tích Chiều $p, n_d$ (Slide 06 – 08)
+# PHẦN 2: Source Code Chính Thức, Hyperparameter & Phân Tích Chiều $p, n_d$ (Slide 08 – 10)
 
 > **Phạm vi:** Đối chiếu trực tiếp từ codebase TensorFlow chính thức (`google-research/tide/models.py`) sang PyTorch (`simulate_forward_pass.py`), trích xuất bảng siêu tham số chuẩn trên 7 benchmark datasets (Table 7 & Table 8 — Phụ lục B.3), và phân tích sâu vai trò của `decoderOutputDim` ($p$), số tầng $n_d$, cũng như nút thắt tham số khi $H$ lớn.
 
 ---
 
-## Slide 06 / 10 — Source Code Chính Thức (`models.py`) & Đối Chiếu PyTorch
+## Slide 08 / 13 — Source Code Chính Thức (`models.py`) & Đối Chiếu PyTorch
 
-![Slide 06: Source Code Dense Decoder](./images/slide_06_source_code_dense_decoder.png)
+![Slide 08: Source Code Dense Decoder](./images/slide_06_source_code_dense_decoder.png)
 
 ### Ánh xạ từng dòng code sang phương trình toán học & Shape tổng quát
 
@@ -18,9 +18,9 @@
 
 ---
 
-## Slide 07 / 10 — Cấu Hình Siêu Tham Số Dense Decoder Trên 7 Benchmark Datasets
+## Slide 09 / 13 — Cấu Hình Siêu Tham Số Dense Decoder Trên 7 Benchmark Datasets
 
-![Slide 07: Hyperparameters Dense Decoder](./images/slide_07_hyperparameters_dense_decoder.png)
+![Slide 09: Hyperparameters Dense Decoder](./images/slide_07_hyperparameters_dense_decoder.png)
 
 ### Phân tích từ Bảng Cấu Hình Chính Thức (Table 7 Trang 20 & Table 8 Trang 21)
 
@@ -35,9 +35,9 @@
 
 ---
 
-## Slide 08 / 10 — Phân Tích Ảnh Hưởng Của $p, n_d$ & Giới Hạn Khi Horizon $H$ Dài
+## Slide 10 / 13 — Phân Tích Ảnh Hưởng Của $p, n_d$ & Giới Hạn Khi Horizon $H$ Dài
 
-![Slide 08: Phân tích p, n_d và Giới hạn](./images/slide_08_phan_tich_p_nd_va_gioi_han.png)
+![Slide 10: Phân tích p, n_d và Giới hạn](./images/slide_08_phan_tich_p_nd_va_gioi_han.png)
 
 ### Tổng kết kỹ thuật & Hai điểm nghẽn thực nghiệm
 

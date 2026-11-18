@@ -1,12 +1,12 @@
-# PHẦN 3: Đề Xuất Cải Thiện Tốt Nhất & Lộ Trình Kiểm Chứng (Slide 09 – 10)
+# PHẦN 3: Đề Xuất Cải Thiện Tốt Nhất & Lộ Trình Kiểm Chứng (Slide 11 – 12)
 
 > **Phạm vi:** Chọn ra **1 đề xuất cải thiện duy nhất tốt nhất** xuất phát trực tiếp từ hạn chế đã được tác giả TiDE thừa nhận ở **Mục 6 Conclusion (Trang 11)** và nút thắt tham số tại **`models.py#L133-L137`** — giải pháp **Low-Rank Factorized Dense Decoder Projection**.
 
 ---
 
-## Slide 09 / 10 — Đề Xuất Tốt Nhất: Low-Rank Dense Decoder Projection — Cơ Sở & Lý Do Chọn
+## Slide 11 / 13 — Đề Xuất Tốt Nhất: Low-Rank Dense Decoder Projection — Cơ Sở & Lý Do Chọn
 
-![Slide 09: Đề xuất Low-Rank Projection](./images/slide_09_de_xuat_low_rank_decoder.png)
+![Slide 11: Đề xuất Low-Rank Projection](./images/slide_09_de_xuat_low_rank_decoder.png)
 
 ### 1. Kế thừa trực tiếp từ các bài báo uy tín
 
@@ -37,9 +37,9 @@ flowchart LR
 
 ---
 
-## Slide 10 / 10 — Điểm Cải Thiện Cụ Thể Trong TiDE & Lộ Trình Thực Nghiệm
+## Slide 12 / 13 — Điểm Cải Thiện Cụ Thể Trong TiDE & Lộ Trình Thực Nghiệm
 
-![Slide 10: Điểm cải thiện & Validation Protocol](./images/slide_10_diem_cai_thien_va_roadmap.png)
+![Slide 12: Điểm cải thiện & Validation Protocol](./images/slide_10_diem_cai_thien_va_roadmap.png)
 
 ### 1. Phương án này cải thiện ở 3 điểm cụ thể nào trong TiDE?
 
