@@ -289,7 +289,9 @@ Và chính tác giả bài báo cũng thẳng thắn thừa nhận hạn chế v
 
 Để giải quyết triệt để nút thắt 11.8 triệu tham số mà tác giả để lại tại Mục 6 và dòng 136 của `models.py`, ở Slide 11 mình đề xuất phương án tối ưu nhất cho nhóm: **Low-Rank Dense Decoder Projection**.
 
-Ý tưởng này kế thừa từ hai nghiên cứu kinh điển là **LoRA (Hu et al., ICLR 2022 — [doi:10.48550/arXiv.2106.09685](https://doi.org/10.48550/arXiv.2106.09685))** và **Low-Rank DNN (Sainath et al., ICASSP 2013 — [doi:10.1109/ICASSP.2013.6638949](https://doi.org/10.1109/ICASSP.2013.6638949))**: thay vì học một ma trận trọng số dày đặc kích thước khổng lồ $\mathbf{W}$ nối thẳng từ $d_h$ sang $H \cdot p$, ta **phân rã thành tích của hai ma trận hạng thấp** $\mathbf{A} \cdot \mathbf{B}$ đi qua một hạng trung gian nhỏ $r$.
+Ý tưởng này kế thừa trực tiếp từ hai nghiên cứu nền tảng bổ trợ cho nhau:
+* **Low-Rank DNN (Sainath et al., ICASSP 2013 — [doi:10.1109/ICASSP.2013.6638949](https://doi.org/10.1109/ICASSP.2013.6638949)):** Đây là bài báo **gốc trực tiếp** đề xuất kỹ thuật thay thế hẳn một tầng Linear ngõ ra có kích thước lớn ($\mathbf{W}$) bằng tích của hai ma trận nhỏ $\mathbf{A} \cdot \mathbf{B}$ khi huấn luyện từ đầu, nhằm cắt giảm tham số tầng cuối mà vẫn giữ độ chính xác.
+* **LoRA (Hu et al., ICLR 2022 — [doi:10.48550/arXiv.2106.09685](https://doi.org/10.48550/arXiv.2106.09685)):** Củng cố cơ sở lý thuyết hiện đại về **hạng nội tại thấp (low intrinsic rank)** — cho thấy ma trận trọng số lớn trong mạng sâu thực chất có độ dư thừa cao, nên có thể nén thông tin qua một nút thắt hạng nhỏ $r$ (khác với LoRA là dùng để fine-tune giữ $\mathbf{W}_0$, ở đây ta áp dụng cách của Sainath et al. để thay thế trực tiếp $\mathbf{W}$ lúc train từ đầu).
 
 Để các bạn mới nghe hình dung thật rõ luồng kiến trúc mới thay đổi ra sao so với bản gốc, mình sẽ đi theo từng bước dữ liệu chạy qua tầng cuối:
 
