@@ -104,20 +104,32 @@ Ngay sau đó, thao tác `Unflatten` sẽ định hình lại vector phẳng $\m
 ### 🟢 SLIDE 04 / 13 — CÁCH DENSE DECODER TẠO BIỂU DIỄN TOÀN HORIZON (ONE-SHOT VS TUẦN TỰ)
 
 * **Ảnh slide:** `slide_03_one_shot_vs_tuan_tu.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-04--13-cách-dense-decoder-tạo-biểu-diễn-toàn-horizon-one-shot-vs-tuần-tự))
-* **Thời lượng dự kiến:** 55 – 65 giây.
-* **Mục tiêu slide:** Giải thích thật dễ hiểu sự khác biệt giữa cách đoán nối đuôi truyền thống và cách đoán 1 lần (One-Shot) của TiDE.
+* **Thời lượng dự kiến:** 75 – 90 giây.
+* **Mục tiêu slide:** Phân tích chi tiết từng bước đối chiếu 2 cột (Đỏ: Sinh tuần tự $O(H)$ vs Xanh: Dense Decoder One-Shot $O(1)$), giải thích rõ cơ chế giải mã không hồi tiếp, lý do triệt tiêu tích lũy sai số và dẫn chứng tốc độ thực nghiệm từ Mục 5.3 (Trang 9–10).
 
 ![Slide 04: One-Shot vs Tuần tự](./images/slide_03_one_shot_vs_tuan_tu.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Để thấy vì sao TiDE lại đột phá về tốc độ, chúng ta thử so sánh cách làm truyền thống với cách của TiDE nhé:
+Slide 04 giải thích một trong những nhiệm vụ cốt lõi nhất của `Dense Decoder`: **làm thế nào để tạo biểu diễn cho toàn bộ horizon** $H$ **mà không cần sinh dự báo tuần tự?** Anh em theo dõi trực diện hai cột đối xứng trên slide — mỗi cột đi theo đúng chuỗi nhân quả 3 bước `1 → 2 → 3`:
 
-Với các mô hình truyền thống như RNN, LSTM hay Transformer cổ điển, chúng làm việc theo kiểu "cuốn chiếu" tuần tự: muốn đoán ngày mai (bước 2) thì bắt buộc phải đoán xong hôm nay (bước 1) rồi lấy kết quả đó nạp ngược lại vào mô hình để đoán tiếp, cứ thế lặp đi lặp lại $H$ lần. Cách này có hai nhược điểm rất lớn: thứ nhất là chậm vì GPU phải chạy nối đuôi nhau từng lượt một, thứ hai là **tích lũy sai số** — ngày 1 đoán lệch một chút thì ngày 2 lấy cái lệch đó đoán tiếp, kéo dài đến ngày thứ 720 là kết quả bị trôi dạt hoàn toàn.
+**Cột trái màu đỏ — Cách truyền thống: Sinh tuần tự (Autoregressive):**
 
-Ngược lại, TiDE bỏ hẳn vòng lặp nối đuôi đó. Từ vector tóm tắt quá khứ $\mathbf{e}^{(i)}$, khối Dense Decoder dùng phép nhân ma trận chiếu **một phát duy nhất** ra biểu diễn của toàn bộ $H$ ngày tương lai cùng lúc. Bước 1 và bước 720 đều trích xuất trực tiếp từ $\mathbf{e}^{(i)}$, không bước nào phải chờ hay phụ thuộc vào kết quả đoán của bước trước. Nhờ vậy, TiDE **triệt tiêu 100% lỗi tích lũy sai số** và chạy nhanh hơn Transformer tới 5–10 lần!
+* **Bước 1 (Sinh nối đuôi nhau):** Các mô hình kiểu cũ (như RNN/Seq2Seq hay Decoder tự hồi quy) buộc phải đoán từng bước một: tính xong dự đoán bước $1$, rồi lại **lấy chính con số vừa đoán đó nạp ngược làm đầu vào** để đoán bước $2$, cứ thế lặp vòng tuần tự đủ $H$ lần cho tới bước $H$.
+* **Bước 2 (Tích lũy sai số — Error Accumulation):** Vì dùng "đáp án tự đoán" của mình làm đề bài cho bước tiếp theo, chỉ cần bước đầu lệch nhẹ một chút thì bước sau sẽ lấy cái sai đó cộng dồn thêm sai số mới — tạo hiệu ứng quả cầu tuyết. Ở các mốc dự báo rất dài như $H = 336$ hay $H = 720$, dự báo nửa sau chuỗi thường bị trôi lệch nghiêm trọng (*drift*).
+* **Bước 3 (Độ trễ tuần tự trên GPU):** Do bước sau phải ngồi chờ bước trước xong mới tính tiếp được, độ phức tạp tuần tự là $O(H)$. Dù GPU có hàng nghìn nhân song song cũng bị trói tay không chạy cùng lúc hết cả $H$ bước được.
 
-Nghe tới đây, chắc hẳn bạn mới sẽ thắc mắc: *"Ủa, nếu các ngày tương lai tính độc lập không chờ nhau, vậy làm sao mô hình biết được ngày hôm nay và ngày mai có liên quan chặt chẽ với nhau?"* Mời anh em sang Slide 05 để giải đáp triệt để nhé!
+**Cột phải màu xanh — Dense Decoder (TiDE): Giải mã song song (Non-autoregressive / One-Shot):**
+
+* **Bước 1 (Giải mã 1 lần duy nhất — One-Shot):** TiDE cắt đứt hoàn toàn vòng lặp hồi tiếp. Chỉ từ một vector nén quá khứ $e^{(i)}$ duy nhất, tầng chiếu cuối của Dense Decoder bung thẳng một phát ra vector phẳng $g^{(i)}$ có kích thước `Shape: (B, H * p)` — chứa sẵn toàn bộ biểu diễn cho cả horizon $H$ cùng một lúc.
+* **Bước 2 (Triệt tiêu tích lũy sai số):** Toàn bộ $H$ lát cắt bối cảnh từ bước $1$ đến bước $H$ (`d_1` đến `d_H`) đều trích xuất **độc lập trực tiếp từ gốc** $e^{(i)}$, hoàn toàn không phụ thuộc vào kết quả dự đoán $\hat{y}$ của bất kỳ bước nào trước đó. Ngày thứ 720 đọc trực tiếp tín hiệu quá khứ ngang hàng như ngày thứ 1, nên hiện tượng cộng dồn sai số bị triệt tiêu triệt để.
+* **Bước 3 (Độ phức tạp $O(1)$ — Tối ưu GPU):** Toàn bộ $H$ vector bối cảnh sinh ra trọn vẹn chỉ trong **đúng 1 lần forward pass**. Theo thực nghiệm **Mục 5.3 (Figure 2, Trang 9–10)** đo trên tập `Electricity` với GPU `NVIDIA T4`, cách chạy song song không tự hồi quy giúp TiDE đạt tốc độ suy luận nhanh hơn Transformer (`PatchTST`) **từ 5 đến 10 lần** (*an order of magnitude*), đồng thời không bị tràn bộ nhớ VRAM khi chuỗi đầu vào dài ($L \geq 1440$).
+
+Nghe tới đây, chắc chắn anh em sẽ nảy ra một câu hỏi phản biện cực kỳ sắc bén: *"Ủa, nếu mọi bước tương lai đều sinh song song và không nhìn kết quả của nhau, vậy làm sao ngày hôm nay và ngày mai liên kết mượt mà với nhau thay vì rời rạc?"* Mời cả nhóm sang Slide 05 để mở công thức toán học và code gốc trả lời câu hỏi này nhé!
+
+* **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
+  * Chỉ dọc 3 mũi tên đỏ ở cột trái: nhấn mạnh vòng lặp nối đuôi từ bước $1 \rightarrow 2 \rightarrow \dots \rightarrow H$ dẫn tới **tích lũy sai số** và **độ trễ** $O(H)$.
+  * Chỉ dọc 3 mũi tên xanh ở cột phải: nhấn mạnh cú chiếu **One-Shot 1 lần** từ $e^{(i)}$ ra `Shape: (B, H * p)` giúp đạt tốc độ song song $O(1)$ **GPU** và **nhanh hơn Transformer 5–10 lần**.
 
 ---
 
