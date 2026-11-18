@@ -1,4 +1,4 @@
-# Gallery Toàn Bộ 10 Slide Hình Ảnh Thuyết Trình — Khối Dense Decoder
+# Gallery Toàn Bộ Slide Hình Ảnh Thuyết Trình — Khối Dense Decoder (11 Slide: 01 – 10 kèm 03B)
 
 Mọi slide bên dưới được xuất tự động ở chuẩn màn hình rộng 16:9 (**`13.333 × 7.5 in`, 180 DPI**), tuân thủ cơ chế **Zero-Dead-Space Auto-Fit** trong [`rule_slide.md`](./rule_slide.md) và tập trung **100% đúng scope Dense Decoder**.
 
