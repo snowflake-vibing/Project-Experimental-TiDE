@@ -48,23 +48,35 @@ $$
 
 ---
 
-## Slide 03B / 10 — Bản chất trong Code (`models.py`): Độc lập tính toán vs Tương quan biểu diễn
+## Slide 03B / 10 — Từ Công thức Toán học suy ra Code (`models.py`): Độc lập tính toán vs Tương quan biểu diễn
 
-![Slide 03B: Bản chất trong code](./images/slide_03b_ban_chat_toan_hoc.png)
+![Slide 03B: Từ công thức toán học suy ra code](./images/slide_03b_ban_chat_toan_hoc.png)
 
-### Giải thích từ luồng chạy thực tế trong `models.py`
+### Liên kết từ Công thức Toán học sang cài đặt `models.py`
 
-#### A. Độc lập tính toán (Từ code tầng `Dense` + `Reshape`)
+#### A. Độc lập tính toán ($O(1)$ GPU Parallelism)
 
-1. **Không hề có vòng lặp `for t in range(H)`:** Trong `models.py`, tầng cuối cùng của Dense Decoder chỉ là một lớp `Dense(p * H)` duy nhất, xuất thẳng ra toàn bộ $H \cdot p$ phần tử rồi gọi `tf.reshape(decoder_out, [bsize, -1, self.pred_len])` để tạo tensor `(B, p, H)`.
-2. **Không phụ thuộc đầu ra bước trước:** Mọi lát cắt cột $\mathbf{d}_t$ và $\mathbf{d}_{t-1}$ cùng đọc trực tiếp từ 1 nguồn duy nhất là tensor `encoded`. Bước sau không phải chờ kết quả dự đoán `y_pred[t-1]` của bước trước làm input, qua đó triệt tiêu 100% lỗi tích lũy sai số (Error Accumulation).
-3. **Chạy 1 lệnh nhân ma trận $O(1)$ trên GPU:** Toàn bộ lớp `Dense(p * H)` thực thi bằng đúng 1 phép nhân ma trận, cho phép hàng nghìn nhân CUDA tính đồng thời cả $H$ bước trong 1 chu kỳ $O(1)$ (giúp TiDE nhanh hơn Transformer 5x–10x theo Mục 5.3).
+* **1. Công thức Toán học:** Tách ma trận chiếu tầng cuối $\mathbf{W} \in \mathbb{R}^{(H\cdot p)\times d_h}$ thành $H$ khối con $\mathbf{W}_t \in \mathbb{R}^{p\times d_h}$ theo từng bước thời gian:
 
-#### B. Tương quan biểu diễn (Từ luồng dữ liệu & tối ưu hóa trong code)
+$$
+\mathbf{d}_t^{(i)} = \mathbf{W}_t \mathbf{v}^{(n_d-1)} + \mathbf{b}_t \implies \frac{\partial \mathbf{d}_t^{(i)}}{\partial \mathbf{d}_s^{(i)}} = \mathbf{0} \quad (\forall t \neq s)
+$$
 
-1. **Mọi bước sinh ra từ chung 1 tensor gốc (`encoded`):** Tensor `encoded` từ Encoder đã nén trọn vẹn xu hướng, chu kỳ và tương tác đa biến của toàn bộ quá khứ. Vì cả $H$ cột $\mathbf{d}_t$ đều cắt ra từ chung nguồn thông tin này nên chúng liên kết chặt chẽ với nhau.
-2. **Tối ưu chung 1 hàm Loss (MSE) toàn horizon:** Khi huấn luyện, hàm MSE tính sai số đồng thời trên toàn bộ $H$ bước tương lai. Gradient từ cả $H$ ngày cùng cập nhật ngược về chung bộ trọng số `Dense(p * H)` và `encoded`, ép các cột kế tiếp nhau tự học tính mượt mà, liên tục.
-3. **Nhánh tắt tuyến tính `Global Residual` (`models.py`):** Code cộng thêm một lớp tuyến tính `+ self.linear_skip(past_y)` nối thẳng từ cửa sổ quá khứ $L$ sang toàn bộ tương lai $H$, bảo toàn trực tiếp các chu kỳ tự hồi quy (như 24h, 168h).
+Đồ thị tính toán không có cạnh nối giữa bước $t$ và $s$; toàn bộ $\mathbf{g} = \mathbf{W}\mathbf{v} + \mathbf{b}$ là 1 phép nhân ma trận duy nhất (Single GEMM Kernel).
+
+* **2. Suy ra cài đặt trong Code (`models.py`):** Không dùng vòng lặp `for t in range(H)`. Tác giả chỉ cần đúng **1 lớp `Dense(p * H)`** tính song song toàn bộ $H$ bước trên GPU, rồi gọi `tf.reshape(out, [bsize, -1, pred_len])` để tạo tensor `(B, p, H)`.
+
+#### B. Tương quan biểu diễn (Representational Correlation)
+
+* **1. Công thức Toán học:**
+
+$$
+\mathrm{Cov}(\mathbf{d}_t^{(i)}, \mathbf{d}_s^{(i)}) = \mathbf{W}_t \, \mathbf{\Sigma}_{\mathbf{e}} \, \mathbf{W}_s^\top \neq \mathbf{0}, \qquad \nabla_{\mathbf{e}^{(i)}} \mathcal{L} = \sum_{t=1}^H \mathbf{W}_t^\top \nabla_{\mathbf{d}_t^{(i)}} \mathcal{L}, \qquad \hat{y}_{\mathrm{res}, t}^{(i)} = \sum_{l=1}^L W_{\mathrm{res}, t, l} \cdot y_l^{(i)}
+$$
+
+Việc chia sẻ chung vector ẩn $\mathbf{e}^{(i)}$ tạo ra hiệp phương sai biên khác không; Gradient tổng hợp từ cả $H$ bước ép $\mathbf{W}_t$ học tính trơn tru; và $\mathbf{W}_{\mathrm{res}}$ giữ trực tiếp chu kỳ trễ.
+
+* **2. Suy ra cài đặt trong Code (`models.py`):** Mọi lát cắt $\mathbf{d}_t$ đều cắt ra từ chung 1 tensor `encoded`; tối ưu chung 1 hàm Loss `MSE(y_true, y_pred)` cho cả $H$ bước; và cộng trực tiếp nhánh tắt tuyến tính `+ self.linear_skip(past_y)`.
 
 ---
 

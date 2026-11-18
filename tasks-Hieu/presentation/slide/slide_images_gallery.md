@@ -4,6 +4,11 @@ Mọi slide bên dưới được xuất tự động ở chuẩn màn hình r�
 
 ---
 
+## Intro: TiDE: Dense Decoder (Presenter: Le Thanh Hieu)
+![Slide Intro](./images/slide_00_intro.png)
+
+---
+
 ## Phần 1: Thuật Ngữ, Kiến Trúc & Toán Học (Slide 01 – 05)
 
 ### Slide 01 / 10: Thuật ngữ nền tảng cốt lõi (`MLPResidual`, `Unflatten`, `Information Bottleneck`, `LayerNorm`, `Dropout`)
@@ -15,7 +20,7 @@ Mọi slide bên dưới được xuất tự động ở chuẩn màn hình r�
 ### Slide 03A / 10: Cách Dense Decoder tạo biểu diễn toàn horizon (One-Shot vs Tuần tự)
 ![Slide 03A](./images/slide_03_one_shot_vs_tuan_tu.png)
 
-### Slide 03B / 10: Bản chất trong Code (`models.py`) — Độc lập tính toán vs Tương quan biểu diễn
+### Slide 03B / 10: Từ Công thức Toán học suy ra Code (`models.py`) — Độc lập tính toán vs Tương quan biểu diễn
 ![Slide 03B](./images/slide_03b_ban_chat_toan_hoc.png)
 
 ### Slide 04 / 10: Kiến trúc $n_d$ Residual Blocks & Chuyển $\mathbf{e}^{(i)}$ thành $\mathbf{g}^{(i)}$
@@ -46,3 +51,8 @@ Mọi slide bên dưới được xuất tự động ở chuẩn màn hình r�
 
 ### Slide 10 / 10: Điểm cải thiện cụ thể trong TiDE & Validation Protocol
 ![Slide 10](./images/slide_10_diem_cai_thien_va_roadmap.png)
+
+---
+
+## Outro: Thanks for listening!
+![Slide Outro](./images/slide_11_outro.png)

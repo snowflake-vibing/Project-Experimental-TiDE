@@ -65,6 +65,12 @@ Nắm chắc 5 thuật ngữ và các con số này rồi, giờ chúng ta đi v
 
 ![Slide 02: Vị trí Dense Decoder](./images/slide_02_vi_tri_dense_decoder.png)
 
+> [!NOTE]
+> **📌 Card độc lập — Giải nghĩa nhanh 3 đại lượng $B, H, p$ trên Slide 02:**
+> * **$B$ (`Batch Size`):** Số lượng mẫu chuỗi thời gian được xử lý song song trong một lần chạy (bài báo cố định $B = 512$ trên 7 bộ benchmark).
+> * **$H$ (`Horizon`):** Tầm dự báo tương lai — số bước thời gian cần dự đoán tiếp theo (thường $H \in \{96, 192, 336, 720\}$).
+> * **$p$ (`decoderOutputDim`):** Số chiều đặc trưng của mỗi vector bối cảnh $\mathbf{d}_t^{(i)}$ cho từng bước thời gian tương lai $t = 1 \dots H$ (thường $p \in \{8, 16, 32\}$).
+
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
 Nhìn lên Figure 1 trích từ trang 5 của bài báo gốc ở Slide 02:
@@ -100,7 +106,7 @@ Nói ngắn gọn, vai trò sống còn của Dense Decoder là **tạo sẵn $H
 * Mọi lát cắt $\mathbf{d}_1, \dots, \mathbf{d}_H$ đều được trích xuất độc lập trực tiếp từ $\mathbf{e}^{(i)}$, không bước nào lấy output của bước trước làm input.
 * Nhờ đó, TiDE **triệt tiêu 100% hiện tượng tích lũy sai số**, đạt độ phức tạp $O(1)$ trên GPU và **chạy nhanh hơn Transformer từ 5 đến 10 lần**!
 
-Vậy câu hỏi đặt ra là: *"Nhìn từ góc độ code thực tế, tại sao các bước chạy độc lập trên GPU nhưng vẫn giữ được mối liên kết chặt chẽ với nhau?"* Chúng ta cùng sang Slide 03B để soi thẳng vào luồng code `models.py` nhé!
+Vậy câu hỏi đặt ra là: *"Từ bản chất toán học đến cài đặt code thực tế trong `models.py`, làm sao các bước vừa chạy độc lập trên GPU nhưng vẫn giữ được mối liên kết chặt chẽ với nhau?"* Chúng ta cùng sang Slide 03B để xem cả hai vế nhé!
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
   * Chỉ vào cột trái: gạch chéo đỏ vào vòng lặp tuần tự và mũi tên tích lũy sai số.
@@ -108,33 +114,31 @@ Vậy câu hỏi đặt ra là: *"Nhìn từ góc độ code thực tế, tại 
 
 ---
 
-### 🟢 SLIDE 03B / 10 — BẢN CHẤT TRONG CODE (`models.py`): ĐỘC LẬP TÍNH TOÁN VS TƯƠNG QUAN BIỂU DIỄN
+### 🟢 SLIDE 03B / 10 — TỪ CÔNG THỨC TOÁN HỌC SUY RA CODE (`models.py`)
 
-* **Ảnh slide:** `slide_03b_ban_chat_toan_hoc.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-03b--10-bản-chất-trong-code-modelspy--độc-lập-tính-toán-vs-tương-quan-biểu-diễn))
-* **Thời lượng dự kiến:** 55 – 65 giây.
-* **Mục tiêu slide:** Giải thích trực tiếp bằng luồng chạy thực tế trong code `models.py`: Tại sao tầng cuối `Dense(p * H)` + `tf.reshape` lại giúp tính toán độc lập trên GPU mà vẫn giữ trọn vẹn sự tương quan giữa các bước thời gian.
+* **Ảnh slide:** `slide_03b_ban_chat_toan_hoc.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-03b--10-từ-công-thức-toán-học-suy-ra-code-modelspy--độc-lập-tính-toán-vs-tương-quan-biểu-diễn))
+* **Thời lượng dự kiến:** 60 – 70 giây.
+* **Mục tiêu slide:** Đi từ hệ thống công thức toán học ở trên để suy ra trực tiếp cách tác giả cài đặt trong `models.py` ở dưới (vừa độc lập tính toán $O(1)$ trên GPU, vừa giữ trọn vẹn tương quan biểu diễn).
 
-![Slide 03B: Bản chất trong code](./images/slide_03b_ban_chat_toan_hoc.png)
+![Slide 03B: Từ công thức toán học suy ra code](./images/slide_03b_ban_chat_toan_hoc.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Slide 03B này giải thích thẳng từ góc độ lập trình trong file `models.py` câu hỏi: **"Làm sao Dense Decoder vừa chạy độc lập trên GPU nhưng các bước thời gian vẫn tương quan mật thiết với nhau?"**
+Slide 03B này đi theo đúng một mạch rất logic: **từ Công thức Toán học ở khung trên $\to$ suy thẳng ra cách viết Code trong `models.py` ở khung dưới**. Anh em nhìn vào 2 cột trên màn hình:
 
-Anh em nhìn vào 2 cột trên màn hình:
+**Cột bên trái — Độc lập tính toán ($O(1)$ GPU Parallelism):**
+* **Về Toán học (khung trên):** Như hai công thức trên slide, khi tách ma trận chiếu tầng cuối thành $H$ khối con, đạo hàm riêng giữa hai bước thời gian bất kỳ $t$ và $s$ bằng $0$. Điều đó chứng minh đồ thị tính toán hoàn toàn không có cạnh nối giữa các bước, toàn bộ phép tính chỉ là 1 phép nhân ma trận duy nhất.
+* **Suy ra Code trong `models.py` (khung dưới):** Chính vì không có cạnh nối tuần tự, tác giả **không cần viết vòng lặp `for t in range(H)`**. Trong code chỉ cần đúng **1 lớp `Dense(p * H)`** duy nhất để GPU tính song song toàn bộ $H$ bước cùng lúc, rồi gọi `tf.reshape` là xong `(B, p, H)`.
 
-**Cột bên trái — Độc lập tính toán (Từ code `Dense` + `Reshape`):**
-* **Thứ nhất, không hề có vòng lặp `for t in range(H)`:** Trong `models.py`, tầng cuối cùng chỉ là **1 lớp `Dense(p * H)` duy nhất**. Nó xuất thẳng ra một tensor phẳng gồm toàn bộ $H \cdot p$ phần tử rồi gọi `tf.reshape` thành `(B, p, H)`.
-* **Thứ hai, không phụ thuộc đầu ra bước trước:** Mọi lát cắt $\mathbf{d}_t$ và $\mathbf{d}_{t-1}$ đều cùng đọc trực tiếp từ một nguồn là tensor `encoded`. Bước sau hoàn toàn không phải chờ kết quả dự đoán `y_pred[t-1]` của bước trước làm input, nên triệt tiêu 100% lỗi tích lũy sai số.
-* **Thứ ba, tối ưu phần cứng GPU:** Toàn bộ lớp `Dense(p * H)` được thực thi bằng đúng 1 phép nhân ma trận trên GPU, cho phép hàng nghìn nhân CUDA tính đồng thời cả $H$ bước trong 1 chu kỳ $O(1)$, nhanh hơn Transformer 5 đến 10 lần.
-
-**Cột bên phải — Tương quan biểu diễn (Từ luồng dữ liệu trong code):**
-* **Thứ nhất, mọi bước đều sinh ra từ chung 1 tensor gốc `encoded`:** Tensor `encoded` từ Encoder truyền lên đã nén trọn vẹn xu hướng và chu kỳ của toàn bộ quá khứ. Vì cả $H$ cột $\mathbf{d}_t$ đều cắt ra từ chung nguồn thông tin này nên chúng liên kết chặt chẽ với nhau.
-* **Thứ hai, tối ưu chung 1 hàm Loss (MSE) toàn horizon:** Lúc train, hàm MSE tính sai số đồng thời trên cả $H$ bước tương lai. Khi Backprop, gradient từ cả $H$ ngày cùng cập nhật ngược về chung một bộ trọng số `Dense(p * H)` và `encoded`, ép các cột kề nhau tự học tính mượt mà, liên tục.
-* **Thứ ba, nhánh tắt tuyến tính `Global Residual` trong code:** `models.py` cộng thêm một lớp tuyến tính nối thẳng từ toàn bộ cửa sổ quá khứ `past_y` ($L$) sang toàn bộ tương lai ($H$), giữ nguyên các chu kỳ tự hồi quy như 24h hay 168h.
+**Cột bên phải — Tương quan biểu diễn (Representational Correlation):**
+* **Về Toán học (khung trên):** Nhóm mình có 3 công thức chứng minh ở khung trên: thứ nhất là Luật Hiệp phương sai toàn phần cho thấy dù độc lập có điều kiện, hiệp phương sai biên vẫn khác không nhờ cùng chia sẻ vector ẩn $\mathbf{e}$; thứ hai là công thức Gradient tổng hợp khi Backprop ép các khối chiếu học mượt mà; và thứ ba là nhánh `Global Residual` giữ chu kỳ trễ.
+* **Suy ra Code trong `models.py` (khung dưới):** Ba công thức đó ánh xạ trực tiếp thành 3 dòng cài đặt rất gọn trong code:
+  1. Mọi lát cắt $\mathbf{d}_t$ đều cắt ra từ **chung 1 tensor `encoded`**.
+  2. Toàn bộ mô hình tối ưu **chung 1 hàm Loss `MSE`** trên cả $H$ bước tương lai.
+  3. Cuối cùng cộng trực tiếp nhánh tắt tuyến tính `+ self.linear_skip(past_y)`.
 
 * **🎬 Tương tác & Điểm nhấn màn hình (Visual Cues):**
-  * Chỉ sang cột trái: nhấn mạnh *"Không có vòng lặp for, chỉ 1 lớp Dense(p * H) + reshape"*.
-  * Chỉ sang cột phải: nhấn mạnh *"Chung đầu vào encoded, chung Loss toàn horizon, và có nhánh Global Residual nối thẳng L sang H"*.
+  * Chỉ tay từ khung trên xuống khung dưới của từng cột: *"Từ công thức toán học ở trên $\to$ suy ra ngay 3 gạch đầu dòng cài đặt trong `models.py` ở dưới"*.
 
 ---
 
