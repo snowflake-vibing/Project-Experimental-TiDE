@@ -38,20 +38,14 @@ flowchart LR
 
 ---
 
-## Slide 12 / 13 — Điểm Cải Thiện Cụ Thể Trong TiDE & Lộ Trình Thực Nghiệm
+## Slide 12 / 13 — Điểm Cải Thiện Cụ Thể Trong TiDE
 
-![Slide 12: Điểm cải thiện & Validation Protocol](./images/slide_10_diem_cai_thien_va_roadmap.png)
+![Slide 12: Điểm cải thiện cụ thể trong TiDE](./images/slide_10_diem_cai_thien_va_roadmap.png)
 
-### 1. Phương án này cải thiện ở 3 điểm cụ thể nào trong TiDE?
+### Phương án Low-Rank Projection cải thiện ở 3 điểm cụ thể nào trong TiDE?
 
 | STT | Vị trí trong TiDE | Vấn đề hiện tại | Giá trị cải thiện mang lại |
 | :--- | :--- | :--- | :--- |
 | **1** | **Tầng chiếu cuối `models.py#L136`** | Cả `lin_b` và `lin_res` mở rộng thẳng từ $d_h \rightarrow H \cdot p$. | Tách chuỗi $d_h \rightarrow r \rightarrow H \cdot p$, giảm ~92.6% số tham số tầng cuối nhưng giữ nguyên luồng forward `MLPResidual`. |
 | **2** | **Nút thắt** $H = 720$ & $p$ lớn (Mục 6 & Table 8) | Tốn VRAM & dễ Overfitting khi chọn $p = 32$ trên tập nhỏ (ETTh2) hoặc horizon dài $H = 720$. | Cho phép tăng dung lượng vector bối cảnh $p \in [16, 32]$ giúp mô tả chi tiết hơn mà không làm bùng nổ tham số. |
 | **3** | **Khoảng trống Ablation Mục 5.4** | Bài báo gốc chưa công bố bảng quét độ nhạy tách riêng cho $p$, $n_d$ trên 7 benchmark datasets. | Bổ sung trọn vẹn thực nghiệm quét nhạy cảm giữa $(p, n_d)$ và các hạng phân rã $r \in \{32, 64, 128\}$. |
-
-### 2. Lộ trình thực nghiệm kiểm chứng tính thuyết phục (Validation Protocol)
-
-1. **Bước 1 — Đối chứng Baseline vs Low-Rank:** Chạy trung bình 5 seeds trên Electricity, ETTh2 và ETTm1 ở $H \in \{336, 720\}$, so sánh `MLPResidual` gốc với phiên bản Low-Rank $r \in \{32, 64, 128\}$.
-2. **Bước 2 — Quét độ nhạy siêu tham số** $p$ & $n_d$: Đo MSE/MAE theo $p \in \{2, 8, 16, 32\}$ và $n_d \in \{1, 2, 3\}$ để kiểm chứng thực nghiệm hiện tượng nghẽn thông tin ($p$ nhỏ) và bão hòa ($n_d \geq 3$).
-3. **Bước 3 — Tiêu chí nghiệm thu:** Giảm $\geq 85\%$ tham số tầng chiếu cuối, giữ nguyên tốc độ suy luận One-Shot $O(1)$ trên GPU và đạt MSE/MAE tương đương hoặc tốt hơn bản TiDE gốc.

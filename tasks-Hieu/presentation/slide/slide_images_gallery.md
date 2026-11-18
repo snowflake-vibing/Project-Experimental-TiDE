@@ -49,7 +49,7 @@ Mọi slide bên dưới được xuất tự động ở chuẩn màn hình r�
 ### Slide 11 / 13: Đề xuất tốt nhất — Low-Rank Dense Decoder Projection
 ![Slide 11](./images/slide_09_de_xuat_low_rank_decoder.png)
 
-### Slide 12 / 13: Điểm cải thiện cụ thể trong TiDE & Validation Protocol
+### Slide 12 / 13: Điểm cải thiện cụ thể trong TiDE
 ![Slide 12](./images/slide_10_diem_cai_thien_va_roadmap.png)
 
 ---

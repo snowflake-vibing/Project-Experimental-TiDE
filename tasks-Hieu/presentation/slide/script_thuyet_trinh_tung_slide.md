@@ -316,29 +316,23 @@ Và chính tác giả bài báo cũng thẳng thắn thừa nhận giới hạn 
 
 ---
 
-### 🟢 SLIDE 12 / 13 — ĐIỂM CẢI THIỆN CỤ THỂ TRONG TiDE & LỘ TRÌNH THỰC NGHIỆM
+### 🟢 SLIDE 12 / 13 — ĐIỂM CẢI THIỆN CỤ THỂ TRONG TiDE
 
-* **Ảnh slide:** `slide_10_diem_cai_thien_va_roadmap.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-12--13-điểm-cải-thiện-cụ-thể-trong-tide--validation-protocol))
-* **Thời lượng dự kiến:** 75 – 85 giây.
-* **Mục tiêu slide:** Tổng kết 3 điểm cải thiện cụ thể trong TiDE và chốt lộ trình thực nghiệm 3 bước (Validation Protocol) thật rõ ràng để cả nhóm bắt tay vào làm trên Kaggle.
+* **Ảnh slide:** `slide_10_diem_cai_thien_va_roadmap.png` ([Xem ảnh trong gallery](./slide_images_gallery.md#slide-12--13-điểm-cải-thiện-cụ-thể-trong-tide))
+* **Thời lượng dự kiến:** 50 – 60 giây.
+* **Mục tiêu slide:** Tổng kết cô đọng 3 điểm cải thiện cụ thể mà Low-Rank Projection mang lại trực tiếp cho khối Dense Decoder của TiDE trước khi kết thúc phần trình bày.
 
-![Slide 12: Điểm cải thiện cụ thể trong TiDE và lộ trình kiểm chứng](./images/slide_10_diem_cai_thien_va_roadmap.png)
+![Slide 12: Điểm cải thiện cụ thể trong TiDE](./images/slide_10_diem_cai_thien_va_roadmap.png)
 
 #### 🎙️ Lời thoại trình bày (Team Tech-talk):
 
-Để khép lại phần trình bày, Slide 12 tóm tắt **3 điểm giải pháp Low-Rank cải thiện trực tiếp cho TiDE** và **lộ trình thực nghiệm 3 bước** để kiểm chứng tính thuyết phục:
+Để chốt lại Phần 3, Slide 12 tóm gọn **3 điểm mà giải pháp Low-Rank Projection cải thiện trực tiếp cho mô hình TiDE**:
 
-**Về 3 điểm cải thiện cụ thể trong TiDE:**
 1. **Tối ưu khối cuối tại `models.py#L136`:** Ở TiDE gốc, hai ma trận dày đặc `lin_b` và `lin_res` phình to trực tiếp theo $H \cdot p$. Khi tách thành $d_h \to r \to H \cdot p$, ta giảm được ~92.6% tham số tầng cuối nhưng vẫn giữ nguyên hoàn toàn logic forward của phần còn lại.
-2. **Gỡ nút thắt $H = 720$ và $p$ lớn:** Giải pháp này xử lý trực tiếp hạn chế *"MLP kém hiệu quả tham số"* ở Mục 6 bài báo, giúp nhóm mình tự tin nâng $p = 16, 32$ trên các tập dữ liệu nhỏ như `ETTh2` mà không bị Overfitting nhờ điều chuẩn hạng thấp $r$.
-3. **Bổ sung Ablation còn thiếu về $n_d$ và $p$:** Bài báo gốc chưa từng công bố bảng quét độ nhạy riêng cho $p$ và $n_d$ ở Mục 5.4; nhóm mình sẽ kiểm chứng định lượng ảnh hưởng của $p \in [4..32]$, $n_d \in [1..3]$ và các mức hạng $r \in \{32, 64, 128\}$.
+2. **Gỡ nút thắt** $H = 720$ **và** $p$ **lớn:** Giải pháp này xử lý trực tiếp hạn chế *"MLP kém hiệu quả tham số"* ở Mục 6 bài báo, giúp nhóm mình có thể nâng $p = 16, 32$ trên các tập dữ liệu nhỏ như `ETTh2` mà không bị Overfitting nhờ cơ chế điều chuẩn hạng thấp $r$.
+3. **Bổ sung Ablation còn thiếu về** $n_d$ **và** $p$: Bài báo gốc chưa công bố bảng quét độ nhạy riêng cho $p$ và $n_d$ ở Mục 5.4; đây là cơ sở để tiến hành kiểm chứng định lượng ảnh hưởng của $p \in [4..32]$, $n_d \in [1..3]$ và các mức hạng $r \in \{32, 64, 128\}$.
 
-**Về lộ trình thực nghiệm 3 bước (Validation Protocol):**
-* **Bước 1 — Đối chứng Baseline vs Low-Rank:** Chạy với 5 seed độc lập trên 3 tập đại diện (`Electricity`, `ETTh2`, `ETTm1`) ở tầm xa $H \in \{336, 720\}$, so sánh các mức hạng $r \in \{32, 64, 128\}$ với TiDE gốc.
-* **Bước 2 — Quét độ nhạy $p$ và $n_d$:** Đo sai số MSE/MAE theo $p \in \{2, 8, 16, 32\}$ và số tầng $n_d \in \{1, 2, 3\}$ để khẳng định bằng số liệu thực tế điểm nghẽn thông tin và điểm bão hòa.
-* **Bước 3 — Tiêu chí nghiệm thu:** Đạt yêu cầu khi tham số tầng chiếu giảm $\ge 85\%$, sai số MSE/MAE giữ nguyên hoặc tốt hơn bản gốc, và giữ nguyên tốc độ $O(1)$ One-Shot.
-
-Mình đã chuẩn bị sẵn hướng dẫn chạy song song 2 tài khoản Kaggle trên trình duyệt Brave trong thư mục `kaggle/` để cả nhóm có 60 giờ GPU miễn phí mỗi tuần. Giờ mời anh em cùng trao đổi và chia task thực nghiệm nhé!
+Đến đây phần phân tích chuyên sâu về khối Dense Decoder của mình xin khép lại, mời cả nhóm sang Slide 13 để cùng đặt câu hỏi thảo luận nhé!
 
 ---
 
