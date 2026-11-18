@@ -15,7 +15,7 @@ Mọi slide bên dưới được xuất tự động ở chuẩn màn hình r�
 ### Slide 03A / 10: Cách Dense Decoder tạo biểu diễn toàn horizon (One-Shot vs Tuần tự)
 ![Slide 03A](./images/slide_03_one_shot_vs_tuan_tu.png)
 
-### Slide 03B / 10: Bản chất toán học — Độc lập tính toán vs Tương quan biểu diễn
+### Slide 03B / 10: Bản chất trong Code (`models.py`) — Độc lập tính toán vs Tương quan biểu diễn
 ![Slide 03B](./images/slide_03b_ban_chat_toan_hoc.png)
 
 ### Slide 04 / 10: Kiến trúc $n_d$ Residual Blocks & Chuyển $\mathbf{e}^{(i)}$ thành $\mathbf{g}^{(i)}$
