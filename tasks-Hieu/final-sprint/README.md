@@ -42,6 +42,7 @@ flowchart LR
 
 | Thứ tự | Tài liệu hướng dẫn | Nội dung chính |
 | :--- | :--- | :--- |
+| **Kế hoạch tổng thể** | [`00_ke_hoach_thuc_hien.md`](./00_ke_hoach_thuc_hien.md) | Lộ trình 4 giai đoạn (Vòng 1 kiểm chứng nhanh & Vòng 2 mở rộng), bảng task chi tiết, bảng rủi ro & Master Checklist. |
 | **Bước 1** | [`01_huong_dan_github_va_cai_dat_code.md`](./01_huong_dan_github_va_cai_dat_code.md) | Chi tiết từng dòng code sửa trong `models.py`, `train.py`, mẫu `README.md` và lệnh kiểm thử/push cho cả `feat/m07` và `feat/m08`. |
 | **Bước 2** | [`02_huong_dan_kaggle_va_rclone.md`](./02_huong_dan_kaggle_va_rclone.md) | Cấu hình Secret `RCLONE_CONFIG_B64`, `REMOTE_BASE` cho M07/M08, lệnh chạy `train.py` khớp `etth1.sh`/`etth2.sh`, lưu ý `--resume`/`--run_id` và add vào `IS403_Project`. |
 | **Bước 3** | [`03_kiem_tra_ket_qua_va_bao_cao.md`](./03_kiem_tra_ket_qua_va_bao_cao.md) | Đọc `./results/test_metrics.json`, công thức tính % cải thiện MSE/MAE, bảng điền kết quả 4 lần chạy và quy tắc báo cáo nhóm trưởng. |
